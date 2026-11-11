@@ -159,3 +159,30 @@ All return `{ ok: true, ... }` or raise. Each one is idempotent where noted.
 The skill teaches the agent to answer "what do you remember about X / why do you know X" by emitting a
 paragraph that is only `::somnia-memory{key="claim:..."}`. The desktop half claims the directive and renders
 the candidate card (score ring, the six bars, sessions, Forget/Pin buttons) using `candidate`.
+
+## Used by desktop/plugin.js
+
+RPC methods (all via `host.request('plugin.hermes-somnia.<name>', …)`):
+
+- Read: `overview` (polled every 60 s; shared by the page, statusbar chip and empty-chat line), `changes`
+  (`{run:'latest'}` and `{run:<started_at>}` from the sleep chart), `candidates` (`filter` near|promoted|rejected|skills,
+  `q`, `limit: 100`), `candidate` (`{key}`, inline chat card), `themes`, `diary` (`{limit: 12}`), `stats`, `sessions.fed`,
+  `job` (polled every 2 s while a job runs).
+- Write: `run` (`{}` and `{dry_run:true}`; dry-run `job.result` is read as `{summary, changes: Change[]}`), `promote`
+  (`{key, target?}`), `forget` (`{key, remove_entry}`), `unforget`, `pin` (`{key, pinned}`), `skill.dismiss`,
+  `entry.edit` / `entry.remove` (`reject` for "Forget") / `entry.to_vault` (`{target, index, old}`), `undo`,
+  `settings.set` for `principles`, `destructive`, `max_promotions`, `min_score`, `min_sessions`.
+- `-32601` on `overview` renders the "run `hermes plugins enable hermes-somnia`" empty state.
+
+SDK exports (namespace import, every optional one feature-detected): `host` (`request`, `state.gateway`, `navigate`,
+`openSession(id,{intent:'stack'})`, `newChat`, `composer.setDraft('new', …)` + `composer.focus`, `notify`, `notifyError`),
+`useQuery`, `useMutation`, `useQueryClient` (fallback `queryClient`), `useValue`, `usePluginI18n`, `relativeTime`,
+`pluginSettingsHref`, `Button`, `Codicon`, `ConfirmDialog`, `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`,
+`DialogDescription`, `DialogFooter`, `SearchField`, `SegmentedControl`, `Skeleton`, `Streamdown`, `Switch`, `Textarea`,
+`Tip`, `ROUTES_AREA`, `SIDEBAR_NAV_AREA`, `PALETTE_AREA`, `KEYBINDS_AREA` (`mod+alt+s`), `STATUSBAR_AREAS.right`,
+`TRANSCRIPT_DIRECTIVE_AREA` (`somnia-memory`), `SESSION_ROW_AREAS.trailing`, `CHAT_EMPTY_AREA`. ctx: `registerMany`,
+`i18n.register/t/onLocaleChange`, `storage.get/set` (seen run, dismissed cards), `onDispose`.
+
+Gaps the page works around (server could add): a stable change id (page keys "Keep" on `run_at:key|text`, kept only
+client-side); `job.result` shape for dry runs is not specified; a `recent`/`since` window for `sessions.fed`; an
+`entry_index` on `Change` (the page matches the entry by key or exact text); `diary.entries[].date` is shown verbatim.

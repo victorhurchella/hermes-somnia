@@ -1,0 +1,260 @@
+{
+ "now": 1794388320,
+ "overview": {
+  "version": "0.4.0",
+  "destinations": "builtin",
+  "destructive": "apply",
+  "schedule": "0 3 * * *",
+  "timezone": "Europe/Lisbon",
+  "cron": {
+   "installed": true,
+   "id": "cron_somnia_9f2c",
+   "next_run_at": "2026-11-12T03:00:00.000Z",
+   "state": "scheduled"
+  },
+  "llm": {
+   "provider": "openrouter",
+   "model": "google/gemini-2.5-flash",
+   "task": "auxiliary.somnia"
+  },
+  "last_run": null,
+  "budgets": [
+   {
+    "target": "memory",
+    "used": 78,
+    "limit": 2200,
+    "goal": 1980,
+    "entries": [
+     {
+      "text": "Maya Okafor, indie dev. Two projects: Lanternfall (Godot) and Ledgerly (SaaS).",
+      "chars": 78,
+      "owner": "human",
+      "key": null,
+      "created_at": 1794129120,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 0
+     }
+    ]
+   },
+   {
+    "target": "user",
+    "used": 0,
+    "limit": 1375,
+    "goal": 1238,
+    "entries": []
+   }
+  ],
+  "nights": [],
+  "alarm": null,
+  "counts": {
+   "candidates": 0,
+   "near": 0,
+   "promoted": 0,
+   "rejected": 0,
+   "skills": 0,
+   "stale": 0,
+   "pending": 0
+  },
+  "vault": null,
+  "pressure": {
+   "memory": 0.04,
+   "user": 0
+  },
+  "principles": {
+   "active": [
+    "pareto",
+    "lindy",
+    "occam",
+    "feynman"
+   ],
+   "all": [
+    "pareto",
+    "lindy",
+    "inversion",
+    "occam",
+    "feynman"
+   ],
+   "labels": {
+    "pareto": "Pareto: keep the vital few",
+    "lindy": "Lindy: trust what has lasted",
+    "inversion": "Inversion: remember the mistakes",
+    "occam": "Occam: merge only when it is simpler",
+    "feynman": "Feynman: if it cannot be said plainly, wait"
+   },
+   "descriptions": {
+    "pareto": "When memory is full, the least-confirmed Somnia entries make room for stronger facts.",
+    "lindy": "Facts that keep being true across weeks get a small bonus (up to +0.05).",
+    "inversion": "Corrections and pitfalls get a +0.06 bonus, so the same mistake is not repeated.",
+    "occam": "A merge is applied only when the result is shorter than the entries it replaces.",
+    "feynman": "A rewritten entry must read as one plain sentence; otherwise the parts are kept."
+   }
+  },
+  "settings": {
+   "destructive": "apply",
+   "max_promotions": 3,
+   "min_score": 0.65,
+   "min_sessions": 2,
+   "diary": true,
+   "notify": "changes",
+   "principles": [
+    "pareto",
+    "lindy",
+    "occam",
+    "feynman"
+   ]
+  }
+ },
+ "runs": {},
+ "latest_run": null,
+ "candidates": [],
+ "themes": {
+  "themes": [],
+  "links": []
+ },
+ "diary": {
+  "entries": [],
+  "path": "~/.hermes/plugin-data/hermes-somnia/DREAMS.md"
+ },
+ "stats": {
+  "histogram": [
+   {
+    "bucket": 0,
+    "count": 0
+   },
+   {
+    "bucket": 0.05,
+    "count": 0
+   },
+   {
+    "bucket": 0.1,
+    "count": 0
+   },
+   {
+    "bucket": 0.15,
+    "count": 0
+   },
+   {
+    "bucket": 0.2,
+    "count": 0
+   },
+   {
+    "bucket": 0.25,
+    "count": 0
+   },
+   {
+    "bucket": 0.3,
+    "count": 0
+   },
+   {
+    "bucket": 0.35,
+    "count": 0
+   },
+   {
+    "bucket": 0.4,
+    "count": 0
+   },
+   {
+    "bucket": 0.45,
+    "count": 0
+   },
+   {
+    "bucket": 0.5,
+    "count": 0
+   },
+   {
+    "bucket": 0.55,
+    "count": 0
+   },
+   {
+    "bucket": 0.6,
+    "count": 0
+   },
+   {
+    "bucket": 0.65,
+    "count": 0
+   },
+   {
+    "bucket": 0.7,
+    "count": 0
+   },
+   {
+    "bucket": 0.75,
+    "count": 0
+   },
+   {
+    "bucket": 0.8,
+    "count": 0
+   },
+   {
+    "bucket": 0.85,
+    "count": 0
+   },
+   {
+    "bucket": 0.9,
+    "count": 0
+   },
+   {
+    "bucket": 0.95,
+    "count": 0
+   }
+  ],
+  "min_score": 0.65,
+  "by_gate": {
+   "origin": 0,
+   "placement": 0,
+   "signals": 0,
+   "sessions": 0,
+   "durability": 0,
+   "age": 0,
+   "score": 0,
+   "not_promoted": 0,
+   "not_rejected": 0
+  },
+  "promoted_total": 0,
+  "rejected_total": 0,
+  "candidates_total": 0
+ },
+ "sessions_fed": {
+  "sessions": {}
+ },
+ "dry_run": {
+  "summary": "Nothing to do yet: no conversations since install.",
+  "changes": []
+ },
+ "noop_alarm": null,
+ "sessions": [
+  {
+   "id": "s-lf-shader",
+   "title": "Lanternfall: lantern falloff shader",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lf-itch",
+   "title": "Friday build notes for itch.io",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lf-tiles",
+   "title": "TileMapLayer migration (Godot 4.4)",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lf-oil",
+   "title": "Oil meter + lantern radius tuning",
+   "source": "desktop"
+  }
+ ],
+ "transcript": [
+  {
+   "role": "user",
+   "text": "hi!"
+  },
+  {
+   "role": "assistant",
+   "text": "Hello Maya."
+  }
+ ],
+ "undo_backup": null
+}

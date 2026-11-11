@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Somnia harness</title>
+<!--
+  Somnia desktop harness. Loads desktop/plugin.js against a faithful SDK shim and
+  a mock Python half, inside a fake Hermes Desktop frame. See README.md.
+  Query params: theme=dark|light  fixture=demo|empty|disabled  view=page|chat|newchat
+                lang=en|pt-br  alarm=noop  script=<name>  width=<px of the main pane>
+-->
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.1.0?dev",
+    "react/jsx-runtime": "https://esm.sh/react@19.1.0/jsx-runtime?dev",
+    "react-dom": "https://esm.sh/react-dom@19.1.0?dev&external=react",
+    "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev&external=react",
+    "@tanstack/react-query": "https://esm.sh/@tanstack/react-query@5.62.7?external=react",
+    "@hermes/plugin-sdk": "./sdk-shim.js"
+  }
+}
+</script>
+<script>
+  // Capture errors before anything else loads.
+  window.__errors = []
+  const origError = console.error.bind(console)
+  console.error = (...args) => {
+    window.__errors.push(args.map(a => (a && a.stack) || String(a)).join(' ').slice(0, 2000))
+    origError(...args)
+  }
+  window.addEventListener('error', e => window.__errors.push(`error: ${e.message} @ ${e.filename}:${e.lineno}`))
+  window.addEventListener('unhandledrejection', e => window.__errors.push(`unhandled: ${(e.reason && (e.reason.stack || e.reason.message)) || e.reason}`))
+  const P = new URLSearchParams(location.search)
+  window.__stage = 'boot'
+  // Watchdog: if the module graph stalls, still report what happened.
+  setTimeout(() => { const el = document.getElementById('harness-result'); if (el && !el.textContent) el.textContent = JSON.stringify({ stalled: window.__stage, errors: window.__errors }) }, 12000)
+  document.documentElement.classList.toggle('dark', (P.get('theme') || 'dark') === 'dark')
+</script>
+<link rel="stylesheet" href="./theme.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.45/dist/codicon.css" />
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  @custom-variant dark (&:is(.dark *));
+  @theme inline {
+    --color-background: var(--dt-background);
+    --color-foreground: var(--dt-foreground);
+    --color-card: var(--dt-card);
+    --color-card-foreground: var(--dt-card-foreground);
+    --color-muted: var(--dt-muted);
+    --color-muted-foreground: var(--dt-muted-foreground);
+    --color-popover: var(--dt-popover);
+    --color-popover-foreground: var(--dt-popover-foreground);
+    --color-primary: var(--dt-primary);
+    --color-primary-foreground: var(--dt-primary-foreground);
+    --color-secondary: var(--dt-secondary);
+    --color-secondary-foreground: var(--dt-secondary-foreground);
+    --color-accent: var(--dt-accent);
+    --color-accent-foreground: var(--dt-accent-foreground);
+    --color-border: var(--dt-border);
+    --color-input: var(--dt-input);
+    --color-ring: var(--dt-ring);
+    --color-destructive: var(--dt-destructive);
+    --color-destructive-foreground: var(--dt-destructive-foreground);
+    --color-midground: var(--dt-midground);
+    --font-sans: var(--dt-font-sans);
+    --font-mono: var(--dt-font-mono);
+    --radius-md: calc(var(--radius-scalar) * 0.625rem);
+    --radius-lg: calc(var(--radius-scalar) * 0.75rem);
+    --radius-xl: calc(var(--radius-scalar) * 1rem);
+    --shadow-sm: 0 0 0 0.0625rem color-mix(in srgb, var(--dt-foreground) 6%, transparent), 0 0.125rem 0.5rem color-mix(in srgb, #000 4%, transparent);
+    --shadow-md: 0 0 0 0.0625rem color-mix(in srgb, var(--dt-foreground) 8%, transparent), 0 0.25rem 1rem color-mix(in srgb, #000 8%, transparent), 0 1rem 2rem -1.5rem color-mix(in srgb, #000 18%, transparent);
+    --shadow-nous: 0 0.125rem 0.25rem -0.125rem color-mix(in srgb, #000 7%, transparent), 0 0.5rem 0.75rem -0.375rem color-mix(in srgb, #000 6%, transparent), 0 1.25rem 1.75rem -0.875rem color-mix(in srgb, #000 6%, transparent);
+    --stroke-nous: color-mix(in srgb, currentColor 3%, transparent);
+  }
+</style>
+<style>
+  /* Base shell rules copied from apps/desktop/src/styles.css (html/body) */
+  html, body, #root { height: 100%; margin: 0; overflow: hidden; }
+  html { font-size: var(--dt-base-size, 0.875rem); }
+  body {
+    background: var(--ui-chat-surface-background); color: var(--dt-foreground);
+    font-family: var(--dt-font-sans, system-ui, sans-serif); font-size: 0.8125rem;
+    line-height: var(--dt-line-height, 1.55); -webkit-font-smoothing: antialiased; user-select: none;
+  }
+  :root { --dt-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans", "Helvetica Neue", Arial, sans-serif; --dt-font-mono: "DejaVu Sans Mono", ui-monospace, monospace; }
+  button, textarea { font: inherit; }
+  *::selection { background: var(--ui-selection-background); }
+
+  /* Fake app frame (harness only) */
+  .hx-app { display: grid; grid-template-columns: 248px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 24px; height: 100%; }
+  .hx-side { grid-row: 1; background: var(--ui-sidebar-surface-background, var(--ui-bg-sidebar)); border-right: 1px solid var(--ui-stroke-tertiary); display: flex; flex-direction: column; padding: 10px 8px; gap: 2px; overflow: hidden; }
+  .hx-brand { display: flex; align-items: center; gap: 8px; padding: 4px 8px 12px; font-weight: 600; color: var(--ui-text-primary); }
+  .hx-row { display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 5px; color: var(--ui-text-secondary); cursor: pointer; border: 0; background: transparent; text-align: left; width: 100%; }
+  .hx-row:hover { background: var(--ui-row-hover-background); color: var(--ui-text-primary); }
+  .hx-row.is-active { background: var(--ui-row-active-background); color: var(--ui-text-primary); }
+  .hx-row .hx-grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hx-kbd { font-size: 0.625rem; color: var(--ui-text-quaternary); }
+  .hx-label { padding: 14px 8px 4px; font-size: 0.6rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ui-text-quaternary); }
+  .hx-age { font-size: 0.625rem; color: var(--ui-text-quaternary); }
+  .hx-main { grid-row: 1; min-width: 0; min-height: 0; background: var(--ui-editor-surface-background, var(--ui-bg-editor)); }
+  .hx-status { grid-column: 1 / -1; display: flex; align-items: stretch; justify-content: space-between; border-top: 1px solid var(--ui-stroke-tertiary); background: var(--ui-bg-chrome); font-size: 0.6875rem; color: var(--ui-text-tertiary); }
+  .hx-status > div { display: flex; align-items: stretch; gap: 2px; padding: 0 6px; }
+  .hx-status span.hx-si { display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; }
+  .hx-chat { height: 100%; display: flex; flex-direction: column; }
+  .hx-transcript { flex: 1; overflow-y: auto; padding: 28px 0; }
+  .hx-msgs { max-width: 760px; margin: 0 auto; padding: 0 24px; display: flex; flex-direction: column; gap: 14px; }
+  .hx-user { align-self: flex-end; max-width: 70%; padding: 8px 12px; border-radius: 12px; background: var(--ui-chat-bubble-background); border: 1px solid var(--ui-stroke-tertiary); color: var(--ui-text-primary); }
+  .hx-assistant { color: var(--ui-text-primary); line-height: 1.6; }
+  .hx-composer { max-width: 760px; width: calc(100% - 48px); margin: 0 auto 18px; border: 1px solid var(--ui-stroke-secondary); border-radius: 12px; padding: 10px 12px; background: var(--ui-chat-bubble-background); }
+  .hx-composer textarea { width: 100%; border: 0; outline: 0; resize: none; background: transparent; color: var(--ui-text-primary); min-height: 44px; }
+  .hx-empty-chat { flex: 1; display: grid; place-items: end center; padding-bottom: 8px; }
+  .hx-toasts { position: fixed; right: 16px; bottom: 36px; display: flex; flex-direction: column; gap: 8px; z-index: 300; }
+  .hx-toast { max-width: 360px; padding: 9px 12px; border-radius: 8px; background: var(--ui-bg-elevated); box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,.2)); color: var(--ui-text-primary); font-size: 0.75rem; border-left: 3px solid var(--ui-accent); }
+  .hx-toast.is-error { border-left-color: var(--ui-red); }
+  .hx-errors { position: fixed; left: 12px; bottom: 36px; max-width: 640px; max-height: 50vh; overflow: auto; z-index: 400; background: #b00020; color: white; font: 11px/1.4 monospace; padding: 10px; border-radius: 6px; white-space: pre-wrap; }
+  .hx-errbox { padding: 6px 8px; margin: 4px 0; border-radius: 4px; background: color-mix(in srgb, var(--ui-red) 12%, transparent); color: var(--ui-red); font-size: 11px; }
+  #harness-result { display: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<pre id="harness-result"></pre>
+<script type="module">
+  // ------------------------------------------------------------------ clock
+  // Pin the clock to the fixture's "now" so relative times are stable.
+  const P = new URLSearchParams(location.search)
+  const fixtureName = P.get('fixture') || 'demo'
+  const fileName = fixtureName === 'empty' ? 'empty' : 'demo'
+  window.__stage = 'fixture'
+  const fixture = (await import(`./fixtures/${fileName}.json`, { with: { type: 'json' } })).default
+  if (P.get('alarm') === 'noop' && fixture.noop_alarm) fixture.overview.alarm = fixture.noop_alarm
+  if (!P.get('realtime')) {
+    const RealDate = Date
+    const offset = fixture.now * 1000 - RealDate.now()
+    class PinnedDate extends RealDate {
+      constructor(...a) { a.length ? super(...a) : super(RealDate.now() + offset) }
+      static now() { return RealDate.now() + offset }
+    }
+    globalThis.Date = PinnedDate
+  }
+
+  window.__stage = 'react'
+  const React = await import('react')
+  const { createRoot } = await import('react-dom/client')
+  const { QueryClientProvider } = await import('@tanstack/react-query')
+  window.__stage = 'sdk'
+  const sdk = await import('@hermes/plugin-sdk')
+  const { createMockServer } = await import('./mock-host.js')
+  const h = React.createElement
+  const { useState, useEffect, useSyncExternalStore } = React
+
+  // ------------------------------------------------------------- registry
+  const contributions = new Map() // key `${area}::${id}` → contribution
+  const regSubs = new Set()
+  let regVersion = 0
+  const bump = () => { regVersion++; regSubs.forEach(f => f()) }
+  const useRegistry = () => useSyncExternalStore(f => (regSubs.add(f), () => regSubs.delete(f)), () => regVersion)
+  const byArea = area => [...contributions.values()].filter(c => c.area === area).sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
+
+  // ------------------------------------------------------------- host + app state
+  const server = createMockServer(fixture, { mode: fixtureName === 'disabled' ? 'disabled' : 'normal' })
+  window.__server = server
+  const app = { route: P.get('view') === 'chat' || P.get('view') === 'newchat' ? 'chat' : P.get('view') === 'settings' ? '/settings?tab=plugins' : '/somnia', session: P.get('view') === 'newchat' ? 'new' : 's-lf-itch', draft: '' }
+  const appSubs = new Set()
+  const setApp = patch => { Object.assign(app, patch); appSubs.forEach(f => f()) }
+  let appVersion = 0
+  appSubs.add(() => appVersion++)
+  const useApp = () => useSyncExternalStore(f => (appSubs.add(f), () => appSubs.delete(f)), () => appVersion)
+  window.__host = { navigations: [], opened: [], newChats: 0, drafts: [], toasts: [] }
+  let composerMounted = false
+  window.__setComposerMounted = v => (composerMounted = v)
+
+  sdk.__setHarnessHost({
+    request: (m, p, t) => server.request(m, p, t),
+    navigate: path => { window.__host.navigations.push(path); setApp({ route: path.startsWith('/somnia') ? '/somnia' : path }) },
+    openSession: (id, options) => { window.__host.opened.push({ id, options }); setApp({ route: 'chat', session: id }) },
+    newChat: () => { window.__host.newChats++; composerMounted = false; setApp({ route: 'chat', session: 'new', draft: '' }) },
+    setDraft: (sid, text) => { if (!composerMounted || (sid === 'new' && app.session !== 'new')) return false; window.__host.drafts.push({ sid, text }); setApp({ draft: text }); return true },
+    focusComposer: () => {},
+    notify: input => { window.__host.toasts.push(input); toastBus.forEach(f => f(input)) }
+  })
+  const toastBus = new Set()
+
+  // ------------------------------------------------------------- ctx
+  const locale = (P.get('lang') || 'en').toLowerCase()
+  sdk.$locale.set(locale)
+  const localeSubs = new Set()
+  const store = new Map()
+  const disposers = []
+  const ctx = {
+    registerMany(list) {
+      const keys = list.map(c => { const k = `${c.area}::${c.id}`; contributions.set(k, c); return k })
+      bump()
+      return () => { keys.forEach(k => contributions.delete(k)); bump() }
+    },
+    register(c) { return ctx.registerMany([c]) },
+    registerSettingsPage(page) { return ctx.registerMany([{ id: page.id, area: 'settings.plugins', order: page.order, render: page.render, data: { title: page.title, icon: page.icon } }]) },
+    i18n: {
+      register: bundles => { sdk.pluginBundles.set('hermes-somnia', bundles); return () => {} },
+      t: (key, ...args) => sdk.translatePlugin('hermes-somnia', sdk.$locale.get(), key, args),
+      onLocaleChange: fn => { localeSubs.add(fn); return () => localeSubs.delete(fn) },
+      get locale() { return sdk.$locale.get() }
+    },
+    storage: { get: (k, f) => (store.has(k) ? store.get(k) : f), set: (k, v) => store.set(k, v) },
+    onDispose: fn => disposers.push(fn)
+  }
+  window.__setLocale = l => { sdk.$locale.set(l); localeSubs.forEach(f => f()) }
+
+  window.__stage = 'plugin'
+  const plugin = (await import('../../desktop/plugin.js')).default
+  window.__stage = 'register'
+  plugin.register(ctx)
+  window.__contributions = () => [...contributions.keys()]
+
+  // ------------------------------------------------------------- frame components
+  class Boundary extends React.Component {
+    constructor(p) { super(p); this.state = { err: null } }
+    static getDerivedStateFromError(err) { return { err } }
+    componentDidCatch(err) { window.__errors.push(`boundary(${this.props.name}): ${err.stack || err}`) }
+    render() { return this.state.err ? h('div', { className: 'hx-errbox' }, `${this.props.name}: ${this.state.err.message}`) : this.props.children }
+  }
+  const Slot = ({ c, props }) => h(Boundary, { name: c.id }, (c.render ? c.render(props) : c.data.render(props)))
+
+  const SESSIONS = fixture.sessions
+  function Sidebar() {
+    useRegistry(); useApp()
+    const core = [{ id: 'capabilities', data: { path: '/capabilities', label: 'Capabilities', codicon: 'extensions' } }]
+    const contributed = byArea(sdk.SIDEBAR_NAV_AREA).map(n => ({ ...n, id: `hermes-somnia:${n.id}` }))
+    const prefOrder = byArea(sdk.SIDEBAR_NAV_PREFS_AREA).flatMap(c => c.data.order || [])
+    const all = [...core, ...contributed]
+    const nav = [...prefOrder.map(id => all.find(n => n.id === id)).filter(Boolean), ...all.filter(n => !prefOrder.includes(n.id))]
+    const trailing = byArea(sdk.SESSION_ROW_AREAS.trailing)
+    return h('aside', { className: 'hx-side' },
+      h('div', { className: 'hx-brand' }, h('i', { className: 'codicon codicon-hubot' }), 'Hermes'),
+      h('button', { className: 'hx-row', onClick: () => sdk.host.newChat() }, h('i', { className: 'codicon codicon-add' }), h('span', { className: 'hx-grow' }, 'New chat'), h('span', { className: 'hx-kbd' }, '⌘N')),
+      h('button', { className: 'hx-row' }, h('i', { className: 'codicon codicon-search' }), h('span', { className: 'hx-grow' }, 'Search')),
+      nav.map(n => h('button', { key: n.id, className: `hx-row${app.route === n.data.path ? ' is-active' : ''}`, onClick: () => sdk.host.navigate(n.data.path) }, h('i', { className: `codicon codicon-${n.data.codicon}` }), h('span', { className: 'hx-grow' }, n.data.label), n.id.startsWith('hermes-somnia') ? h('span', { className: 'hx-kbd' }, '⌘⌥S') : null)),
+      h('div', { className: 'hx-label' }, 'Sessions'),
+      SESSIONS.map((s, i) => h('button', { key: s.id, className: `hx-row${app.route === 'chat' && app.session === s.id ? ' is-active' : ''}`, onClick: () => sdk.host.openSession(s.id, { intent: 'in-place' }), 'data-session': s.id },
+        h('span', { className: 'hx-grow' }, s.title),
+        trailing.map(c => h(Slot, { key: c.id, c, props: { sessionId: s.id } })),
+        h('span', { className: 'hx-age' }, `${1 + i * 2}d`)))
+    )
+  }
+
+  function Composer() {
+    useApp()
+    useEffect(() => { window.__setComposerMounted(true); return () => window.__setComposerMounted(false) }, [])
+    return h('div', { className: 'hx-composer' }, h('textarea', { id: 'hx-composer', value: app.draft, placeholder: 'Ask Hermes…', onChange: e => setApp({ draft: e.target.value }) }))
+  }
+
+  function Chat() {
+    useRegistry(); useApp()
+    const directives = byArea(sdk.TRANSCRIPT_DIRECTIVE_AREA)
+    const empties = byArea(sdk.CHAT_EMPTY_AREA)
+    const msgs = app.session === 'new' ? [] : fixture.transcript
+    const renderMsg = (m, i) => {
+      const d = /^::([a-z0-9-]+)\{(.*)\}$/.exec(m.text.trim())
+      if (d) {
+        const c = directives.find(x => x.data.name === d[1])
+        const attrs = Object.fromEntries([...d[2].matchAll(/(\w+)="([^"]*)"/g)].map(x => [x[1], x[2]]))
+        return c ? h('div', { key: i, className: 'hx-assistant' }, h(Boundary, { name: c.id }, c.data.render({ attrs, source: m.text, streaming: false, sessionId: app.session }))) : h('div', { key: i }, m.text)
+      }
+      return h('div', { key: i, className: m.role === 'user' ? 'hx-user' : 'hx-assistant' }, m.text)
+    }
+    return h('div', { className: 'hx-chat' },
+      msgs.length
+        ? h('div', { className: 'hx-transcript' }, h('div', { className: 'hx-msgs' }, msgs.map(renderMsg)))
+        : h('div', { className: 'hx-empty-chat' }, h('div', null, empties.map(c => h(Slot, { key: c.id, c, props: { sessionId: 'new' } })))),
+      h(Composer))
+  }
+
+  function Main() {
+    useRegistry(); useApp()
+    if (app.route === 'chat') return h(Chat)
+    if (app.route.startsWith('/settings')) {
+      const pages = byArea('settings.plugins')
+      return h('div', { style: { display: 'flex', height: '100%' } },
+        h('nav', { style: { width: 200, padding: '16px 8px', borderRight: '1px solid var(--ui-stroke-tertiary, #333)' } },
+          h('div', { className: 'hx-label' }, 'Settings ▸ Plugins'),
+          pages.map(pg => h('div', { key: pg.id, className: 'hx-row is-active' }, h('i', { className: `codicon codicon-${pg.data.icon}` }), pg.data.title))),
+        h('div', { style: { flex: 1, padding: 24, overflow: 'auto' } }, pages.map(pg => h(Boundary, { key: pg.id, name: pg.id }, pg.render()))))
+    }
+    const route = byArea(sdk.ROUTES_AREA).find(r => r.data.path === app.route)
+    return route ? h(Boundary, { name: route.id }, route.render()) : h('div', { style: { padding: 24 } }, `No route for ${app.route}`)
+  }
+
+  function StatusBar() {
+    useRegistry()
+    return h('footer', { className: 'hx-status' },
+      h('div', null, h('span', { className: 'hx-si' }, h('i', { className: 'codicon codicon-circle-filled', style: { color: 'var(--ui-green)', fontSize: 8 } }), 'gateway open'), h('span', { className: 'hx-si' }, 'default')),
+      h('div', null, byArea(sdk.STATUSBAR_AREAS.right).map(c => h(Slot, { key: c.id, c, props: {} })), h('span', { className: 'hx-si' }, 'gemini-2.5-flash'), h('span', { className: 'hx-si' }, h('i', { className: 'codicon codicon-bell' }))))
+  }
+
+  function Toasts() {
+    const [list, setList] = useState([])
+    useEffect(() => { const f = t => { setList(l => [...l.slice(-2), { ...t, id: Math.random() }]) }; toastBus.add(f); return () => toastBus.delete(f) }, [])
+    return h('div', { className: 'hx-toasts' }, list.map(t => h('div', { key: t.id, className: `hx-toast${t.kind === 'error' ? ' is-error' : ''}` }, t.title ? h('strong', null, `${t.title} · `) : null, t.message)))
+  }
+
+  function ErrorOverlay() {
+    const [errs, setErrs] = useState([])
+    useEffect(() => { const id = setInterval(() => setErrs([...window.__errors]), 500); return () => clearInterval(id) }, [])
+    return errs.length && !P.get('hideErrors') ? h('div', { className: 'hx-errors', id: 'hx-errors' }, `${errs.length} error(s)\n\n${errs.join('\n\n')}`) : null
+  }
+
+  function App() {
+    return h(QueryClientProvider, { client: sdk.queryClient },
+      h('div', { className: 'hx-app' }, h(Sidebar), h('main', { className: 'hx-main' }, h(Main)), h(StatusBar)),
+      h(Toasts), h(ErrorOverlay))
+  }
+  createRoot(document.getElementById('root')).render(h(App))
+  window.__stage = 'rendered'
+
+  // ------------------------------------------------------------- scripted flows
+  const sleep = ms => new Promise(r => setTimeout(r, ms))
+  const $ = (sel, root = document) => root.querySelector(sel)
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)]
+  const byText = (text, root = document, sel = 'button') => $$(sel, root).find(b => b.textContent.trim() === text || b.textContent.trim().startsWith(text))
+  async function waitFor(fn, ms = 6000) { const t0 = Date.now(); while (Date.now() - t0 < ms) { const v = fn(); if (v) return v; await sleep(50) } throw new Error('waitFor timed out: ' + fn) }
+  const click = el => { if (!el) throw new Error('click: element not found'); el.click ? el.click() : el.dispatchEvent(new MouseEvent('click', { bubbles: true })) }
+  const rpcCalls = m => window.__rpcLog.filter(e => e.method === `plugin.hermes-somnia.${m}`)
+  const hover = el => el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+
+  const SCRIPTS = {
+    async forget() {
+      const card = await waitFor(() => $('.smn-change[data-action="added"]'))
+      click(byText('Forget', card))
+      click(await waitFor(() => $('[data-confirm="ok"]')))
+      await waitFor(() => rpcCalls('forget').some(e => e.ok))
+      await sleep(900)
+      const key = rpcCalls('forget')[0].params.key
+      const c = server.db.candidates.find(x => x.key === key)
+      const stillInMemory = server.db.overview.budgets.some(b => b.entries.some(e => e.key === key))
+      return { ok: c.status === 'rejected' && !stillInMemory && !$('[data-confirm="ok"]'), status: c.status, stillInMemory }
+    },
+    async keep() {
+      const before = (await waitFor(() => $$('.smn-change').length && $$('.smn-change'))).length
+      click(byText('Keep', $('.smn-change')))
+      await sleep(200)
+      const after = $$('.smn-change').length
+      return { ok: after === before - 1 && !!byText('1 kept'), before, after }
+    },
+    async edit() {
+      const card = await waitFor(() => $('.smn-change[data-action="added"]'))
+      click(byText('Edit', card))
+      const ta = await waitFor(() => $('textarea', card))
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set
+      setter.call(ta, 'Maya ships Lanternfall to itch.io every Friday.')
+      ta.dispatchEvent(new Event('input', { bubbles: true }))
+      await sleep(50)
+      click(byText('Save', card))
+      await waitFor(() => rpcCalls('entry.edit').some(e => e.ok))
+      return { ok: server.db.overview.budgets[0].entries.some(e => e.text === 'Maya ships Lanternfall to itch.io every Friday.'), params: rpcCalls('entry.edit')[0].params }
+    },
+    async memory() {
+      const seg = await waitFor(() => $('.smn-seg.is-stale'))
+      click(seg)
+      const detail = await waitFor(() => $('.smn-detail'))
+      hover($$('.smn-seg.is-somnia')[1])
+      return { ok: !!detail && /Postmark/.test(detail.textContent), text: detail.textContent.slice(0, 120) }
+    },
+    async memoryForget() {
+      click(await waitFor(() => $('.smn-seg.is-stale')))
+      const detail = await waitFor(() => $('.smn-detail'))
+      click(byText('Forget', detail))
+      click(await waitFor(() => $('[data-confirm="ok"]')))
+      await waitFor(() => rpcCalls('entry.remove').some(e => e.ok))
+      return { ok: rpcCalls('entry.remove')[0].params.reject === true, params: rpcCalls('entry.remove')[0].params }
+    },
+    async preview() {
+      click(await waitFor(() => byText('Preview')))
+      const dlg = await waitFor(() => $('[data-slot="dialog-content"]'), 9000)
+      await sleep(300)
+      return { ok: /What tonight would change/.test(dlg.textContent) && rpcCalls('job').length >= 2, jobs: rpcCalls('job').length }
+    },
+    async dream() {
+      click(await waitFor(() => byText('Dream now')))
+      await waitFor(() => $('.smn-progress'))
+      await waitFor(() => window.__host.toasts.length, 9000)
+      return { ok: /Quiet/.test(window.__host.toasts[0].message), toast: window.__host.toasts[0] }
+    },
+    async undo() {
+      click(await waitFor(() => { const b = byText('Undo last write'); return b && !b.disabled && b }))
+      click(await waitFor(() => $('[data-confirm="ok"]')))
+      await waitFor(() => rpcCalls('undo').some(e => e.ok))
+      return { ok: true, toast: await waitFor(() => window.__host.toasts[0]) }
+    },
+    async promote() {
+      await waitFor(() => $('.smn-cand'))
+      const row = $$('.smn-cand').find(r => !byText('Promote now', r).disabled)
+      const key = row.dataset.key
+      click(byText('Promote now', row))
+      await waitFor(() => server.db.candidates.find(c => c.key === key).status === 'promoted', 9000)
+      return { ok: true, key }
+    },
+    async pin() {
+      const row = await waitFor(() => $('.smn-cand'))
+      click(byText('Pin', row))
+      await waitFor(() => rpcCalls('pin').some(e => e.ok))
+      await sleep(300)
+      return { ok: !!$('.smn-cand .smn-pill') && server.db.candidates.find(c => c.key === row.dataset.key).pinned }
+    },
+    async expand() {
+      const row = await waitFor(() => $('.smn-cand'))
+      click($('.smn-cand-main', row))
+      await waitFor(() => $('.smn-cand-detail'))
+      return { ok: true }
+    },
+    async search() {
+      const input = await waitFor(() => $('#smn-near input'))
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
+      setter.call(input, 'neon')
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      await waitFor(() => rpcCalls('candidates').some(e => e.params.q === 'neon'))
+      await sleep(400)
+      return { ok: $$('.smn-cand').length >= 1 && $$('.smn-cand').every(r => /Neon/i.test(r.textContent)), n: $$('.smn-cand').length }
+    },
+    async tabs() {
+      click(await waitFor(() => byText('Forgotten')))
+      const row = await waitFor(() => $$('.smn-cand').find(r => /Rails/.test(r.textContent)))
+      click(byText('Unforget', row))
+      await waitFor(() => rpcCalls('unforget').some(e => e.ok))
+      click(byText('Skill ideas'))
+      const skill = await waitFor(() => $$('.smn-cand').find(r => /Friday release/.test(r.textContent)))
+      click(byText('Turn into a skill', skill))
+      await waitFor(() => window.__host.drafts.length, 6000)
+      return { ok: window.__host.newChats === 1 && /skill/.test(window.__host.drafts[0].text), draft: window.__host.drafts[0].text.slice(0, 80) }
+    },
+    async ask() {
+      const card = await waitFor(() => $('.smn-change'))
+      click(byText('Ask Hermes', card))
+      await waitFor(() => window.__host.drafts.length, 6000)
+      await sleep(200)
+      return { ok: window.__host.newChats === 1 && $('#hx-composer').value.includes('Why do you remember'), composer: $('#hx-composer').value.slice(0, 60) }
+    },
+    async session() {
+      const chip = await waitFor(() => $('.smn-change .smn-chip'))
+      click(chip)
+      await sleep(200)
+      return { ok: window.__host.opened[0].options.intent === 'stack', opened: window.__host.opened[0] }
+    },
+    async night() {
+      const hits = await waitFor(() => $$('.smn-chart-hit').length && $$('.smn-chart-hit'))
+      const target = hits[hits.length - 8] // an active night a week ago
+      hover(target)
+      await sleep(100)
+      const tip = $('.smn-tip')
+      click(target)
+      await waitFor(() => rpcCalls('changes').some(e => typeof e.params.run === 'number'))
+      await waitFor(() => /Night of/.test($('#smn-morning h2').textContent))
+      return { ok: !!tip, title: $('#smn-morning h2').textContent, tip: tip && tip.textContent }
+    },
+    async theme() {
+      const star = await waitFor(() => $$('.smn-star').find(s => /neon/.test(s.getAttribute('aria-label'))))
+      click(star)
+      await waitFor(() => $('.smn-filter'))
+      await sleep(200)
+      return { ok: $$('.smn-cand').every(r => /Neon|neon/i.test(r.textContent)), n: $$('.smn-cand').length }
+    },
+    async principles() {
+      const sw = await waitFor(() => $('#smn-p-inversion'))
+      click(sw)
+      await waitFor(() => rpcCalls('settings.set').some(e => e.ok))
+      await sleep(300)
+      return { ok: JSON.stringify(rpcCalls('settings.set')[0].params.value) === JSON.stringify(['pareto', 'lindy', 'inversion', 'occam', 'feynman']) && $('#smn-p-inversion').getAttribute('aria-checked') === 'true', params: rpcCalls('settings.set')[0].params }
+    },
+    async calibration() {
+      const d = await waitFor(() => $('#smn-calibration'))
+      d.open = true
+      await sleep(100)
+      click(byText('', d, 'button[aria-label="Minimum score +"]') || $('button[aria-label="Minimum score +"]'))
+      await waitFor(() => rpcCalls('settings.set').some(e => e.ok))
+      return { ok: rpcCalls('settings.set')[0].params.key === 'min_score', params: rpcCalls('settings.set')[0].params }
+    },
+    async directive() {
+      const first = await waitFor(() => $$('.smn-card[data-key]')[0])
+      click($$('button', first).find(b => b.textContent === 'Forget'))
+      await sleep(100)
+      const armedBtn = $$('button', first).find(b => b.textContent.startsWith('Really'))
+      click(armedBtn)
+      await sleep(1200)
+      const gone = /Forgotten/.test($('.smn-card').textContent)
+      const second = $$('.smn-card[data-key]')[0]
+      click($$('button', second).find(b => b.textContent === 'Pin'))
+      await sleep(800)
+      return { ok: !!armedBtn && gone && rpcCalls('pin').length === 1 && rpcCalls('forget').length === 1 }
+    },
+    async directiveOpen() {
+      const card = await waitFor(() => $$('.smn-card[data-key]')[1])
+      click(byText('Open Somnia', card))
+      await waitFor(() => $('.smn-cand.is-open'))
+      return { ok: window.__host.navigations.includes('/somnia') && /Steam Deck/.test($('.smn-cand.is-open').textContent) }
+    },
+    async locale() {
+      await waitFor(() => $('.smn-h1'))
+      window.__setLocale('pt-br')
+      await sleep(300)
+      return { ok: /Esta manhã/.test(document.body.textContent) && /Somnia/.test($('.hx-side').textContent), nav: [...contributions.keys()].filter(k => k.includes('sidebar')) }
+    },
+    async disabled() {
+      await waitFor(() => /not enabled/.test(document.body.textContent))
+      return { ok: /hermes plugins enable hermes-somnia/.test(document.body.textContent) }
+    }
+  }
+
+  async function runScript(name) {
+    const out = { script: name }
+    try {
+      await waitFor(() => document.querySelector('.smn-page, .smn-card, .hx-chat'), 8000)
+      await sleep(600)
+      Object.assign(out, await SCRIPTS[name]())
+    } catch (err) {
+      out.ok = false
+      out.error = String(err && err.stack || err)
+    }
+    await sleep(400)
+    out.errors = window.__errors
+    out.rpc = window.__rpcLog.map(e => `${e.method.replace('plugin.hermes-somnia.', '')}${e.ok === false ? ' ✗' : ''}`)
+    document.getElementById('harness-result').textContent = JSON.stringify(out)
+    document.title = 'DONE'
+  }
+  window.__runScript = runScript
+  if (P.get('script')) runScript(P.get('script'))
+  else setTimeout(() => {
+    document.getElementById('harness-result').textContent = JSON.stringify({ errors: window.__errors, rpc: window.__rpcLog.map(e => e.method) })
+  }, 4000)
+</script>
+</body>
+</html>

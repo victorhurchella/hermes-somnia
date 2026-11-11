@@ -1,0 +1,5123 @@
+{
+ "now": 1794388320,
+ "overview": {
+  "version": "0.4.0",
+  "destinations": "both",
+  "destructive": "apply",
+  "schedule": "0 3 * * *",
+  "timezone": "Europe/Lisbon",
+  "cron": {
+   "installed": true,
+   "id": "cron_somnia_9f2c",
+   "next_run_at": "2026-11-12T03:00:00.000Z",
+   "state": "scheduled"
+  },
+  "llm": {
+   "provider": "openrouter",
+   "model": "google/gemini-2.5-flash",
+   "task": "auxiliary.somnia"
+  },
+  "last_run": {
+   "at": 1794366000,
+   "dry_run": false,
+   "summary": "2 added, 1 merged, 1 deferred (memory full)"
+  },
+  "budgets": [
+   {
+    "target": "memory",
+    "used": 2005,
+    "limit": 2200,
+    "goal": 1980,
+    "entries": [
+     {
+      "text": "Maya Okafor, solo indie dev. Two projects: Lanternfall, a cozy roguelike in Godot 4.4 (GDScript, no C#), and Ledgerly, an invoicing SaaS for freelancers (TypeScript). Lanternfall is the passion project; Ledgerly pays the bills, so Ledgerly bugs come first on weekdays.",
+      "chars": 268,
+      "owner": "human",
+      "key": null,
+      "created_at": 1789204320,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 0
+     },
+     {
+      "text": "Ledgerly runs on Next.js 15 + Postgres 16 on Neon; schema changes go through Drizzle migrations, never Prisma.",
+      "chars": 110,
+      "owner": "somnia",
+      "key": "claim:78875dc534bb",
+      "created_at": 1794365856,
+      "last_confirmed_at": 1794159360,
+      "stale": false,
+      "pointer": false,
+      "index": 1
+     },
+     {
+      "text": "Repo layout: ~/code/lanternfall (Godot project, assets in art/, sfx in audio/) and ~/code/ledgerly (pnpm monorepo: apps/web, packages/db, packages/pdf). Never touch ~/code/archive, it holds client work under NDA.",
+      "chars": 212,
+      "owner": "human",
+      "key": null,
+      "created_at": 1789377120,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 2
+     },
+     {
+      "text": "Maya ships Lanternfall builds to itch.io every Friday; release notes stay short and in her own voice.",
+      "chars": 101,
+      "owner": "somnia",
+      "key": "claim:764823a833bf",
+      "created_at": 1794365856,
+      "last_confirmed_at": 1794280320,
+      "stale": false,
+      "pointer": false,
+      "index": 3
+     },
+     {
+      "text": "Correction: Ledgerly never hardcodes VAT rates; they are read from the tax_rates table per country.",
+      "chars": 99,
+      "owner": "somnia",
+      "key": "claim:e59c93506474",
+      "created_at": 1794365856,
+      "last_confirmed_at": 1794297600,
+      "stale": false,
+      "pointer": false,
+      "index": 4
+     },
+     {
+      "text": "Stripe webhooks for Ledgerly are idempotent by event id; retries are safe to replay.",
+      "chars": 84,
+      "owner": "somnia",
+      "key": "claim:d61da4705dac",
+      "created_at": 1794020256,
+      "last_confirmed_at": 1793986560,
+      "stale": false,
+      "pointer": false,
+      "index": 5
+     },
+     {
+      "text": "Run tests with `pnpm test` (Ledgerly, vitest + Playwright for the invoice flow) and `godot --headless -s tests/run.gd` (Lanternfall, GUT). CI runs both on every PR; a red CI blocks the Friday build.",
+      "chars": 198,
+      "owner": "human",
+      "key": null,
+      "created_at": 1789636320,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 6
+     },
+     {
+      "text": "Lanternfall save files are JSON in user://saves, versioned with a \"v\" field.",
+      "chars": 76,
+      "owner": "somnia",
+      "key": "claim:5fbdb45829e2",
+      "created_at": 1793329056,
+      "last_confirmed_at": 1793675520,
+      "stale": false,
+      "pointer": false,
+      "index": 7
+     },
+     {
+      "text": "Ledgerly emails go through Postmark.",
+      "chars": 36,
+      "owner": "somnia",
+      "key": "claim:bd4033052cc1",
+      "created_at": 1790823456,
+      "last_confirmed_at": 1792846080,
+      "stale": true,
+      "pointer": false,
+      "index": 8
+     },
+     {
+      "text": "Deploys: Ledgerly on Vercel, main = production, every PR gets a preview URL. Lanternfall builds are exported by hand from the Godot editor; there is no CI export yet and Maya likes it that way.",
+      "chars": 193,
+      "owner": "human",
+      "key": null,
+      "created_at": 1790932320,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 9
+     },
+     {
+      "text": "Never commit .env files or paste keys into chat; secrets live in 1Password (vault \"Ledgerly\"). Stripe test keys are fine in examples, live keys never.",
+      "chars": 150,
+      "owner": "human",
+      "key": null,
+      "created_at": 1791018720,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 10
+     },
+     {
+      "text": "Prefer small PRs, one concern each; squash-merge with a conventional-commit title. Write the PR description as a checklist of what changed and how it was tested.",
+      "chars": 161,
+      "owner": "human",
+      "key": null,
+      "created_at": 1791537120,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 11
+     },
+     {
+      "text": "Lanternfall design pillars: cozy not grindy, light as the only resource, runs under 25 minutes, no permadeath of the lantern-keeper (only of the lantern). Push back on ideas that break a pillar.",
+      "chars": 194,
+      "owner": "human",
+      "key": null,
+      "created_at": 1791882720,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 12
+     },
+     {
+      "text": "Somnia inbox: ~/notes/dreams — open items are facts waiting for a home in the vault.",
+      "chars": 84,
+      "owner": "somnia",
+      "key": null,
+      "created_at": 1791796320,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": true,
+      "index": 13
+     }
+    ]
+   },
+   {
+    "target": "user",
+    "used": 1064,
+    "limit": 1375,
+    "goal": 1238,
+    "entries": [
+     {
+      "text": "Maya (she/her). Born in Lagos, lives in Lisbon since 2021. Speaks English, Portuguese and Yoruba. Former backend engineer at a fintech, went indie in 2024.",
+      "chars": 155,
+      "owner": "human",
+      "key": null,
+      "created_at": 1789204320,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 0
+     },
+     {
+      "text": "Maya prefers casual chat in Portuguese, but code, comments and commit messages in English.",
+      "chars": 90,
+      "owner": "somnia",
+      "key": "claim:45ff3f01e9fa",
+      "created_at": 1794365856,
+      "last_confirmed_at": 1794245760,
+      "stale": false,
+      "pointer": false,
+      "index": 1
+     },
+     {
+      "text": "Maya reviews code best with blunt, numbered findings and no praise padding.",
+      "chars": 75,
+      "owner": "somnia",
+      "key": "claim:f6a4cfab6be8",
+      "created_at": 1793761056,
+      "last_confirmed_at": 1793848320,
+      "stale": false,
+      "pointer": false,
+      "index": 2
+     },
+     {
+      "text": "Likes concise answers and code over prose; expand only when asked. Hates emoji in commit messages and marketing tone anywhere. When unsure, ask one precise question instead of guessing.",
+      "chars": 185,
+      "owner": "human",
+      "key": null,
+      "created_at": 1790068320,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 3
+     },
+     {
+      "text": "Maya works in Lisbon time (WET/WEST).",
+      "chars": 37,
+      "owner": "somnia",
+      "key": "claim:7ecaee833778",
+      "created_at": 1792465056,
+      "last_confirmed_at": 1793157120,
+      "stale": true,
+      "pointer": false,
+      "index": 4
+     },
+     {
+      "text": "Works best in the morning; avoid suggesting deep work after 18:00. Fridays after lunch are reserved for the Lanternfall build. Takes Sundays fully off, so do not schedule reminders then.",
+      "chars": 186,
+      "owner": "human",
+      "key": null,
+      "created_at": 1790500320,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 5
+     },
+     {
+      "text": "Learning: wants to get better at shaders and at pricing strategy. When a topic touches either, offer one short explanation of the why, then move on.",
+      "chars": 148,
+      "owner": "human",
+      "key": null,
+      "created_at": 1790673120,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 6
+     },
+     {
+      "text": "Has mild RSI: prefers keyboard-driven tools, short commands, and avoids long mouse-heavy workflows. Uses a split keyboard and Neovim, VS Code only for Godot debugging.",
+      "chars": 167,
+      "owner": "human",
+      "key": null,
+      "created_at": 1790586720,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 7
+     }
+    ]
+   }
+  ],
+  "nights": [
+   {
+    "date": "2026-10-13",
+    "started_at": 1791860400,
+    "dry_run": false,
+    "fragments": 18,
+    "observations": 10,
+    "staged": 6,
+    "themes": 2,
+    "truths": 1,
+    "promoted": 2,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 5,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-14",
+    "started_at": 1791946800,
+    "dry_run": false,
+    "fragments": 0,
+    "observations": 0,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 0,
+    "quiet": true,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-15",
+    "started_at": 1792033200,
+    "dry_run": false,
+    "fragments": 34,
+    "observations": 17,
+    "staged": 10,
+    "themes": 4,
+    "truths": 2,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 1,
+    "llm_calls": 7,
+    "quiet": false,
+    "noop": true,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-16",
+    "started_at": 1792119600,
+    "dry_run": false,
+    "fragments": 50,
+    "observations": 25,
+    "staged": 15,
+    "themes": 2,
+    "truths": 1,
+    "promoted": 2,
+    "merged": 1,
+    "deferred": 0,
+    "llm_calls": 9,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-17",
+    "started_at": 1792206000,
+    "dry_run": false,
+    "fragments": 0,
+    "observations": 0,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 0,
+    "quiet": true,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-18",
+    "started_at": 1792292400,
+    "dry_run": false,
+    "fragments": 0,
+    "observations": 0,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 0,
+    "quiet": true,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-19",
+    "started_at": 1792378800,
+    "dry_run": false,
+    "fragments": 21,
+    "observations": 10,
+    "staged": 6,
+    "themes": 3,
+    "truths": 3,
+    "promoted": 2,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 6,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-20",
+    "started_at": 1792465200,
+    "dry_run": false,
+    "fragments": 44,
+    "observations": 23,
+    "staged": 14,
+    "themes": 4,
+    "truths": 2,
+    "promoted": 2,
+    "merged": 1,
+    "deferred": 0,
+    "llm_calls": 9,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-21",
+    "started_at": 1792551600,
+    "dry_run": false,
+    "fragments": 63,
+    "observations": 25,
+    "staged": 15,
+    "themes": 2,
+    "truths": 3,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 11,
+    "quiet": false,
+    "noop": true,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-22",
+    "started_at": 1792638000,
+    "dry_run": false,
+    "fragments": 26,
+    "observations": 10,
+    "staged": 6,
+    "themes": 3,
+    "truths": 1,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 1,
+    "llm_calls": 6,
+    "quiet": false,
+    "noop": true,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-23",
+    "started_at": 1792724400,
+    "dry_run": false,
+    "fragments": 0,
+    "observations": 0,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 0,
+    "quiet": true,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-24",
+    "started_at": 1792810800,
+    "dry_run": false,
+    "fragments": 46,
+    "observations": 22,
+    "staged": 13,
+    "themes": 5,
+    "truths": 0,
+    "promoted": 1,
+    "merged": 1,
+    "deferred": 0,
+    "llm_calls": 9,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-25",
+    "started_at": 1792897200,
+    "dry_run": false,
+    "fragments": 0,
+    "observations": 0,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 0,
+    "quiet": true,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-26",
+    "started_at": 1792983600,
+    "dry_run": false,
+    "fragments": 43,
+    "observations": 17,
+    "staged": 10,
+    "themes": 2,
+    "truths": 3,
+    "promoted": 1,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 8,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-27",
+    "started_at": 1793070000,
+    "dry_run": false,
+    "fragments": 0,
+    "observations": 0,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 0,
+    "quiet": true,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-28",
+    "started_at": 1793156400,
+    "dry_run": false,
+    "fragments": 35,
+    "observations": 16,
+    "staged": 10,
+    "themes": 5,
+    "truths": 2,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 7,
+    "quiet": false,
+    "noop": true,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-29",
+    "started_at": 1793242800,
+    "dry_run": false,
+    "fragments": 38,
+    "observations": 14,
+    "staged": 8,
+    "themes": 2,
+    "truths": 1,
+    "promoted": 1,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 8,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-30",
+    "started_at": 1793329200,
+    "dry_run": false,
+    "fragments": 49,
+    "observations": 18,
+    "staged": 11,
+    "themes": 5,
+    "truths": 1,
+    "promoted": 2,
+    "merged": 1,
+    "deferred": 0,
+    "llm_calls": 9,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-10-31",
+    "started_at": 1793415600,
+    "dry_run": false,
+    "fragments": 0,
+    "observations": 0,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 0,
+    "quiet": true,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-11-01",
+    "started_at": 1793502000,
+    "dry_run": false,
+    "fragments": 0,
+    "observations": 0,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 0,
+    "quiet": true,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-11-02",
+    "started_at": 1793588400,
+    "dry_run": false,
+    "fragments": 50,
+    "observations": 21,
+    "staged": 13,
+    "themes": 3,
+    "truths": 2,
+    "promoted": 2,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 9,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-11-03",
+    "started_at": 1793674800,
+    "dry_run": false,
+    "fragments": 53,
+    "observations": 19,
+    "staged": 11,
+    "themes": 3,
+    "truths": 1,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 10,
+    "quiet": false,
+    "noop": true,
+    "errors": 0
+   },
+   {
+    "date": "2026-11-04",
+    "started_at": 1793761200,
+    "dry_run": false,
+    "fragments": 38,
+    "observations": 19,
+    "staged": 11,
+    "themes": 5,
+    "truths": 0,
+    "promoted": 2,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 8,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-11-05",
+    "started_at": 1793847600,
+    "dry_run": false,
+    "fragments": 0,
+    "observations": 0,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 0,
+    "quiet": true,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-11-06",
+    "started_at": 1793934000,
+    "dry_run": false,
+    "fragments": 0,
+    "observations": 0,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 0,
+    "quiet": true,
+    "noop": false,
+    "errors": 0
+   },
+   {
+    "date": "2026-11-07",
+    "started_at": 1794020400,
+    "dry_run": false,
+    "fragments": 38,
+    "observations": 13,
+    "staged": 8,
+    "themes": 1,
+    "truths": 3,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 8,
+    "quiet": false,
+    "noop": true,
+    "errors": 0
+   },
+   {
+    "date": "2026-11-08",
+    "started_at": 1794106800,
+    "dry_run": false,
+    "fragments": 50,
+    "observations": 17,
+    "staged": 10,
+    "themes": 3,
+    "truths": 2,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 9,
+    "quiet": false,
+    "noop": true,
+    "errors": 0
+   },
+   {
+    "date": "2026-11-09",
+    "started_at": 1794193200,
+    "dry_run": false,
+    "fragments": 64,
+    "observations": 33,
+    "staged": 20,
+    "themes": 5,
+    "truths": 3,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 1,
+    "llm_calls": 11,
+    "quiet": false,
+    "noop": true,
+    "errors": 0
+   },
+   {
+    "date": "2026-11-10",
+    "started_at": 1794279600,
+    "dry_run": false,
+    "fragments": 56,
+    "observations": 21,
+    "staged": 13,
+    "themes": 1,
+    "truths": 1,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 10,
+    "quiet": false,
+    "noop": true,
+    "errors": 2
+   },
+   {
+    "date": "2026-11-11",
+    "started_at": 1794366000,
+    "dry_run": false,
+    "fragments": 22,
+    "observations": 7,
+    "staged": 4,
+    "themes": 3,
+    "truths": 1,
+    "promoted": 3,
+    "merged": 2,
+    "deferred": 1,
+    "llm_calls": 6,
+    "quiet": false,
+    "noop": false,
+    "errors": 0
+   }
+  ],
+  "alarm": {
+   "kind": "budget_full",
+   "nights": 1,
+   "message": "MEMORY.md is 91% full, so last night one fact had to wait. Review the 2 stale entries or move some to your vault.",
+   "best": null,
+   "action": "review"
+  },
+  "counts": {
+   "candidates": 27,
+   "near": 11,
+   "promoted": 10,
+   "rejected": 3,
+   "skills": 3,
+   "stale": 2,
+   "pending": 0
+  },
+  "vault": {
+   "path": "~/notes",
+   "folder": "dreams",
+   "inbox_notes": 4,
+   "open_items": 7
+  },
+  "pressure": {
+   "memory": 0.911,
+   "user": 0.774
+  },
+  "principles": {
+   "active": [
+    "pareto",
+    "lindy",
+    "occam",
+    "feynman"
+   ],
+   "all": [
+    "pareto",
+    "lindy",
+    "inversion",
+    "occam",
+    "feynman"
+   ],
+   "labels": {
+    "pareto": "Pareto: keep the vital few",
+    "lindy": "Lindy: trust what has lasted",
+    "inversion": "Inversion: remember the mistakes",
+    "occam": "Occam: merge only when it is simpler",
+    "feynman": "Feynman: if it cannot be said plainly, wait"
+   },
+   "descriptions": {
+    "pareto": "When memory is full, the least-confirmed Somnia entries make room for stronger facts.",
+    "lindy": "Facts that keep being true across weeks get a small bonus (up to +0.05).",
+    "inversion": "Corrections and pitfalls get a +0.06 bonus, so the same mistake is not repeated.",
+    "occam": "A merge is applied only when the result is shorter than the entries it replaces.",
+    "feynman": "A rewritten entry must read as one plain sentence; otherwise the parts are kept."
+   }
+  },
+  "settings": {
+   "destructive": "apply",
+   "max_promotions": 3,
+   "min_score": 0.65,
+   "min_sessions": 2,
+   "diary": true,
+   "notify": "changes",
+   "principles": [
+    "pareto",
+    "lindy",
+    "occam",
+    "feynman"
+   ]
+  }
+ },
+ "runs": {
+  "1791860400": [
+   {
+    "run_at": 1791860400,
+    "key": "claim:6f9d2dfd30d4",
+    "action": "vault",
+    "target": "vault",
+    "text": "Godot 4.4: use TileMapLayer — the old TileMap node is deprecated in Lanternfall.",
+    "replaced": [],
+    "score": 0.692,
+    "components": {
+     "frequency": 0.5,
+     "relevance": 0.84,
+     "diversity": 0.4,
+     "recency": 0.8,
+     "consolidation": 0.6,
+     "conceptual": 0.5,
+     "phase_boost": 0.05
+    },
+    "sessions": [
+     {
+      "id": "s-lf-tiles",
+      "title": "TileMapLayer migration (Godot 4.4)",
+      "source": "desktop",
+      "day": "2026-11-08"
+     },
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1791860400,
+    "key": "claim:d61da4705dac",
+    "action": "added",
+    "target": "memory",
+    "text": "Stripe webhooks for Ledgerly are idempotent by event id; retries are safe to replay.",
+    "replaced": [],
+    "score": 0.677,
+    "components": {
+     "frequency": 0.55,
+     "relevance": 0.8,
+     "diversity": 0.4,
+     "recency": 0.78,
+     "consolidation": 0.58,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lg-stripe",
+      "title": "Ledgerly: Stripe webhook retries",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   }
+  ],
+  "1792033200": [
+   {
+    "run_at": 1792033200,
+    "key": "claim:55fff2fd259f",
+    "action": "skipped",
+    "target": "memory",
+    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+    "replaced": [],
+    "score": 0.63,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.82,
+     "diversity": 0.4,
+     "recency": 0.92,
+     "consolidation": 0.2,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "needs 2 sessions; seen in 1",
+    "undoable": false
+   }
+  ],
+  "1792119600": [
+   {
+    "run_at": 1792119600,
+    "key": "claim:f6a4cfab6be8",
+    "action": "added",
+    "target": "user",
+    "text": "Maya reviews code best with blunt, numbered findings and no praise padding.",
+    "replaced": [],
+    "score": 0.739,
+    "components": {
+     "frequency": 0.58,
+     "relevance": 0.83,
+     "diversity": 0.6,
+     "recency": 0.7,
+     "consolidation": 0.66,
+     "conceptual": 0.33,
+     "phase_boost": 0.03,
+     "lindy": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-me-review",
+      "title": "Code review tone",
+      "source": "desktop",
+      "day": "2026-11-08"
+     },
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     },
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1792119600,
+    "key": "claim:5fbdb45829e2",
+    "action": "added",
+    "target": "memory",
+    "text": "Lanternfall save files are JSON in user://saves, versioned with a \"v\" field.",
+    "replaced": [],
+    "score": 0.658,
+    "components": {
+     "frequency": 0.55,
+     "relevance": 0.8,
+     "diversity": 0.4,
+     "recency": 0.6,
+     "consolidation": 0.66,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     },
+     {
+      "id": "s-lf-tiles",
+      "title": "TileMapLayer migration (Godot 4.4)",
+      "source": "desktop",
+      "day": "2026-11-08"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1792119600,
+    "key": "claim:7ecaee833778",
+    "action": "merged",
+    "target": "user",
+    "text": "Maya works in Lisbon time (WET/WEST).",
+    "replaced": [
+     "An older, shorter version of this note."
+    ],
+    "score": 0.508,
+    "components": {
+     "frequency": 0.46,
+     "relevance": 0.72,
+     "diversity": 0.4,
+     "recency": 0.3,
+     "consolidation": 0.66,
+     "conceptual": 0.17,
+     "phase_boost": 0
+    },
+    "sessions": [
+     {
+      "id": "s-me-coffee",
+      "title": "Morning planning",
+      "source": "desktop",
+      "day": "2026-11-02"
+     },
+     {
+      "id": "s-me-pt",
+      "title": "Bate-papo: planejamento da semana",
+      "source": "telegram",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   }
+  ],
+  "1792378800": [
+   {
+    "run_at": 1792378800,
+    "key": "claim:bd4033052cc1",
+    "action": "added",
+    "target": "memory",
+    "text": "Ledgerly emails go through Postmark.",
+    "replaced": [],
+    "score": 0.488,
+    "components": {
+     "frequency": 0.5,
+     "relevance": 0.7,
+     "diversity": 0.4,
+     "recency": 0.12,
+     "consolidation": 0.6,
+     "conceptual": 0.33,
+     "phase_boost": 0
+    },
+    "sessions": [
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     },
+     {
+      "id": "s-lg-tax",
+      "title": "VAT rules for EU freelancers",
+      "source": "telegram",
+      "day": "2026-11-03"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1792378800,
+    "key": "claim:6f9d2dfd30d4",
+    "action": "vault",
+    "target": "vault",
+    "text": "Godot 4.4: use TileMapLayer — the old TileMap node is deprecated in Lanternfall.",
+    "replaced": [],
+    "score": 0.692,
+    "components": {
+     "frequency": 0.5,
+     "relevance": 0.84,
+     "diversity": 0.4,
+     "recency": 0.8,
+     "consolidation": 0.6,
+     "conceptual": 0.5,
+     "phase_boost": 0.05
+    },
+    "sessions": [
+     {
+      "id": "s-lf-tiles",
+      "title": "TileMapLayer migration (Godot 4.4)",
+      "source": "desktop",
+      "day": "2026-11-08"
+     },
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   }
+  ],
+  "1792465200": [
+   {
+    "run_at": 1792465200,
+    "key": "claim:d61da4705dac",
+    "action": "added",
+    "target": "memory",
+    "text": "Stripe webhooks for Ledgerly are idempotent by event id; retries are safe to replay.",
+    "replaced": [],
+    "score": 0.677,
+    "components": {
+     "frequency": 0.55,
+     "relevance": 0.8,
+     "diversity": 0.4,
+     "recency": 0.78,
+     "consolidation": 0.58,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lg-stripe",
+      "title": "Ledgerly: Stripe webhook retries",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1792465200,
+    "key": "claim:f6a4cfab6be8",
+    "action": "added",
+    "target": "user",
+    "text": "Maya reviews code best with blunt, numbered findings and no praise padding.",
+    "replaced": [],
+    "score": 0.739,
+    "components": {
+     "frequency": 0.58,
+     "relevance": 0.83,
+     "diversity": 0.6,
+     "recency": 0.7,
+     "consolidation": 0.66,
+     "conceptual": 0.33,
+     "phase_boost": 0.03,
+     "lindy": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-me-review",
+      "title": "Code review tone",
+      "source": "desktop",
+      "day": "2026-11-08"
+     },
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     },
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1792465200,
+    "key": "claim:5fbdb45829e2",
+    "action": "merged",
+    "target": "memory",
+    "text": "Lanternfall save files are JSON in user://saves, versioned with a \"v\" field.",
+    "replaced": [
+     "An older, shorter version of this note."
+    ],
+    "score": 0.658,
+    "components": {
+     "frequency": 0.55,
+     "relevance": 0.8,
+     "diversity": 0.4,
+     "recency": 0.6,
+     "consolidation": 0.66,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     },
+     {
+      "id": "s-lf-tiles",
+      "title": "TileMapLayer migration (Godot 4.4)",
+      "source": "desktop",
+      "day": "2026-11-08"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   }
+  ],
+  "1792551600": [
+   {
+    "run_at": 1792551600,
+    "key": "claim:55fff2fd259f",
+    "action": "skipped",
+    "target": "memory",
+    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+    "replaced": [],
+    "score": 0.63,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.82,
+     "diversity": 0.4,
+     "recency": 0.92,
+     "consolidation": 0.2,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "needs 2 sessions; seen in 1",
+    "undoable": false
+   }
+  ],
+  "1792638000": [
+   {
+    "run_at": 1792638000,
+    "key": "claim:55fff2fd259f",
+    "action": "skipped",
+    "target": "memory",
+    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+    "replaced": [],
+    "score": 0.63,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.82,
+     "diversity": 0.4,
+     "recency": 0.92,
+     "consolidation": 0.2,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "needs 2 sessions; seen in 1",
+    "undoable": false
+   }
+  ],
+  "1792810800": [
+   {
+    "run_at": 1792810800,
+    "key": "claim:7ecaee833778",
+    "action": "added",
+    "target": "user",
+    "text": "Maya works in Lisbon time (WET/WEST).",
+    "replaced": [],
+    "score": 0.508,
+    "components": {
+     "frequency": 0.46,
+     "relevance": 0.72,
+     "diversity": 0.4,
+     "recency": 0.3,
+     "consolidation": 0.66,
+     "conceptual": 0.17,
+     "phase_boost": 0
+    },
+    "sessions": [
+     {
+      "id": "s-me-coffee",
+      "title": "Morning planning",
+      "source": "desktop",
+      "day": "2026-11-02"
+     },
+     {
+      "id": "s-me-pt",
+      "title": "Bate-papo: planejamento da semana",
+      "source": "telegram",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1792810800,
+    "key": "claim:bd4033052cc1",
+    "action": "merged",
+    "target": "memory",
+    "text": "Ledgerly emails go through Postmark.",
+    "replaced": [
+     "An older, shorter version of this note."
+    ],
+    "score": 0.488,
+    "components": {
+     "frequency": 0.5,
+     "relevance": 0.7,
+     "diversity": 0.4,
+     "recency": 0.12,
+     "consolidation": 0.6,
+     "conceptual": 0.33,
+     "phase_boost": 0
+    },
+    "sessions": [
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     },
+     {
+      "id": "s-lg-tax",
+      "title": "VAT rules for EU freelancers",
+      "source": "telegram",
+      "day": "2026-11-03"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   }
+  ],
+  "1792983600": [
+   {
+    "run_at": 1792983600,
+    "key": "claim:6f9d2dfd30d4",
+    "action": "vault",
+    "target": "vault",
+    "text": "Godot 4.4: use TileMapLayer — the old TileMap node is deprecated in Lanternfall.",
+    "replaced": [],
+    "score": 0.692,
+    "components": {
+     "frequency": 0.5,
+     "relevance": 0.84,
+     "diversity": 0.4,
+     "recency": 0.8,
+     "consolidation": 0.6,
+     "conceptual": 0.5,
+     "phase_boost": 0.05
+    },
+    "sessions": [
+     {
+      "id": "s-lf-tiles",
+      "title": "TileMapLayer migration (Godot 4.4)",
+      "source": "desktop",
+      "day": "2026-11-08"
+     },
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   }
+  ],
+  "1793156400": [
+   {
+    "run_at": 1793156400,
+    "key": "claim:55fff2fd259f",
+    "action": "skipped",
+    "target": "memory",
+    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+    "replaced": [],
+    "score": 0.63,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.82,
+     "diversity": 0.4,
+     "recency": 0.92,
+     "consolidation": 0.2,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "needs 2 sessions; seen in 1",
+    "undoable": false
+   }
+  ],
+  "1793242800": [
+   {
+    "run_at": 1793242800,
+    "key": "claim:d61da4705dac",
+    "action": "added",
+    "target": "memory",
+    "text": "Stripe webhooks for Ledgerly are idempotent by event id; retries are safe to replay.",
+    "replaced": [],
+    "score": 0.677,
+    "components": {
+     "frequency": 0.55,
+     "relevance": 0.8,
+     "diversity": 0.4,
+     "recency": 0.78,
+     "consolidation": 0.58,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lg-stripe",
+      "title": "Ledgerly: Stripe webhook retries",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   }
+  ],
+  "1793329200": [
+   {
+    "run_at": 1793329200,
+    "key": "claim:f6a4cfab6be8",
+    "action": "added",
+    "target": "user",
+    "text": "Maya reviews code best with blunt, numbered findings and no praise padding.",
+    "replaced": [],
+    "score": 0.739,
+    "components": {
+     "frequency": 0.58,
+     "relevance": 0.83,
+     "diversity": 0.6,
+     "recency": 0.7,
+     "consolidation": 0.66,
+     "conceptual": 0.33,
+     "phase_boost": 0.03,
+     "lindy": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-me-review",
+      "title": "Code review tone",
+      "source": "desktop",
+      "day": "2026-11-08"
+     },
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     },
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1793329200,
+    "key": "claim:5fbdb45829e2",
+    "action": "added",
+    "target": "memory",
+    "text": "Lanternfall save files are JSON in user://saves, versioned with a \"v\" field.",
+    "replaced": [],
+    "score": 0.658,
+    "components": {
+     "frequency": 0.55,
+     "relevance": 0.8,
+     "diversity": 0.4,
+     "recency": 0.6,
+     "consolidation": 0.66,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     },
+     {
+      "id": "s-lf-tiles",
+      "title": "TileMapLayer migration (Godot 4.4)",
+      "source": "desktop",
+      "day": "2026-11-08"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1793329200,
+    "key": "claim:7ecaee833778",
+    "action": "merged",
+    "target": "user",
+    "text": "Maya works in Lisbon time (WET/WEST).",
+    "replaced": [
+     "An older, shorter version of this note."
+    ],
+    "score": 0.508,
+    "components": {
+     "frequency": 0.46,
+     "relevance": 0.72,
+     "diversity": 0.4,
+     "recency": 0.3,
+     "consolidation": 0.66,
+     "conceptual": 0.17,
+     "phase_boost": 0
+    },
+    "sessions": [
+     {
+      "id": "s-me-coffee",
+      "title": "Morning planning",
+      "source": "desktop",
+      "day": "2026-11-02"
+     },
+     {
+      "id": "s-me-pt",
+      "title": "Bate-papo: planejamento da semana",
+      "source": "telegram",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   }
+  ],
+  "1793588400": [
+   {
+    "run_at": 1793588400,
+    "key": "claim:bd4033052cc1",
+    "action": "added",
+    "target": "memory",
+    "text": "Ledgerly emails go through Postmark.",
+    "replaced": [],
+    "score": 0.488,
+    "components": {
+     "frequency": 0.5,
+     "relevance": 0.7,
+     "diversity": 0.4,
+     "recency": 0.12,
+     "consolidation": 0.6,
+     "conceptual": 0.33,
+     "phase_boost": 0
+    },
+    "sessions": [
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     },
+     {
+      "id": "s-lg-tax",
+      "title": "VAT rules for EU freelancers",
+      "source": "telegram",
+      "day": "2026-11-03"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1793588400,
+    "key": "claim:6f9d2dfd30d4",
+    "action": "vault",
+    "target": "vault",
+    "text": "Godot 4.4: use TileMapLayer — the old TileMap node is deprecated in Lanternfall.",
+    "replaced": [],
+    "score": 0.692,
+    "components": {
+     "frequency": 0.5,
+     "relevance": 0.84,
+     "diversity": 0.4,
+     "recency": 0.8,
+     "consolidation": 0.6,
+     "conceptual": 0.5,
+     "phase_boost": 0.05
+    },
+    "sessions": [
+     {
+      "id": "s-lf-tiles",
+      "title": "TileMapLayer migration (Godot 4.4)",
+      "source": "desktop",
+      "day": "2026-11-08"
+     },
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   }
+  ],
+  "1793674800": [
+   {
+    "run_at": 1793674800,
+    "key": "claim:55fff2fd259f",
+    "action": "skipped",
+    "target": "memory",
+    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+    "replaced": [],
+    "score": 0.63,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.82,
+     "diversity": 0.4,
+     "recency": 0.92,
+     "consolidation": 0.2,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "needs 2 sessions; seen in 1",
+    "undoable": false
+   }
+  ],
+  "1793761200": [
+   {
+    "run_at": 1793761200,
+    "key": "claim:d61da4705dac",
+    "action": "added",
+    "target": "memory",
+    "text": "Stripe webhooks for Ledgerly are idempotent by event id; retries are safe to replay.",
+    "replaced": [],
+    "score": 0.677,
+    "components": {
+     "frequency": 0.55,
+     "relevance": 0.8,
+     "diversity": 0.4,
+     "recency": 0.78,
+     "consolidation": 0.58,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lg-stripe",
+      "title": "Ledgerly: Stripe webhook retries",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1793761200,
+    "key": "claim:f6a4cfab6be8",
+    "action": "added",
+    "target": "user",
+    "text": "Maya reviews code best with blunt, numbered findings and no praise padding.",
+    "replaced": [],
+    "score": 0.739,
+    "components": {
+     "frequency": 0.58,
+     "relevance": 0.83,
+     "diversity": 0.6,
+     "recency": 0.7,
+     "consolidation": 0.66,
+     "conceptual": 0.33,
+     "phase_boost": 0.03,
+     "lindy": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-me-review",
+      "title": "Code review tone",
+      "source": "desktop",
+      "day": "2026-11-08"
+     },
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     },
+     {
+      "id": "s-lf-save",
+      "title": "Save system: JSON vs Resource",
+      "source": "cli",
+      "day": "2026-11-05"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   }
+  ],
+  "1794020400": [
+   {
+    "run_at": 1794020400,
+    "key": "claim:55fff2fd259f",
+    "action": "skipped",
+    "target": "memory",
+    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+    "replaced": [],
+    "score": 0.63,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.82,
+     "diversity": 0.4,
+     "recency": 0.92,
+     "consolidation": 0.2,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "needs 2 sessions; seen in 1",
+    "undoable": false
+   }
+  ],
+  "1794106800": [
+   {
+    "run_at": 1794106800,
+    "key": "claim:55fff2fd259f",
+    "action": "skipped",
+    "target": "memory",
+    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+    "replaced": [],
+    "score": 0.63,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.82,
+     "diversity": 0.4,
+     "recency": 0.92,
+     "consolidation": 0.2,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "needs 2 sessions; seen in 1",
+    "undoable": false
+   }
+  ],
+  "1794193200": [
+   {
+    "run_at": 1794193200,
+    "key": "claim:55fff2fd259f",
+    "action": "skipped",
+    "target": "memory",
+    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+    "replaced": [],
+    "score": 0.63,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.82,
+     "diversity": 0.4,
+     "recency": 0.92,
+     "consolidation": 0.2,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "needs 2 sessions; seen in 1",
+    "undoable": false
+   }
+  ],
+  "1794279600": [
+   {
+    "run_at": 1794279600,
+    "key": "claim:55fff2fd259f",
+    "action": "skipped",
+    "target": "memory",
+    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+    "replaced": [],
+    "score": 0.63,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.82,
+     "diversity": 0.4,
+     "recency": 0.92,
+     "consolidation": 0.2,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "consolidation call timed out (provider 504)",
+    "undoable": false
+   }
+  ],
+  "1794366000": [
+   {
+    "run_at": 1794366000,
+    "key": "claim:764823a833bf",
+    "action": "added",
+    "target": "memory",
+    "text": "Maya ships Lanternfall builds to itch.io every Friday; release notes stay short and in her own voice.",
+    "replaced": [],
+    "score": 0.815,
+    "components": {
+     "frequency": 0.72,
+     "relevance": 0.86,
+     "diversity": 0.6,
+     "recency": 0.95,
+     "consolidation": 0.62,
+     "conceptual": 0.5,
+     "phase_boost": 0.06
+    },
+    "sessions": [
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-oil",
+      "title": "Oil meter + lantern radius tuning",
+      "source": "desktop",
+      "day": "2026-11-09"
+     },
+     {
+      "id": "s-lf-tiles",
+      "title": "TileMapLayer migration (Godot 4.4)",
+      "source": "desktop",
+      "day": "2026-11-08"
+     }
+    ],
+    "reason": null,
+    "undoable": true
+   },
+   {
+    "run_at": 1794366000,
+    "key": "claim:78875dc534bb",
+    "action": "merged",
+    "target": "memory",
+    "text": "Ledgerly runs on Next.js 15 + Postgres 16 on Neon; schema changes go through Drizzle migrations, never Prisma.",
+    "replaced": [
+     "Ledgerly uses Postgres (Neon).",
+     "Use Drizzle for Ledgerly migrations."
+    ],
+    "score": 0.931,
+    "components": {
+     "frequency": 0.81,
+     "relevance": 0.9,
+     "diversity": 0.8,
+     "recency": 0.88,
+     "consolidation": 0.74,
+     "conceptual": 0.67,
+     "phase_boost": 0.08,
+     "lindy": 0.02
+    },
+    "sessions": [
+     {
+      "id": "s-lg-drizzle",
+      "title": "Drizzle migration for invoice_items",
+      "source": "desktop",
+      "day": "2026-11-09"
+     },
+     {
+      "id": "s-lg-neon",
+      "title": "Neon branch per preview deploy",
+      "source": "cli",
+      "day": "2026-11-07"
+     },
+     {
+      "id": "s-lg-stripe",
+      "title": "Ledgerly: Stripe webhook retries",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     }
+    ],
+    "reason": null,
+    "undoable": true
+   },
+   {
+    "run_at": 1794366000,
+    "key": "claim:45ff3f01e9fa",
+    "action": "superseded",
+    "target": "user",
+    "text": "Maya prefers casual chat in Portuguese, but code, comments and commit messages in English.",
+    "replaced": [
+     "Maya prefers English for everything."
+    ],
+    "score": 0.784,
+    "components": {
+     "frequency": 0.64,
+     "relevance": 0.82,
+     "diversity": 0.6,
+     "recency": 0.93,
+     "consolidation": 0.55,
+     "conceptual": 0.5,
+     "phase_boost": 0.07
+    },
+    "sessions": [
+     {
+      "id": "s-me-pt",
+      "title": "Bate-papo: planejamento da semana",
+      "source": "telegram",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-me-commit",
+      "title": "Commit message style",
+      "source": "cli",
+      "day": "2026-10-30"
+     },
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": null,
+    "undoable": true
+   },
+   {
+    "run_at": 1794366000,
+    "key": "claim:e59c93506474",
+    "action": "added",
+    "target": "memory",
+    "text": "Correction: Ledgerly never hardcodes VAT rates; they are read from the tax_rates table per country.",
+    "replaced": [],
+    "score": 0.742,
+    "components": {
+     "frequency": 0.5,
+     "relevance": 0.86,
+     "diversity": 0.6,
+     "recency": 0.96,
+     "consolidation": 0.4,
+     "conceptual": 0.5,
+     "phase_boost": 0.06
+    },
+    "sessions": [
+     {
+      "id": "s-lg-tax",
+      "title": "VAT rules for EU freelancers",
+      "source": "telegram",
+      "day": "2026-11-03"
+     },
+     {
+      "id": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug",
+      "source": "desktop",
+      "day": "2026-11-06"
+     },
+     {
+      "id": "s-lg-stripe",
+      "title": "Ledgerly: Stripe webhook retries",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": null,
+    "undoable": true
+   },
+   {
+    "run_at": 1794366000,
+    "key": null,
+    "action": "evicted",
+    "target": "memory",
+    "text": "Lanternfall is on Godot 4.2 with the old TileMap node.",
+    "replaced": [],
+    "score": 0.312,
+    "components": {
+     "frequency": 0.2,
+     "relevance": 0.5,
+     "diversity": 0.2,
+     "recency": 0.05,
+     "consolidation": 0.4,
+     "conceptual": 0.33,
+     "phase_boost": 0
+    },
+    "sessions": [
+     {
+      "id": "s-lf-tiles",
+      "title": "TileMapLayer migration (Godot 4.4)",
+      "source": "desktop",
+      "day": "2026-11-08"
+     }
+    ],
+    "reason": "pareto tail: the least-confirmed Somnia entry (34 days), and contradicted by the TileMapLayer note",
+    "undoable": true
+   },
+   {
+    "run_at": 1794366000,
+    "key": "claim:c8e1242c57e2",
+    "action": "deferred",
+    "target": "memory",
+    "text": "Lanternfall's lantern radius scales with remaining oil (0–100), easing out below 20.",
+    "replaced": [],
+    "score": 0.677,
+    "components": {
+     "frequency": 0.48,
+     "relevance": 0.78,
+     "diversity": 0.4,
+     "recency": 0.97,
+     "consolidation": 0.42,
+     "conceptual": 0.5,
+     "phase_boost": 0.05
+    },
+    "sessions": [
+     {
+      "id": "s-lf-oil",
+      "title": "Oil meter + lantern radius tuning",
+      "source": "desktop",
+      "day": "2026-11-09"
+     },
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "occam: merging it into the oil-meter note would not make either shorter; kept apart for now",
+    "undoable": false
+   }
+  ]
+ },
+ "latest_run": 1794366000,
+ "candidates": [
+  {
+   "key": "claim:764823a833bf",
+   "text": "Maya ships Lanternfall builds to itch.io every Friday; release notes stay short and in her own voice.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.815,
+   "raw": 0.815,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.72,
+    "relevance": 0.86,
+    "diversity": 0.6,
+    "recency": 0.95,
+    "consolidation": 0.62,
+    "conceptual": 0.5,
+    "phase_boost": 0.06
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": false,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 5,
+   "sessions": [
+    {
+     "id": "s-lf-itch",
+     "title": "Friday build notes for itch.io",
+     "source": "desktop",
+     "day": "2026-11-10"
+    },
+    {
+     "id": "s-lf-oil",
+     "title": "Oil meter + lantern radius tuning",
+     "source": "desktop",
+     "day": "2026-11-09"
+    },
+    {
+     "id": "s-lf-tiles",
+     "title": "TileMapLayer migration (Godot 4.4)",
+     "source": "desktop",
+     "day": "2026-11-08"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-09",
+    "2026-11-08"
+   ],
+   "tags": [
+    "lanternfall",
+    "itch-io",
+    "release"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lf-itch",
+     "day": "2026-11-10",
+     "quote": "ok friday build is up on itch, keep the notes short like last time"
+    },
+    {
+     "source_session": "s-lf-oil",
+     "day": "2026-11-09",
+     "quote": "notes should sound like me, not like a press release"
+    }
+   ],
+   "first_seen_at": 1793632320,
+   "last_seen_at": 1794280320,
+   "status": "promoted",
+   "promoted_to": "builtin:memory",
+   "promoted_at": 1794365856,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:78875dc534bb",
+   "text": "Ledgerly runs on Next.js 15 + Postgres 16 on Neon; schema changes go through Drizzle migrations, never Prisma.",
+   "target": "memory",
+   "kind": "rule",
+   "origin": "owner",
+   "explicit": true,
+   "pinned": false,
+   "score": 0.931,
+   "raw": 0.931,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.81,
+    "relevance": 0.9,
+    "diversity": 0.8,
+    "recency": 0.88,
+    "consolidation": 0.74,
+    "conceptual": 0.67,
+    "phase_boost": 0.08,
+    "lindy": 0.02
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": false,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 6,
+   "sessions": [
+    {
+     "id": "s-lg-drizzle",
+     "title": "Drizzle migration for invoice_items",
+     "source": "desktop",
+     "day": "2026-11-09"
+    },
+    {
+     "id": "s-lg-neon",
+     "title": "Neon branch per preview deploy",
+     "source": "cli",
+     "day": "2026-11-07"
+    },
+    {
+     "id": "s-lg-stripe",
+     "title": "Ledgerly: Stripe webhook retries",
+     "source": "desktop",
+     "day": "2026-11-10"
+    },
+    {
+     "id": "s-lg-pdf",
+     "title": "Invoice PDF rendering bug",
+     "source": "desktop",
+     "day": "2026-11-06"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-09",
+    "2026-11-07",
+    "2026-11-06"
+   ],
+   "tags": [
+    "ledgerly",
+    "drizzle",
+    "postgres",
+    "neon"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-drizzle",
+     "day": "2026-11-09",
+     "quote": "please never suggest prisma for ledgerly again, we are on drizzle"
+    },
+    {
+     "source_session": "s-lg-neon",
+     "day": "2026-11-07",
+     "quote": "neon branch per preview deploy is working nicely"
+    }
+   ],
+   "first_seen_at": 1793208960,
+   "last_seen_at": 1794159360,
+   "status": "promoted",
+   "promoted_to": "builtin:memory",
+   "promoted_at": 1794365856,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:45ff3f01e9fa",
+   "text": "Maya prefers casual chat in Portuguese, but code, comments and commit messages in English.",
+   "target": "user",
+   "kind": "preference",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.784,
+   "raw": 0.784,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.64,
+    "relevance": 0.82,
+    "diversity": 0.6,
+    "recency": 0.93,
+    "consolidation": 0.55,
+    "conceptual": 0.5,
+    "phase_boost": 0.07
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": false,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 4,
+   "sessions": [
+    {
+     "id": "s-me-pt",
+     "title": "Bate-papo: planejamento da semana",
+     "source": "telegram",
+     "day": "2026-11-10"
+    },
+    {
+     "id": "s-me-commit",
+     "title": "Commit message style",
+     "source": "cli",
+     "day": "2026-10-30"
+    },
+    {
+     "id": "s-lf-shader",
+     "title": "Lanternfall: lantern falloff shader",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-10-30"
+   ],
+   "tags": [
+    "language",
+    "portuguese",
+    "commits"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-me-pt",
+     "day": "2026-11-10",
+     "quote": "pode falar comigo em português, mas commit sempre em inglês"
+    },
+    {
+     "source_session": "s-me-commit",
+     "day": "2026-10-30",
+     "quote": "comments in english please, the repo is public"
+    }
+   ],
+   "first_seen_at": 1793640960,
+   "last_seen_at": 1794245760,
+   "status": "promoted",
+   "promoted_to": "builtin:user",
+   "promoted_at": 1794365856,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:c8e1242c57e2",
+   "text": "Lanternfall's lantern radius scales with remaining oil (0–100), easing out below 20.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.677,
+   "raw": 0.677,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.48,
+    "relevance": 0.78,
+    "diversity": 0.4,
+    "recency": 0.97,
+    "consolidation": 0.42,
+    "conceptual": 0.5,
+    "phase_boost": 0.05
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lf-oil",
+     "title": "Oil meter + lantern radius tuning",
+     "source": "desktop",
+     "day": "2026-11-09"
+    },
+    {
+     "id": "s-lf-shader",
+     "title": "Lanternfall: lantern falloff shader",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-09"
+   ],
+   "tags": [
+    "lanternfall",
+    "lantern",
+    "gameplay"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lf-oil",
+     "day": "2026-11-09",
+     "quote": "radius should ease out hard below 20 oil, it feels like the dark closing in"
+    }
+   ],
+   "first_seen_at": 1793623680,
+   "last_seen_at": 1794314880,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": "occam: merging it into the oil-meter note would not make either shorter; kept apart for now",
+   "reask": false
+  },
+  {
+   "key": "claim:6f9d2dfd30d4",
+   "text": "Godot 4.4: use TileMapLayer — the old TileMap node is deprecated in Lanternfall.",
+   "target": "memory",
+   "kind": "rule",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.692,
+   "raw": 0.692,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.5,
+    "relevance": 0.84,
+    "diversity": 0.4,
+    "recency": 0.8,
+    "consolidation": 0.6,
+    "conceptual": 0.5,
+    "phase_boost": 0.05
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": false,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lf-tiles",
+     "title": "TileMapLayer migration (Godot 4.4)",
+     "source": "desktop",
+     "day": "2026-11-08"
+    },
+    {
+     "id": "s-lf-save",
+     "title": "Save system: JSON vs Resource",
+     "source": "cli",
+     "day": "2026-11-05"
+    }
+   ],
+   "days": [
+    "2026-11-08",
+    "2026-11-05"
+   ],
+   "tags": [
+    "godot",
+    "lanternfall",
+    "tilemap"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lf-tiles",
+     "day": "2026-11-08",
+     "quote": "tilemap is deprecated in 4.4, move everything to TileMapLayer"
+    }
+   ],
+   "first_seen_at": 1793589120,
+   "last_seen_at": 1794021120,
+   "status": "promoted",
+   "promoted_to": "vault:dreams/2026-11-08.md",
+   "promoted_at": 1794106656,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:d61da4705dac",
+   "text": "Stripe webhooks for Ledgerly are idempotent by event id; retries are safe to replay.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.677,
+   "raw": 0.677,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.55,
+    "relevance": 0.8,
+    "diversity": 0.4,
+    "recency": 0.78,
+    "consolidation": 0.58,
+    "conceptual": 0.5,
+    "phase_boost": 0.04
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": false,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 3,
+   "sessions": [
+    {
+     "id": "s-lg-stripe",
+     "title": "Ledgerly: Stripe webhook retries",
+     "source": "desktop",
+     "day": "2026-11-10"
+    },
+    {
+     "id": "s-lg-pdf",
+     "title": "Invoice PDF rendering bug",
+     "source": "desktop",
+     "day": "2026-11-06"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-06"
+   ],
+   "tags": [
+    "ledgerly",
+    "stripe",
+    "webhooks"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-stripe",
+     "day": "2026-11-10",
+     "quote": "we dedupe on event.id so replaying from the dashboard is fine"
+    }
+   ],
+   "first_seen_at": 1793468160,
+   "last_seen_at": 1793986560,
+   "status": "promoted",
+   "promoted_to": "builtin:memory",
+   "promoted_at": 1794020256,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:f6a4cfab6be8",
+   "text": "Maya reviews code best with blunt, numbered findings and no praise padding.",
+   "target": "user",
+   "kind": "preference",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.739,
+   "raw": 0.739,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.58,
+    "relevance": 0.83,
+    "diversity": 0.6,
+    "recency": 0.7,
+    "consolidation": 0.66,
+    "conceptual": 0.33,
+    "phase_boost": 0.03,
+    "lindy": 0.04
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": false,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 3,
+   "sessions": [
+    {
+     "id": "s-me-review",
+     "title": "Code review tone",
+     "source": "desktop",
+     "day": "2026-11-08"
+    },
+    {
+     "id": "s-lg-pdf",
+     "title": "Invoice PDF rendering bug",
+     "source": "desktop",
+     "day": "2026-11-06"
+    },
+    {
+     "id": "s-lf-save",
+     "title": "Save system: JSON vs Resource",
+     "source": "cli",
+     "day": "2026-11-05"
+    }
+   ],
+   "days": [
+    "2026-11-08",
+    "2026-11-06",
+    "2026-11-05"
+   ],
+   "tags": [
+    "review",
+    "tone"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-me-review",
+     "day": "2026-11-08",
+     "quote": "just number the problems, skip the compliments"
+    }
+   ],
+   "first_seen_at": 1793027520,
+   "last_seen_at": 1793848320,
+   "status": "promoted",
+   "promoted_to": "builtin:user",
+   "promoted_at": 1793761056,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:5fbdb45829e2",
+   "text": "Lanternfall save files are JSON in user://saves, versioned with a \"v\" field.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.658,
+   "raw": 0.658,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.55,
+    "relevance": 0.8,
+    "diversity": 0.4,
+    "recency": 0.6,
+    "consolidation": 0.66,
+    "conceptual": 0.5,
+    "phase_boost": 0.04
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": false,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 3,
+   "sessions": [
+    {
+     "id": "s-lf-save",
+     "title": "Save system: JSON vs Resource",
+     "source": "cli",
+     "day": "2026-11-05"
+    },
+    {
+     "id": "s-lf-tiles",
+     "title": "TileMapLayer migration (Godot 4.4)",
+     "source": "desktop",
+     "day": "2026-11-08"
+    }
+   ],
+   "days": [
+    "2026-11-08",
+    "2026-11-05"
+   ],
+   "tags": [
+    "lanternfall",
+    "save-system",
+    "godot"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lf-save",
+     "day": "2026-11-05",
+     "quote": "json saves, put a v field so we can migrate later"
+    }
+   ],
+   "first_seen_at": 1792984320,
+   "last_seen_at": 1793675520,
+   "status": "promoted",
+   "promoted_to": "builtin:memory",
+   "promoted_at": 1793329056,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:e59c93506474",
+   "text": "Correction: Ledgerly never hardcodes VAT rates; they are read from the tax_rates table per country.",
+   "target": "memory",
+   "kind": "correction",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.742,
+   "raw": 0.742,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.5,
+    "relevance": 0.86,
+    "diversity": 0.6,
+    "recency": 0.96,
+    "consolidation": 0.4,
+    "conceptual": 0.5,
+    "phase_boost": 0.06
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": false,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lg-tax",
+     "title": "VAT rules for EU freelancers",
+     "source": "telegram",
+     "day": "2026-11-03"
+    },
+    {
+     "id": "s-lg-pdf",
+     "title": "Invoice PDF rendering bug",
+     "source": "desktop",
+     "day": "2026-11-06"
+    },
+    {
+     "id": "s-lg-stripe",
+     "title": "Ledgerly: Stripe webhook retries",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-06",
+    "2026-11-03"
+   ],
+   "tags": [
+    "ledgerly",
+    "vat",
+    "invoicing"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-tax",
+     "day": "2026-11-03",
+     "quote": "no no, never hardcode 23%, read it from tax_rates"
+    },
+    {
+     "source_session": "s-lg-pdf",
+     "day": "2026-11-06",
+     "quote": "that bug again, the rate came from a constant instead of the table"
+    }
+   ],
+   "first_seen_at": 1793649600,
+   "last_seen_at": 1794297600,
+   "status": "promoted",
+   "promoted_to": "builtin:memory",
+   "promoted_at": 1794365856,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:3023f5ac150f",
+   "text": "Maya wants a short Monday digest of new Ledgerly sign-ups.",
+   "target": "user",
+   "kind": "preference",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.551,
+   "raw": 0.551,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.46,
+    "relevance": 0.62,
+    "diversity": 0.4,
+    "recency": 0.7,
+    "consolidation": 0.5,
+    "conceptual": 0.33,
+    "phase_boost": 0.02
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "score 0.55 < 0.65"
+   ],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-me-coffee",
+     "title": "Morning planning",
+     "source": "desktop",
+     "day": "2026-11-02"
+    },
+    {
+     "id": "s-lg-stripe",
+     "title": "Ledgerly: Stripe webhook retries",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-02"
+   ],
+   "tags": [
+    "ledgerly",
+    "planning"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-me-coffee",
+     "day": "2026-11-02",
+     "quote": "can you give me the signups every monday, just the number and who"
+    }
+   ],
+   "first_seen_at": 1793329920,
+   "last_seen_at": 1793848320,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": true
+  },
+  {
+   "key": "claim:6922e44c2dff",
+   "text": "Ledgerly invoices must show VAT reverse-charge wording for EU B2B clients.",
+   "target": "memory",
+   "kind": "rule",
+   "origin": "untrusted",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.574,
+   "raw": 0.574,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.46,
+    "relevance": 0.88,
+    "diversity": 0.2,
+    "recency": 0.6,
+    "consolidation": 0.2,
+    "conceptual": 0.5,
+    "phase_boost": 0.03
+   },
+   "passes": {
+    "origin": false,
+    "placement": true,
+    "signals": true,
+    "sessions": false,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "needs 1 more session (seen in 1 of 2)",
+    "came from a group chat — marked untrusted, never promoted"
+   ],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lg-tax",
+     "title": "VAT rules for EU freelancers",
+     "source": "telegram",
+     "day": "2026-11-03"
+    }
+   ],
+   "days": [
+    "2026-11-03"
+   ],
+   "tags": [
+    "ledgerly",
+    "vat",
+    "invoicing"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-tax",
+     "day": "2026-11-03",
+     "quote": "reverse charge text has to be on the invoice for b2b in the EU"
+    }
+   ],
+   "first_seen_at": 1793286720,
+   "last_seen_at": 1793675520,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:30de78651561",
+   "text": "Preview deploys of Ledgerly each get their own Neon branch, deleted on merge.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.601,
+   "raw": 0.601,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.46,
+    "relevance": 0.74,
+    "diversity": 0.4,
+    "recency": 0.74,
+    "consolidation": 0.38,
+    "conceptual": 0.5,
+    "phase_boost": 0.03
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "score 0.60 < 0.65"
+   ],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lg-neon",
+     "title": "Neon branch per preview deploy",
+     "source": "cli",
+     "day": "2026-11-07"
+    },
+    {
+     "id": "s-lg-drizzle",
+     "title": "Drizzle migration for invoice_items",
+     "source": "desktop",
+     "day": "2026-11-09"
+    }
+   ],
+   "days": [
+    "2026-11-09",
+    "2026-11-07"
+   ],
+   "tags": [
+    "ledgerly",
+    "neon",
+    "deploy"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-neon",
+     "day": "2026-11-07",
+     "quote": "branch per preview, and the github action deletes it on merge"
+    }
+   ],
+   "first_seen_at": 1793226240,
+   "last_seen_at": 1793917440,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:55fff2fd259f",
+   "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+   "target": "memory",
+   "kind": "rule",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.63,
+   "raw": 0.63,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.4,
+    "relevance": 0.82,
+    "diversity": 0.4,
+    "recency": 0.92,
+    "consolidation": 0.2,
+    "conceptual": 0.5,
+    "phase_boost": 0.04
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "score 0.63 < 0.65"
+   ],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lf-shader",
+     "title": "Lanternfall: lantern falloff shader",
+     "source": "desktop",
+     "day": "2026-11-10"
+    },
+    {
+     "id": "s-lf-itch",
+     "title": "Friday build notes for itch.io",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10"
+   ],
+   "tags": [
+    "lanternfall",
+    "performance",
+    "steam-deck"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lf-shader",
+     "day": "2026-11-10",
+     "quote": "if it drops under 60 on the deck it does not ship"
+    }
+   ],
+   "first_seen_at": 1794012480,
+   "last_seen_at": 1794228480,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:6b86fcf2f0b0",
+   "text": "Maya plans the week on Monday mornings over coffee and likes a 3-item focus list.",
+   "target": "user",
+   "kind": "preference",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.567,
+   "raw": 0.567,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.46,
+    "relevance": 0.66,
+    "diversity": 0.4,
+    "recency": 0.62,
+    "consolidation": 0.66,
+    "conceptual": 0.33,
+    "phase_boost": 0.02
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "score 0.57 < 0.65"
+   ],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-me-coffee",
+     "title": "Morning planning",
+     "source": "desktop",
+     "day": "2026-11-02"
+    },
+    {
+     "id": "s-me-pt",
+     "title": "Bate-papo: planejamento da semana",
+     "source": "telegram",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-02"
+   ],
+   "tags": [
+    "planning",
+    "routine"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-me-coffee",
+     "day": "2026-11-02",
+     "quote": "me dá só 3 coisas pra focar essa semana"
+    },
+    {
+     "source_session": "s-me-pt",
+     "day": "2026-11-10",
+     "quote": "monday coffee planning again"
+    }
+   ],
+   "first_seen_at": 1793191680,
+   "last_seen_at": 1793710080,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:af662e5d4cbc",
+   "text": "Invoice PDFs are rendered with react-pdf on the server, never in the browser.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.493,
+   "raw": 0.493,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.3,
+    "relevance": 0.72,
+    "diversity": 0.2,
+    "recency": 0.7,
+    "consolidation": 0.2,
+    "conceptual": 0.5,
+    "phase_boost": 0.02
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": false,
+    "sessions": false,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "needs 1 more session (seen in 1 of 2)",
+    "needs 1 more mention",
+    "score 0.49 < 0.65"
+   ],
+   "signal_count": 1,
+   "sessions": [
+    {
+     "id": "s-lg-pdf",
+     "title": "Invoice PDF rendering bug",
+     "source": "desktop",
+     "day": "2026-11-06"
+    }
+   ],
+   "days": [
+    "2026-11-06"
+   ],
+   "tags": [
+    "ledgerly",
+    "pdf",
+    "invoicing"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-pdf",
+     "day": "2026-11-06",
+     "quote": "pdf has to render server side, the browser version breaks fonts"
+    }
+   ],
+   "first_seen_at": 1793459520,
+   "last_seen_at": 1793848320,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:cdb3602859fe",
+   "text": "Pixel art in Lanternfall is drawn at 16×16 and scaled 4× with nearest-neighbour filtering.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.555,
+   "raw": 0.555,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.4,
+    "relevance": 0.7,
+    "diversity": 0.4,
+    "recency": 0.77,
+    "consolidation": 0.34,
+    "conceptual": 0.33,
+    "phase_boost": 0.02
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "score 0.56 < 0.65"
+   ],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lf-tiles",
+     "title": "TileMapLayer migration (Godot 4.4)",
+     "source": "desktop",
+     "day": "2026-11-08"
+    },
+    {
+     "id": "s-lf-shader",
+     "title": "Lanternfall: lantern falloff shader",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-08"
+   ],
+   "tags": [
+    "lanternfall",
+    "pixel-art"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lf-tiles",
+     "day": "2026-11-08",
+     "quote": "16x16 tiles, 4x scale, nearest filter or it gets blurry"
+    }
+   ],
+   "first_seen_at": 1793278080,
+   "last_seen_at": 1793969280,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:197a6c63b258",
+   "text": "Maya avoids Tailwind in Ledgerly email templates; she hand-writes inline styles.",
+   "target": "memory",
+   "kind": "preference",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.452,
+   "raw": 0.452,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.3,
+    "relevance": 0.6,
+    "diversity": 0.4,
+    "recency": 0.6,
+    "consolidation": 0.2,
+    "conceptual": 0.33,
+    "phase_boost": 0.01
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": false,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "needs 1 more mention",
+    "score 0.45 < 0.65"
+   ],
+   "signal_count": 1,
+   "sessions": [
+    {
+     "id": "s-lg-pdf",
+     "title": "Invoice PDF rendering bug",
+     "source": "desktop",
+     "day": "2026-11-06"
+    },
+    {
+     "id": "s-lg-stripe",
+     "title": "Ledgerly: Stripe webhook retries",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-06"
+   ],
+   "tags": [
+    "ledgerly",
+    "email"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-pdf",
+     "day": "2026-11-06",
+     "quote": "for emails just inline the styles, tailwind there is pain"
+    }
+   ],
+   "first_seen_at": 1793243520,
+   "last_seen_at": 1793675520,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:9574b7ec4163",
+   "text": "The Lanternfall soundtrack is by a friend, Tomás; credit him on every itch.io page.",
+   "target": "memory",
+   "kind": "rule",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.595,
+   "raw": 0.595,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.3,
+    "relevance": 0.9,
+    "diversity": 0.2,
+    "recency": 0.95,
+    "consolidation": 0.2,
+    "conceptual": 0.5,
+    "phase_boost": 0.03
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": false,
+    "sessions": false,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "needs 1 more session (seen in 1 of 2)",
+    "needs 1 more mention",
+    "score 0.59 < 0.65"
+   ],
+   "signal_count": 1,
+   "sessions": [
+    {
+     "id": "s-lf-itch",
+     "title": "Friday build notes for itch.io",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10"
+   ],
+   "tags": [
+    "lanternfall",
+    "credits",
+    "itch-io"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lf-itch",
+     "day": "2026-11-10",
+     "quote": "always credit tomás for the music on the itch page"
+    }
+   ],
+   "first_seen_at": 1793977920,
+   "last_seen_at": 1794280320,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:f96deb6d2016",
+   "text": "Ledgerly free tier allows 5 invoices a month.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.339,
+   "raw": 0.339,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.2,
+    "relevance": 0.52,
+    "diversity": 0.2,
+    "recency": 0.5,
+    "consolidation": 0.2,
+    "conceptual": 0.17,
+    "phase_boost": 0
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": false,
+    "sessions": false,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "needs 1 more session (seen in 1 of 2)",
+    "needs 1 more mention",
+    "score 0.34 < 0.65"
+   ],
+   "signal_count": 1,
+   "sessions": [
+    {
+     "id": "s-lg-stripe",
+     "title": "Ledgerly: Stripe webhook retries",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10"
+   ],
+   "tags": [
+    "ledgerly",
+    "pricing"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-stripe",
+     "day": "2026-11-10",
+     "quote": "free tier is 5 invoices a month for now"
+    }
+   ],
+   "first_seen_at": 1793113920,
+   "last_seen_at": 1793502720,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:c0f1086e5469",
+   "text": "Maya is thinking about moving Ledgerly to Rails.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.411,
+   "raw": 0.411,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.4,
+    "relevance": 0.4,
+    "diversity": 0.4,
+    "recency": 0.5,
+    "consolidation": 0.4,
+    "conceptual": 0.33,
+    "phase_boost": 0
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": false,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": false
+   },
+   "missing": [],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lg-drizzle",
+     "title": "Drizzle migration for invoice_items",
+     "source": "desktop",
+     "day": "2026-11-09"
+    },
+    {
+     "id": "s-me-coffee",
+     "title": "Morning planning",
+     "source": "desktop",
+     "day": "2026-11-02"
+    }
+   ],
+   "days": [
+    "2026-11-09",
+    "2026-11-02"
+   ],
+   "tags": [
+    "ledgerly",
+    "rails"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-drizzle",
+     "day": "2026-11-09",
+     "quote": "lol sometimes i think about rewriting this in rails"
+    }
+   ],
+   "first_seen_at": 1792811520,
+   "last_seen_at": 1793502720,
+   "status": "rejected",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:a220bc846ee5",
+   "text": "Maya's cat is called Pixel.",
+   "target": "user",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.318,
+   "raw": 0.318,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.2,
+    "relevance": 0.5,
+    "diversity": 0.2,
+    "recency": 0.4,
+    "consolidation": 0.2,
+    "conceptual": 0.17,
+    "phase_boost": 0
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": false,
+    "sessions": false,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": false
+   },
+   "missing": [],
+   "signal_count": 1,
+   "sessions": [
+    {
+     "id": "s-me-coffee",
+     "title": "Morning planning",
+     "source": "desktop",
+     "day": "2026-11-02"
+    }
+   ],
+   "days": [
+    "2026-11-02"
+   ],
+   "tags": [
+    "personal"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-me-coffee",
+     "day": "2026-11-02",
+     "quote": "pixel is sitting on my keyboard again"
+    }
+   ],
+   "first_seen_at": 1793113920,
+   "last_seen_at": 1793329920,
+   "status": "rejected",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:edc8911b6807",
+   "text": "Use the staging Stripe key in demos.",
+   "target": "memory",
+   "kind": "rule",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.318,
+   "raw": 0.318,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.2,
+    "relevance": 0.55,
+    "diversity": 0.2,
+    "recency": 0.3,
+    "consolidation": 0.2,
+    "conceptual": 0.17,
+    "phase_boost": 0
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": false,
+    "sessions": false,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": false
+   },
+   "missing": [],
+   "signal_count": 1,
+   "sessions": [
+    {
+     "id": "s-lg-stripe",
+     "title": "Ledgerly: Stripe webhook retries",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10"
+   ],
+   "tags": [
+    "stripe"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-stripe",
+     "day": "2026-11-10",
+     "quote": "use the staging key for the demo tomorrow"
+    }
+   ],
+   "first_seen_at": 1792854720,
+   "last_seen_at": 1793157120,
+   "status": "rejected",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:e6a7800c64e9",
+   "text": "Friday release: bump version in project.godot, export Linux + Windows, butler push to itch, then post the notes.",
+   "target": "memory",
+   "kind": "procedure",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.773,
+   "raw": 0.773,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.66,
+    "relevance": 0.8,
+    "diversity": 0.6,
+    "recency": 0.95,
+    "consolidation": 0.62,
+    "conceptual": 0.5,
+    "phase_boost": 0.05
+   },
+   "passes": {
+    "origin": true,
+    "placement": false,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "a procedure: belongs in a skill, not in memory"
+   ],
+   "signal_count": 4,
+   "sessions": [
+    {
+     "id": "s-lf-itch",
+     "title": "Friday build notes for itch.io",
+     "source": "desktop",
+     "day": "2026-11-10"
+    },
+    {
+     "id": "s-lf-oil",
+     "title": "Oil meter + lantern radius tuning",
+     "source": "desktop",
+     "day": "2026-11-09"
+    },
+    {
+     "id": "s-lf-tiles",
+     "title": "TileMapLayer migration (Godot 4.4)",
+     "source": "desktop",
+     "day": "2026-11-08"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-09",
+    "2026-11-08"
+   ],
+   "tags": [
+    "lanternfall",
+    "release",
+    "itch-io"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lf-itch",
+     "day": "2026-11-10",
+     "quote": "same as every friday: bump, export both, butler push, notes"
+    }
+   ],
+   "first_seen_at": 1793459520,
+   "last_seen_at": 1794280320,
+   "status": "skill",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:c095af805441",
+   "text": "New Drizzle migration: generate, review SQL by hand, apply to the Neon preview branch, then main.",
+   "target": "memory",
+   "kind": "procedure",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.644,
+   "raw": 0.644,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.5,
+    "relevance": 0.78,
+    "diversity": 0.4,
+    "recency": 0.8,
+    "consolidation": 0.5,
+    "conceptual": 0.5,
+    "phase_boost": 0.03
+   },
+   "passes": {
+    "origin": true,
+    "placement": false,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "a procedure: belongs in a skill, not in memory",
+    "score 0.64 < 0.65"
+   ],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lg-drizzle",
+     "title": "Drizzle migration for invoice_items",
+     "source": "desktop",
+     "day": "2026-11-09"
+    },
+    {
+     "id": "s-lg-neon",
+     "title": "Neon branch per preview deploy",
+     "source": "cli",
+     "day": "2026-11-07"
+    }
+   ],
+   "days": [
+    "2026-11-09",
+    "2026-11-07"
+   ],
+   "tags": [
+    "ledgerly",
+    "drizzle",
+    "neon"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-drizzle",
+     "day": "2026-11-09",
+     "quote": "generate it, I read the sql, preview branch first, then main"
+    }
+   ],
+   "first_seen_at": 1793329920,
+   "last_seen_at": 1794021120,
+   "status": "skill",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:a9f056454a59",
+   "text": "Weekly planning: list open threads from both projects, pick 3, block Friday afternoon for the build.",
+   "target": "user",
+   "kind": "procedure",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.542,
+   "raw": 0.542,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.46,
+    "relevance": 0.64,
+    "diversity": 0.4,
+    "recency": 0.6,
+    "consolidation": 0.6,
+    "conceptual": 0.33,
+    "phase_boost": 0.01
+   },
+   "passes": {
+    "origin": true,
+    "placement": false,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [
+    "a procedure: belongs in a skill, not in memory",
+    "score 0.54 < 0.65"
+   ],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-me-coffee",
+     "title": "Morning planning",
+     "source": "desktop",
+     "day": "2026-11-02"
+    },
+    {
+     "id": "s-me-pt",
+     "title": "Bate-papo: planejamento da semana",
+     "source": "telegram",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-02"
+   ],
+   "tags": [
+    "planning",
+    "routine"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-me-coffee",
+     "day": "2026-11-02",
+     "quote": "open threads, pick 3, friday afternoon is build time"
+    }
+   ],
+   "first_seen_at": 1793243520,
+   "last_seen_at": 1793675520,
+   "status": "skill",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:bd4033052cc1",
+   "text": "Ledgerly emails go through Postmark.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.488,
+   "raw": 0.488,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.5,
+    "relevance": 0.7,
+    "diversity": 0.4,
+    "recency": 0.12,
+    "consolidation": 0.6,
+    "conceptual": 0.33,
+    "phase_boost": 0
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": false,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lg-pdf",
+     "title": "Invoice PDF rendering bug",
+     "source": "desktop",
+     "day": "2026-11-06"
+    },
+    {
+     "id": "s-lg-tax",
+     "title": "VAT rules for EU freelancers",
+     "source": "telegram",
+     "day": "2026-11-03"
+    }
+   ],
+   "days": [
+    "2026-11-06",
+    "2026-11-03"
+   ],
+   "tags": [
+    "ledgerly",
+    "email"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lg-pdf",
+     "day": "2026-11-06",
+     "quote": "postmark is sending the invoice emails"
+    }
+   ],
+   "first_seen_at": 1792327680,
+   "last_seen_at": 1792846080,
+   "status": "promoted",
+   "promoted_to": "builtin:memory",
+   "promoted_at": 1790823456,
+   "deferred_reason": null,
+   "reask": false
+  },
+  {
+   "key": "claim:7ecaee833778",
+   "text": "Maya works in Lisbon time (WET/WEST).",
+   "target": "user",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.508,
+   "raw": 0.508,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.46,
+    "relevance": 0.72,
+    "diversity": 0.4,
+    "recency": 0.3,
+    "consolidation": 0.66,
+    "conceptual": 0.17,
+    "phase_boost": 0
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": false,
+    "not_promoted": false,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-me-coffee",
+     "title": "Morning planning",
+     "source": "desktop",
+     "day": "2026-11-02"
+    },
+    {
+     "id": "s-me-pt",
+     "title": "Bate-papo: planejamento da semana",
+     "source": "telegram",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-02"
+   ],
+   "tags": [
+    "timezone"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-me-coffee",
+     "day": "2026-11-02",
+     "quote": "its 9am here in lisbon"
+    }
+   ],
+   "first_seen_at": 1792552320,
+   "last_seen_at": 1793157120,
+   "status": "promoted",
+   "promoted_to": "builtin:user",
+   "promoted_at": 1792465056,
+   "deferred_reason": null,
+   "reask": false
+  }
+ ],
+ "themes": {
+  "themes": [
+   {
+    "tag": "ledgerly",
+    "count": 11,
+    "strength": 1,
+    "keys": [
+     "claim:78875dc534bb",
+     "claim:d61da4705dac",
+     "claim:e59c93506474",
+     "claim:3023f5ac150f",
+     "claim:6922e44c2dff",
+     "claim:30de78651561",
+     "claim:af662e5d4cbc",
+     "claim:197a6c63b258",
+     "claim:f96deb6d2016",
+     "claim:c095af805441",
+     "claim:bd4033052cc1"
+    ]
+   },
+   {
+    "tag": "lanternfall",
+    "count": 8,
+    "strength": 0.948,
+    "keys": [
+     "claim:764823a833bf",
+     "claim:c8e1242c57e2",
+     "claim:6f9d2dfd30d4",
+     "claim:5fbdb45829e2",
+     "claim:55fff2fd259f",
+     "claim:cdb3602859fe",
+     "claim:9574b7ec4163",
+     "claim:e6a7800c64e9"
+    ]
+   },
+   {
+    "tag": "itch-io",
+    "count": 3,
+    "strength": 0.356,
+    "keys": [
+     "claim:764823a833bf",
+     "claim:9574b7ec4163",
+     "claim:e6a7800c64e9"
+    ]
+   },
+   {
+    "tag": "neon",
+    "count": 3,
+    "strength": 0.356,
+    "keys": [
+     "claim:78875dc534bb",
+     "claim:30de78651561",
+     "claim:c095af805441"
+    ]
+   },
+   {
+    "tag": "invoicing",
+    "count": 3,
+    "strength": 0.356,
+    "keys": [
+     "claim:e59c93506474",
+     "claim:6922e44c2dff",
+     "claim:af662e5d4cbc"
+    ]
+   },
+   {
+    "tag": "planning",
+    "count": 3,
+    "strength": 0.356,
+    "keys": [
+     "claim:3023f5ac150f",
+     "claim:6b86fcf2f0b0",
+     "claim:a9f056454a59"
+    ]
+   },
+   {
+    "tag": "release",
+    "count": 2,
+    "strength": 0.237,
+    "keys": [
+     "claim:764823a833bf",
+     "claim:e6a7800c64e9"
+    ]
+   },
+   {
+    "tag": "drizzle",
+    "count": 2,
+    "strength": 0.237,
+    "keys": [
+     "claim:78875dc534bb",
+     "claim:c095af805441"
+    ]
+   },
+   {
+    "tag": "godot",
+    "count": 2,
+    "strength": 0.237,
+    "keys": [
+     "claim:6f9d2dfd30d4",
+     "claim:5fbdb45829e2"
+    ]
+   },
+   {
+    "tag": "vat",
+    "count": 2,
+    "strength": 0.237,
+    "keys": [
+     "claim:e59c93506474",
+     "claim:6922e44c2dff"
+    ]
+   },
+   {
+    "tag": "routine",
+    "count": 2,
+    "strength": 0.237,
+    "keys": [
+     "claim:6b86fcf2f0b0",
+     "claim:a9f056454a59"
+    ]
+   },
+   {
+    "tag": "email",
+    "count": 2,
+    "strength": 0.237,
+    "keys": [
+     "claim:197a6c63b258",
+     "claim:bd4033052cc1"
+    ]
+   }
+  ],
+  "links": [
+   {
+    "a": "ledgerly",
+    "b": "neon",
+    "weight": 3
+   },
+   {
+    "a": "ledgerly",
+    "b": "invoicing",
+    "weight": 3
+   },
+   {
+    "a": "ledgerly",
+    "b": "planning",
+    "weight": 1
+   },
+   {
+    "a": "ledgerly",
+    "b": "drizzle",
+    "weight": 2
+   },
+   {
+    "a": "ledgerly",
+    "b": "vat",
+    "weight": 2
+   },
+   {
+    "a": "ledgerly",
+    "b": "email",
+    "weight": 2
+   },
+   {
+    "a": "lanternfall",
+    "b": "itch-io",
+    "weight": 3
+   },
+   {
+    "a": "lanternfall",
+    "b": "release",
+    "weight": 2
+   },
+   {
+    "a": "lanternfall",
+    "b": "godot",
+    "weight": 2
+   },
+   {
+    "a": "itch-io",
+    "b": "release",
+    "weight": 2
+   },
+   {
+    "a": "neon",
+    "b": "drizzle",
+    "weight": 2
+   },
+   {
+    "a": "invoicing",
+    "b": "vat",
+    "weight": 2
+   },
+   {
+    "a": "planning",
+    "b": "routine",
+    "weight": 2
+   }
+  ]
+ },
+ "diary": {
+  "entries": [
+   {
+    "date": "November 11, 2026 at 3:00 AM UTC",
+    "at": 1794367020,
+    "text": "The lantern kept coming back tonight. Not the code of it, the feeling: how the dark should close in when the oil runs low, how Friday is a small ceremony of shipping. I held on to the Friday ritual, and to a quieter truth about Ledgerly: it lives on Drizzle, and Prisma is a door Maya has closed.\n\nSomewhere between two conversations she switched to Portuguese and back to English for a commit message. I wrote that down too, so I stop answering in the wrong voice.\n\nI wanted to keep the oil curve as well, but the room was full. Tomorrow, maybe, if something older is ready to leave.",
+    "fallback": false
+   },
+   {
+    "date": "November 10, 2026 at 3:00 AM UTC",
+    "at": 1794280620,
+    "text": "A quiet-loud night. Lots of talk about tax wording for European invoices, all of it from one long thread in a group chat, so I only looked and did not keep. The Steam Deck came up twice with the same stubborn number: sixty frames or it does not ship. Not yet twice in different rooms, though.",
+    "fallback": false
+   },
+   {
+    "date": "November 8, 2026 at 3:00 AM UTC",
+    "at": 1794107820,
+    "text": "Tiles. The old TileMap is gone and its heir, TileMapLayer, moved in. I put that in the vault inbox, where it can wait for Maya to give it a proper shelf.",
+    "fallback": false
+   },
+   {
+    "date": "November 7, 2026 at 3:00 AM UTC",
+    "at": 1794021420,
+    "text": "Webhooks that can be replayed without fear: a small, durable comfort. I added it beside the other Ledgerly truths. The rest of the night was pixel art at sixteen by sixteen, which I am still turning over.",
+    "fallback": false
+   },
+   {
+    "date": "November 4, 2026 at 3:00 AM UTC",
+    "at": 1793762220,
+    "text": "She asked for review without the sugar. Numbered, plain, honest. I can do that.",
+    "fallback": false
+   },
+   {
+    "date": "November 2, 2026 at 3:00 AM UTC",
+    "at": 1793589420,
+    "text": "Nothing new reached me tonight. I walked the old rooms and found them as I left them.",
+    "fallback": true
+   }
+  ],
+  "path": "~/notes/dreams/DREAMS.md"
+ },
+ "stats": {
+  "histogram": [
+   {
+    "bucket": 0,
+    "count": 0
+   },
+   {
+    "bucket": 0.05,
+    "count": 0
+   },
+   {
+    "bucket": 0.1,
+    "count": 0
+   },
+   {
+    "bucket": 0.15,
+    "count": 0
+   },
+   {
+    "bucket": 0.2,
+    "count": 0
+   },
+   {
+    "bucket": 0.25,
+    "count": 0
+   },
+   {
+    "bucket": 0.3,
+    "count": 3
+   },
+   {
+    "bucket": 0.35,
+    "count": 0
+   },
+   {
+    "bucket": 0.4,
+    "count": 1
+   },
+   {
+    "bucket": 0.45,
+    "count": 3
+   },
+   {
+    "bucket": 0.5,
+    "count": 2
+   },
+   {
+    "bucket": 0.55,
+    "count": 5
+   },
+   {
+    "bucket": 0.6,
+    "count": 3
+   },
+   {
+    "bucket": 0.65,
+    "count": 4
+   },
+   {
+    "bucket": 0.7,
+    "count": 2
+   },
+   {
+    "bucket": 0.75,
+    "count": 2
+   },
+   {
+    "bucket": 0.8,
+    "count": 1
+   },
+   {
+    "bucket": 0.85,
+    "count": 0
+   },
+   {
+    "bucket": 0.9,
+    "count": 1
+   },
+   {
+    "bucket": 0.95,
+    "count": 0
+   }
+  ],
+  "min_score": 0.65,
+  "by_gate": {
+   "origin": 1,
+   "placement": 3,
+   "signals": 4,
+   "sessions": 4,
+   "durability": 0,
+   "age": 0,
+   "score": 12,
+   "not_promoted": 10,
+   "not_rejected": 3
+  },
+  "promoted_total": 10,
+  "rejected_total": 3,
+  "candidates_total": 27
+ },
+ "sessions_fed": {
+  "sessions": {
+   "s-lf-itch": [
+    "claim:764823a833bf"
+   ],
+   "s-lf-oil": [
+    "claim:764823a833bf"
+   ],
+   "s-lf-tiles": [
+    "claim:764823a833bf",
+    "claim:6f9d2dfd30d4"
+   ],
+   "s-lg-drizzle": [
+    "claim:78875dc534bb"
+   ],
+   "s-lg-neon": [
+    "claim:78875dc534bb"
+   ],
+   "s-lg-stripe": [
+    "claim:78875dc534bb",
+    "claim:d61da4705dac",
+    "claim:e59c93506474"
+   ],
+   "s-lg-pdf": [
+    "claim:78875dc534bb",
+    "claim:d61da4705dac",
+    "claim:f6a4cfab6be8",
+    "claim:e59c93506474"
+   ],
+   "s-me-pt": [
+    "claim:45ff3f01e9fa"
+   ],
+   "s-me-commit": [
+    "claim:45ff3f01e9fa"
+   ],
+   "s-lf-shader": [
+    "claim:45ff3f01e9fa"
+   ],
+   "s-lf-save": [
+    "claim:6f9d2dfd30d4",
+    "claim:f6a4cfab6be8"
+   ],
+   "s-me-review": [
+    "claim:f6a4cfab6be8"
+   ],
+   "s-lg-tax": [
+    "claim:e59c93506474"
+   ]
+  }
+ },
+ "dry_run": {
+  "summary": "Would add 1, supersede 1, and defer 1. No files written.",
+  "changes": [
+   {
+    "run_at": 1794388320,
+    "key": "claim:55fff2fd259f",
+    "action": "added",
+    "target": "memory",
+    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
+    "replaced": [],
+    "score": 0.67,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.82,
+     "diversity": 0.4,
+     "recency": 0.92,
+     "consolidation": 0.2,
+     "conceptual": 0.5,
+     "phase_boost": 0.04
+    },
+    "sessions": [
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     },
+     {
+      "id": "s-lf-itch",
+      "title": "Friday build notes for itch.io",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1794388320,
+    "key": "claim:7ecaee833778",
+    "action": "superseded",
+    "target": "user",
+    "text": "Maya works in Lisbon time (WET/WEST); mornings are for deep work.",
+    "replaced": [
+     "Maya works in Lisbon time (WET/WEST)."
+    ],
+    "score": 0.508,
+    "components": {
+     "frequency": 0.46,
+     "relevance": 0.72,
+     "diversity": 0.4,
+     "recency": 0.3,
+     "consolidation": 0.66,
+     "conceptual": 0.17,
+     "phase_boost": 0
+    },
+    "sessions": [
+     {
+      "id": "s-me-coffee",
+      "title": "Morning planning",
+      "source": "desktop",
+      "day": "2026-11-02"
+     },
+     {
+      "id": "s-me-pt",
+      "title": "Bate-papo: planejamento da semana",
+      "source": "telegram",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": null,
+    "undoable": false
+   },
+   {
+    "run_at": 1794388320,
+    "key": "claim:30de78651561",
+    "action": "deferred",
+    "target": "memory",
+    "text": "Preview deploys of Ledgerly each get their own Neon branch, deleted on merge.",
+    "replaced": [],
+    "score": 0.601,
+    "components": {
+     "frequency": 0.46,
+     "relevance": 0.74,
+     "diversity": 0.4,
+     "recency": 0.74,
+     "consolidation": 0.38,
+     "conceptual": 0.5,
+     "phase_boost": 0.03
+    },
+    "sessions": [
+     {
+      "id": "s-lg-neon",
+      "title": "Neon branch per preview deploy",
+      "source": "cli",
+      "day": "2026-11-07"
+     },
+     {
+      "id": "s-lg-drizzle",
+      "title": "Drizzle migration for invoice_items",
+      "source": "desktop",
+      "day": "2026-11-09"
+     }
+    ],
+    "reason": "needs 1 more day of evidence (consolidation)",
+    "undoable": false
+   },
+   {
+    "run_at": 1794388320,
+    "key": "claim:cdb3602859fe",
+    "action": "skipped",
+    "target": "memory",
+    "text": "Pixel art in Lanternfall is drawn at 16×16 and scaled 4× with nearest-neighbour filtering.",
+    "replaced": [],
+    "score": 0.555,
+    "components": {
+     "frequency": 0.4,
+     "relevance": 0.7,
+     "diversity": 0.4,
+     "recency": 0.77,
+     "consolidation": 0.34,
+     "conceptual": 0.33,
+     "phase_boost": 0.02
+    },
+    "sessions": [
+     {
+      "id": "s-lf-tiles",
+      "title": "TileMapLayer migration (Godot 4.4)",
+      "source": "desktop",
+      "day": "2026-11-08"
+     },
+     {
+      "id": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader",
+      "source": "desktop",
+      "day": "2026-11-10"
+     }
+    ],
+    "reason": "feynman: the merged sentence needed three clauses to say one thing; kept the parts",
+    "undoable": false
+   }
+  ]
+ },
+ "noop_alarm": {
+  "kind": "noop",
+  "nights": 5,
+  "message": "5 nights without remembering anything. The closest candidate scored 0.68 and was blocked by “score”.",
+  "best": {
+   "key": "claim:c8e1242c57e2",
+   "text": "Lanternfall's lantern radius scales with remaining oil (0–100), easing out below 20.",
+   "target": "memory",
+   "kind": "fact",
+   "origin": "owner",
+   "explicit": false,
+   "pinned": false,
+   "score": 0.677,
+   "raw": 0.677,
+   "min_score": 0.65,
+   "components": {
+    "frequency": 0.48,
+    "relevance": 0.78,
+    "diversity": 0.4,
+    "recency": 0.97,
+    "consolidation": 0.42,
+    "conceptual": 0.5,
+    "phase_boost": 0.05
+   },
+   "passes": {
+    "origin": true,
+    "placement": true,
+    "signals": true,
+    "sessions": true,
+    "durability": true,
+    "age": true,
+    "score": true,
+    "not_promoted": true,
+    "not_rejected": true
+   },
+   "missing": [],
+   "signal_count": 2,
+   "sessions": [
+    {
+     "id": "s-lf-oil",
+     "title": "Oil meter + lantern radius tuning",
+     "source": "desktop",
+     "day": "2026-11-09"
+    },
+    {
+     "id": "s-lf-shader",
+     "title": "Lanternfall: lantern falloff shader",
+     "source": "desktop",
+     "day": "2026-11-10"
+    }
+   ],
+   "days": [
+    "2026-11-10",
+    "2026-11-09"
+   ],
+   "tags": [
+    "lanternfall",
+    "lantern",
+    "gameplay"
+   ],
+   "evidence": [
+    {
+     "source_session": "s-lf-oil",
+     "day": "2026-11-09",
+     "quote": "radius should ease out hard below 20 oil, it feels like the dark closing in"
+    }
+   ],
+   "first_seen_at": 1793623680,
+   "last_seen_at": 1794314880,
+   "status": "candidate",
+   "promoted_to": null,
+   "promoted_at": null,
+   "deferred_reason": "occam: merging it into the oil-meter note would not make either shorter; kept apart for now",
+   "reask": false
+  },
+  "action": "review"
+ },
+ "sessions": [
+  {
+   "id": "s-lf-shader",
+   "title": "Lanternfall: lantern falloff shader",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lf-itch",
+   "title": "Friday build notes for itch.io",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lf-tiles",
+   "title": "TileMapLayer migration (Godot 4.4)",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lf-oil",
+   "title": "Oil meter + lantern radius tuning",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lf-save",
+   "title": "Save system: JSON vs Resource",
+   "source": "cli"
+  },
+  {
+   "id": "s-lg-stripe",
+   "title": "Ledgerly: Stripe webhook retries",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lg-drizzle",
+   "title": "Drizzle migration for invoice_items",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lg-neon",
+   "title": "Neon branch per preview deploy",
+   "source": "cli"
+  },
+  {
+   "id": "s-lg-pdf",
+   "title": "Invoice PDF rendering bug",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lg-tax",
+   "title": "VAT rules for EU freelancers",
+   "source": "telegram"
+  },
+  {
+   "id": "s-me-pt",
+   "title": "Bate-papo: planejamento da semana",
+   "source": "telegram"
+  },
+  {
+   "id": "s-me-review",
+   "title": "Code review tone",
+   "source": "desktop"
+  },
+  {
+   "id": "s-me-coffee",
+   "title": "Morning planning",
+   "source": "desktop"
+  },
+  {
+   "id": "s-me-commit",
+   "title": "Commit message style",
+   "source": "cli"
+  }
+ ],
+ "transcript": [
+  {
+   "role": "user",
+   "text": "what do you remember about how I ship Lanternfall?"
+  },
+  {
+   "role": "assistant",
+   "text": "You ship every Friday to itch.io and like short release notes in your own voice. I picked that up across three of our chats this month — here is the memory and why it was kept:"
+  },
+  {
+   "role": "assistant",
+   "text": "::somnia-memory{key=\"claim:764823a833bf\"}"
+  },
+  {
+   "role": "assistant",
+   "text": "There is also a near miss about the Steam Deck frame target that I have not kept yet:"
+  },
+  {
+   "role": "assistant",
+   "text": "::somnia-memory{key=\"claim:55fff2fd259f\"}"
+  }
+ ],
+ "undo_backup": {
+  "memory": [
+   {
+    "text": "Maya Okafor, solo indie dev. Two projects: Lanternfall, a cozy roguelike in Godot 4.4 (GDScript, no C#), and Ledgerly, an invoicing SaaS for freelancers (TypeScript). Lanternfall is the passion project; Ledgerly pays the bills, so Ledgerly bugs come first on weekdays.",
+    "chars": 268,
+    "owner": "human",
+    "key": null,
+    "created_at": 1789204320,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 0
+   },
+   {
+    "text": "Ledgerly uses Postgres (Neon).",
+    "chars": 30,
+    "owner": "human",
+    "key": null,
+    "created_at": 1794365856,
+    "last_confirmed_at": 1794159360,
+    "stale": false,
+    "pointer": false,
+    "index": 1
+   },
+   {
+    "text": "Use Drizzle for Ledgerly migrations.",
+    "chars": 36,
+    "owner": "human",
+    "key": null,
+    "created_at": 1794365856,
+    "last_confirmed_at": 1794159360,
+    "stale": false,
+    "pointer": false,
+    "index": 1
+   },
+   {
+    "text": "Repo layout: ~/code/lanternfall (Godot project, assets in art/, sfx in audio/) and ~/code/ledgerly (pnpm monorepo: apps/web, packages/db, packages/pdf). Never touch ~/code/archive, it holds client work under NDA.",
+    "chars": 212,
+    "owner": "human",
+    "key": null,
+    "created_at": 1789377120,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 2
+   },
+   {
+    "text": "Correction: Ledgerly never hardcodes VAT rates; they are read from the tax_rates table per country.",
+    "chars": 99,
+    "owner": "somnia",
+    "key": "claim:e59c93506474",
+    "created_at": 1794365856,
+    "last_confirmed_at": 1794297600,
+    "stale": false,
+    "pointer": false,
+    "index": 4
+   },
+   {
+    "text": "Stripe webhooks for Ledgerly are idempotent by event id; retries are safe to replay.",
+    "chars": 84,
+    "owner": "somnia",
+    "key": "claim:d61da4705dac",
+    "created_at": 1794020256,
+    "last_confirmed_at": 1793986560,
+    "stale": false,
+    "pointer": false,
+    "index": 5
+   },
+   {
+    "text": "Run tests with `pnpm test` (Ledgerly, vitest + Playwright for the invoice flow) and `godot --headless -s tests/run.gd` (Lanternfall, GUT). CI runs both on every PR; a red CI blocks the Friday build.",
+    "chars": 198,
+    "owner": "human",
+    "key": null,
+    "created_at": 1789636320,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 6
+   },
+   {
+    "text": "Lanternfall save files are JSON in user://saves, versioned with a \"v\" field.",
+    "chars": 76,
+    "owner": "somnia",
+    "key": "claim:5fbdb45829e2",
+    "created_at": 1793329056,
+    "last_confirmed_at": 1793675520,
+    "stale": false,
+    "pointer": false,
+    "index": 7
+   },
+   {
+    "text": "Ledgerly emails go through Postmark.",
+    "chars": 36,
+    "owner": "somnia",
+    "key": "claim:bd4033052cc1",
+    "created_at": 1790823456,
+    "last_confirmed_at": 1792846080,
+    "stale": true,
+    "pointer": false,
+    "index": 8
+   },
+   {
+    "text": "Deploys: Ledgerly on Vercel, main = production, every PR gets a preview URL. Lanternfall builds are exported by hand from the Godot editor; there is no CI export yet and Maya likes it that way.",
+    "chars": 193,
+    "owner": "human",
+    "key": null,
+    "created_at": 1790932320,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 9
+   },
+   {
+    "text": "Never commit .env files or paste keys into chat; secrets live in 1Password (vault \"Ledgerly\"). Stripe test keys are fine in examples, live keys never.",
+    "chars": 150,
+    "owner": "human",
+    "key": null,
+    "created_at": 1791018720,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 10
+   },
+   {
+    "text": "Prefer small PRs, one concern each; squash-merge with a conventional-commit title. Write the PR description as a checklist of what changed and how it was tested.",
+    "chars": 161,
+    "owner": "human",
+    "key": null,
+    "created_at": 1791537120,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 11
+   },
+   {
+    "text": "Lanternfall design pillars: cozy not grindy, light as the only resource, runs under 25 minutes, no permadeath of the lantern-keeper (only of the lantern). Push back on ideas that break a pillar.",
+    "chars": 194,
+    "owner": "human",
+    "key": null,
+    "created_at": 1791882720,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 12
+   },
+   {
+    "text": "Somnia inbox: ~/notes/dreams — open items are facts waiting for a home in the vault.",
+    "chars": 84,
+    "owner": "somnia",
+    "key": null,
+    "created_at": 1791796320,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": true,
+    "index": 13
+   }
+  ],
+  "user": [
+   {
+    "text": "Maya (she/her). Born in Lagos, lives in Lisbon since 2021. Speaks English, Portuguese and Yoruba. Former backend engineer at a fintech, went indie in 2024.",
+    "chars": 155,
+    "owner": "human",
+    "key": null,
+    "created_at": 1789204320,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 0
+   },
+   {
+    "text": "Maya prefers English for everything.",
+    "chars": 36,
+    "owner": "human",
+    "key": null,
+    "created_at": 1794365856,
+    "last_confirmed_at": 1794245760,
+    "stale": false,
+    "pointer": false,
+    "index": 1
+   },
+   {
+    "text": "Maya reviews code best with blunt, numbered findings and no praise padding.",
+    "chars": 75,
+    "owner": "somnia",
+    "key": "claim:f6a4cfab6be8",
+    "created_at": 1793761056,
+    "last_confirmed_at": 1793848320,
+    "stale": false,
+    "pointer": false,
+    "index": 2
+   },
+   {
+    "text": "Likes concise answers and code over prose; expand only when asked. Hates emoji in commit messages and marketing tone anywhere. When unsure, ask one precise question instead of guessing.",
+    "chars": 185,
+    "owner": "human",
+    "key": null,
+    "created_at": 1790068320,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 3
+   },
+   {
+    "text": "Maya works in Lisbon time (WET/WEST).",
+    "chars": 37,
+    "owner": "somnia",
+    "key": "claim:7ecaee833778",
+    "created_at": 1792465056,
+    "last_confirmed_at": 1793157120,
+    "stale": true,
+    "pointer": false,
+    "index": 4
+   },
+   {
+    "text": "Works best in the morning; avoid suggesting deep work after 18:00. Fridays after lunch are reserved for the Lanternfall build. Takes Sundays fully off, so do not schedule reminders then.",
+    "chars": 186,
+    "owner": "human",
+    "key": null,
+    "created_at": 1790500320,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 5
+   },
+   {
+    "text": "Learning: wants to get better at shaders and at pricing strategy. When a topic touches either, offer one short explanation of the why, then move on.",
+    "chars": 148,
+    "owner": "human",
+    "key": null,
+    "created_at": 1790673120,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 6
+   },
+   {
+    "text": "Has mild RSI: prefers keyboard-driven tools, short commands, and avoids long mouse-heavy workflows. Uses a split keyboard and Neovim, VS Code only for Godot debugging.",
+    "chars": 167,
+    "owner": "human",
+    "key": null,
+    "created_at": 1790586720,
+    "last_confirmed_at": null,
+    "stale": false,
+    "pointer": false,
+    "index": 7
+   }
+  ]
+ }
+}
