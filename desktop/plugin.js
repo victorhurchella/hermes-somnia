@@ -884,9 +884,39 @@ function remember(key, value) {
 
 // ==== rpc + data hooks ======================================================
 
-function rpc(method, params = {}, timeoutMs) {
-  if (typeof host.request !== 'function') return Promise.reject(new Error('host.request unavailable'))
-  return host.request(RPC_PREFIX + method, params, timeoutMs)
+// Two doors to the Python half. A backend with a session authority (the messaging gateway) serves the
+// plugin's RPC methods; a standalone dashboard answers them with -32601 but mounts the plugin's REST
+// routes (dashboard/plugin_api.py). The first door that answers is remembered for the session.
+let transport = null // 'rpc' | 'rest' | null (unknown yet)
+let rest = null
+
+function viaRest(method, params, timeoutMs) {
+  return rest(`/rpc/${method}`, { method: 'POST', body: params || {}, timeoutMs })
+}
+
+async function rpc(method, params = {}, timeoutMs) {
+  const canRpc = typeof host.request === 'function'
+  const canRest = typeof rest === 'function'
+  if (transport === 'rest' && canRest) return viaRest(method, params, timeoutMs)
+  if (!canRpc) {
+    if (canRest) return viaRest(method, params, timeoutMs)
+    throw new Error('host.request unavailable')
+  }
+  try {
+    const out = await host.request(RPC_PREFIX + method, params, timeoutMs)
+    transport = 'rpc'
+    return out
+  } catch (err) {
+    if (!isDisabledError(err) || !canRest) throw err
+    try {
+      const out = await viaRest(method, params, timeoutMs)
+      transport = 'rest'
+      return out
+    } catch (restErr) {
+      if (/\b(404|403)\b|not found|forbidden/i.test(String(restErr && restErr.message))) throw err
+      throw restErr
+    }
+  }
 }
 
 /** -32601: the gateway does not know the method → Python half not enabled. */
@@ -3038,6 +3068,7 @@ export default {
     i18n = ctx.i18n && typeof ctx.i18n.register === 'function' && typeof ctx.i18n.t === 'function' ? ctx.i18n : null
     if (i18n) i18n.register(LOCALES)
     storage = ctx.storage || null
+    rest = typeof ctx.rest === 'function' ? (path, opts) => ctx.rest(path, opts) : null
     langPick = stored('lang', 'auto')
     $seenRun.set(stored('seen_run', 0))
     $dismissed.set(stored('dismissed', []))
@@ -3097,6 +3128,8 @@ export default {
       STORES.forEach(s => s.reset())
       serverPrinciples = null
       storage = null
+      rest = null
+      transport = null
       i18n = null
     })
   }

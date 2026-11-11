@@ -1,0 +1,10 @@
+{
+  "name": "hermes-somnia",
+  "label": "Somnia",
+  "description": "Backend routes for the Somnia desktop page (memory dreaming).",
+  "icon": "Moon",
+  "version": "0.2.0",
+  "tab": { "path": "/somnia", "hidden": true },
+  "entry": "dist/index.js",
+  "api": "plugin_api.py"
+}
