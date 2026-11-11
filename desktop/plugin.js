@@ -431,7 +431,7 @@ const EN = {
   },
   disabled: {
     title: 'Somnia’s Python half is not enabled',
-    body: 'This page reads its data from the plugin’s gateway methods. Enable the plugin, restart the gateway, then retry:',
+    body: 'The backend this app is connected to has not loaded Somnia’s Python half. In Capabilities → Plugins, turn Somnia’s agent plugin off and on again (that loads it into this backend), or enable it and restart the backend:',
     command: 'hermes plugins enable hermes-somnia'
   },
   gateway: { waiting: 'Waiting for the gateway…' },
@@ -741,7 +741,7 @@ const PT = {
   },
   disabled: {
     title: 'A parte Python do Somnia não está ativada',
-    body: 'Esta página lê os dados pelos métodos do plugin no gateway. Ative o plugin, reinicie o gateway e tente de novo:',
+    body: 'O backend ao qual este app está conectado não carregou a parte Python do Somnia. Em Capabilities → Plugins, desligue e ligue de novo o plugin de agente do Somnia (isso carrega ele neste backend), ou ative e reinicie o backend:',
     command: 'hermes plugins enable hermes-somnia'
   },
   gateway: { waiting: 'Esperando o gateway…' },
