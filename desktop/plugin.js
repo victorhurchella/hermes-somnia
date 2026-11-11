@@ -1666,7 +1666,7 @@ function EntryEditor({ budget, entry, onDone }) {
   return h(
     'div',
     { className: 'smn-editor' },
-    Textarea ? h(Textarea, props) : h('textarea', props),
+    Textarea ? h(Textarea, props) : h('textarea', { ...props, className: 'smn-textarea smn-textarea-native' }),
     h(
       'div',
       { className: 'smn-editor-foot' },
@@ -2727,7 +2727,7 @@ const STYLESHEET = `
 /* editor */
 .smn-editor{display:flex;flex-direction:column;gap:6px}
 .smn-textarea{width:100%;resize:vertical;font:inherit;font-size:0.8125rem;line-height:1.5}
-textarea.smn-textarea:not([data-slot]){padding:6px 8px;border-radius:4px;border:1px solid var(--ui-stroke-secondary);background:var(--ui-bg-input,transparent);color:var(--ui-text-primary)}
+textarea.smn-textarea-native{padding:6px 8px;border-radius:4px;border:1px solid var(--ui-stroke-secondary);background:var(--ui-bg-input,transparent);color:var(--ui-text-primary)}
 .smn-editor-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
 
 /* almost there */

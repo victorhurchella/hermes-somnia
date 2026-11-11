@@ -1,4 +1,8 @@
+![Somnia](docs/banner.png)
+
 # Somnia
+
+<a href="hermes://plugin/install?repo=victorhurchella/hermes-somnia&enable=1"><b>Install in Hermes</b></a>
 
 **Your Hermes agent sleeps on what you told it, and wakes up remembering what matters.**
 
@@ -54,6 +58,9 @@ leave a trail you can check. Somnia does that offline, every night, inside Herme
 
 ## Install
 
+In the desktop app: **Capabilities → Plugins**, search for *Somnia*, then Install. Or use the link at the top of
+this page, or the terminal:
+
 ```bash
 hermes plugins install victorhurchella/hermes-somnia --enable
 hermes somnia setup              # installs the nightly job (03:00, script only)
@@ -61,7 +68,9 @@ hermes somnia run --dry-run -v   # preview a night: nothing is written
 hermes somnia doctor             # check the wiring
 ```
 
-Desktop app: turn on **Somnia** under *Settings → Plugins* to get the sidebar page.
+The sidebar page appears under **Capabilities** once the plugin is on; its settings live in
+*Settings → Plugins → Somnia*. Against a remote Hermes backend, install from the desktop app with the Desktop
+component checked so the page is copied to your machine.
 
 Cost: the night job has no agent turn. Somnia's own LLM calls go through your Hermes provider: one extraction call
 per ~20k chars of new conversation (at most 12 a night), one consolidation call per memory file that changes,
@@ -120,6 +129,21 @@ plugins:
 - **Everything is reversible.** Writes go through Hermes' own MemoryStore (lock, atomic write, injection scan).
   There is a backup before every write and `hermes somnia undo`. "Forget" is permanent: a forgotten fact is only
   offered again if it keeps coming back for 6 months.
+
+## What it touches (disclosure)
+
+- **Reads:** Hermes' session store (`state.db`, read-only), `MEMORY.md`/`USER.md`, `config.yaml`, `cron/jobs.json`
+  (to find its own job), and, in vault mode, the vault folder you point it to.
+- **Writes:** `MEMORY.md`/`USER.md` through Hermes' own MemoryStore (or the `/memory pending` queue with
+  `destructive: stage`), its own state in `$HERMES_HOME/plugin-data/hermes-somnia/`, a backup before every write,
+  one cron job (`hermes somnia setup`) plus its script in `$HERMES_HOME/scripts/`, and, in vault mode, only
+  `<vault>/somnia/`.
+- **Model calls:** your own Hermes provider (or `auxiliary.somnia`). The prompts contain excerpts of your user turns
+  and the agent's final replies, with secrets masked first. No other network calls, no telemetry, no credentials.
+- **Private Hermes modules:** `tools.memory_tool` (atomic, locked memory writes), `tools.write_approval` (the
+  approval queue), `agent.auxiliary_client` (the `auxiliary.somnia` model in the night job) and
+  `hermes_cli.plugins_state` (saving settings from the page). There is no public seam for these yet. Each one is
+  isolated in `hermes_somnia/hermes_api.py` and has a fallback.
 
 ## Docs
 

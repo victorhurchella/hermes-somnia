@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;width:1200px;height:600px;overflow:hidden}
+body{background:radial-gradient(ellipse at 78% 22%,#2a2350 0%,#14122a 45%,#0b0a18 100%);font-family:"Inter","Segoe UI",system-ui,sans-serif;color:#ece8ff;position:relative}
+.star{position:absolute;border-radius:50%;background:#fff}
+.moon{position:absolute;right:150px;top:110px;width:190px;height:190px;border-radius:50%;box-shadow:-38px 22px 0 0 #f3e9c6;filter:drop-shadow(0 0 40px rgba(243,233,198,.35))}
+.wrap{position:absolute;left:96px;top:150px;width:640px}
+.kicker{font-size:20px;letter-spacing:.24em;text-transform:uppercase;color:#a99be8;margin-bottom:22px}
+h1{font-size:118px;line-height:1;margin:0;font-weight:700;letter-spacing:-.03em;background:linear-gradient(90deg,#fff 0%,#c9bdff 100%);-webkit-background-clip:text;color:transparent}
+p{font-size:29px;line-height:1.4;margin:28px 0 0;color:#cfc8f2}
+.phases{position:absolute;left:96px;bottom:70px;display:flex;gap:14px}
+.ph{font-size:18px;padding:9px 18px;border-radius:999px;border:1px solid rgba(201,189,255,.35);color:#ddd6ff;background:rgba(255,255,255,.04)}
+.arrow{color:#7d70bd;font-size:18px;padding-top:9px}
+</style></head><body>
+<div id="stars"></div>
+<div class="moon"></div>
+<div class="wrap">
+  <div class="kicker">Memory dreaming for Hermes</div>
+  <h1>Somnia</h1>
+  <p>Your agent sleeps on what you told it, and wakes up remembering what matters.</p>
+</div>
+<div class="phases"><span class="ph">Light</span><span class="arrow">→</span><span class="ph">REM</span><span class="arrow">→</span><span class="ph">Deep</span><span class="arrow">→</span><span class="ph">Dream Diary</span></div>
+<script>
+let s=7;const r=()=>(s=(s*16807)%2147483647)/2147483647;const box=document.getElementById('stars');
+for(let i=0;i<120;i++){const d=document.createElement('div');d.className='star';const z=r()*2.2+.6;Object.assign(d.style,{left:r()*1200+'px',top:r()*600+'px',width:z+'px',height:z+'px',opacity:(.25+r()*.6).toFixed(2)});box.appendChild(d)}
+</script>
+</body></html>
