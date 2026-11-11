@@ -50,10 +50,10 @@ config_schema:
     description: Keep one short MEMORY.md entry telling the agent where the dream inbox lives
   destructive:
     type: str
-    choices: [stage, apply]
-    default: stage
+    choices: [apply, stage]
+    default: apply
     label: Merges and removals
-    description: "stage = merges/replacements wait in /memory pending for your approval; apply = write them directly (backups kept, `hermes dreaming undo`)"
+    description: "apply = write merges/replacements directly, like OpenClaw (backup before every write, `hermes dreaming undo`); stage = they wait in /memory pending for your approval"
   max_promotions:
     type: int
     default: 3

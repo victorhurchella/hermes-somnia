@@ -33,7 +33,7 @@ class Settings:
     # builtin sink
     targets: list = field(default_factory=lambda: ["memory", "user"])
     headroom: float = 0.10  # keep this fraction of each char budget free after a dream
-    destructive: str = "stage"  # stage (-> /memory pending) | apply
+    destructive: str = "apply"  # apply (OpenClaw parity; backup + undo) | stage (-> /memory pending)
     max_entry_chars: int = 300
     max_prior_entry_loss_fraction: float = 0.25
     # vault sink

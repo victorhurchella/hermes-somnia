@@ -181,7 +181,7 @@ class SweepTests(unittest.TestCase):
         self.assertEqual(again.light.fragments, 0)
         self.assertEqual(again.selected, [])
 
-    def test_merge_is_staged_by_default(self):
+    def _merge(self, settings):
         mem = FakeMemory(self.tmp, memory=["eixo uses pnpm."])
 
         def consolidate(payload):
@@ -189,8 +189,20 @@ class SweepTests(unittest.TestCase):
             return {"operations": [{"candidateKey": c["key"], "action": "merged", "priorEntries": [0],
                                     "text": "Project eixo builds and deploys with pnpm 12, not npm."}]}
 
-        s = run_sweep(self.settings, complete=ScriptedLLM(extract=_extract, consolidate=consolidate), backend=mem,
+        s = run_sweep(settings, complete=ScriptedLLM(extract=_extract, consolidate=consolidate), backend=mem,
                       now=NOW, base_dir=self.tmp / "state", sessions_db=self.db)
+        return mem, s
+
+    def test_merge_is_applied_by_default_like_openclaw(self):
+        mem, s = self._merge(self.settings)
+        self.assertEqual(mem.data["memory"], ["Project eixo builds and deploys with pnpm 12, not npm."])
+        self.assertEqual(mem.staged, [])
+        backups = list((self.tmp / "state" / "runs").glob("*/MEMORY.md"))
+        self.assertEqual([b.read_text() for b in backups], ["eixo uses pnpm."])
+
+    def test_merge_is_staged_when_configured(self):
+        self.settings.destructive = "stage"
+        mem, s = self._merge(self.settings)
         self.assertEqual(mem.data["memory"], ["eixo uses pnpm."])
         self.assertEqual(len(mem.staged), 1)
         self.assertEqual(s.sinks[0].staged_id, "p1")

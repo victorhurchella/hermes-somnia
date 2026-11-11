@@ -14,8 +14,8 @@ A nightly script-only cron job (`hermes-dreaming`) consolidates memory offline, 
 3. **Deep** scores every candidate on six signals (frequency, relevance, session diversity, recency,
    consolidation across days, conceptual richness) plus the Light/REM boost. At most 3 per night pass every
    gate. They are then written:
-   - `builtin`: merged into MEMORY.md / USER.md under the char budget. Merges and replacements wait in
-     `/memory pending` unless `destructive: apply`.
+   - `builtin`: merged into MEMORY.md / USER.md under the char budget, written directly like OpenClaw.
+     With `destructive: stage`, merges and replacements wait in `/memory pending` instead.
    - `vault`: appended as checkboxes to `<vault>/<vault_folder>/YYYY-MM-DD.md` (status: inbox).
 
 ## When the user asks about it

@@ -52,7 +52,7 @@ Safety rails in OpenClaw worth knowing:
 | `MEMORY.md` is a large, unbounded file | `MEMORY.md`/`USER.md` have a hard character budget (2,200 / 1,375 by default) | **Curation, not accumulation.** The LLM plan can add, merge into, or supersede existing entries. It may only evict entries dreaming itself created (tracked by hash). It must leave 10% headroom, and at most 3 promotions per night. |
 | Inline markers in `MEMORY.md` (`<!-- importance -->`, source refs) | Every character of the budget is prompt space | No inline metadata. Provenance lives in the plugin's SQLite sidecar. |
 | Gates: ≥3 recalls, ≥3 unique queries, score ≥ 0.75 | Different signals | ≥2 signals, ≥2 distinct sessions, durability ≥ 0.5, score ≥ 0.65. An explicit owner instruction ("remember…", "from now on…") counts as recurrence on its own. |
-| Consolidation writes directly | Hermes has a write-approval queue (`/memory pending`) | Merges, replacements and evictions are **staged for approval by default** (`destructive: stage`). Plain additions are applied. |
+| Consolidation writes directly, with a preimage backup | Hermes has a write-approval queue (`/memory pending`) | Writes directly too (`destructive: apply`, default), with a backup and `hermes dreaming undo`. `destructive: stage` sends merges, replacements and evictions to `/memory pending` instead. |
 | Multi-workspace fan-out, sentinel cron message caught by a hook | Hermes has script-only cron jobs | One `--no-agent` script job. It costs nothing beyond the dreaming LLM calls, and stdout is the delivery. |
 
 REM themes also need a tag to appear in at least 2 candidates (with OpenClaw's formula alone, every tag of a

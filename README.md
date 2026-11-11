@@ -81,7 +81,7 @@ plugins:
         vault_path: ~/notes            # else $OBSIDIAN_VAULT_PATH, else $WIKI_PATH
         vault_folder: dreams           # the only place dreaming writes in the vault
         protected_paths: [self, journal]
-        destructive: stage             # stage merges/removals for /memory pending, or apply
+        destructive: apply             # apply (like OpenClaw) or stage merges/removals for /memory pending
         max_promotions: 3
         min_sessions: 2
         schedule: "0 3 * * *"
@@ -109,9 +109,10 @@ plugins:
 - **Recurrence, not one-offs.** A fact needs at least 2 observations in at least 2 distinct sessions,
   durability ≥ 0.5 and a score ≥ 0.65. The one exception is an explicit instruction from you ("remember…",
   "from now on…").
-- **Deletions need your approval.** Merges, replacements and evictions go to Hermes' own `/memory pending`
-  queue (`/memory approve <id>`). Only plain additions are applied directly. Dreaming may only evict entries
-  it created itself.
+- **No review needed, everything reviewable.** Like OpenClaw, dreaming writes on its own: you don't approve
+  anything. Each night's changes are listed in `DREAMS.md` (`## Deep Sleep`), and a backup is taken before every
+  write. Prefer to approve merges and removals yourself? Set `destructive: stage` and they go to Hermes'
+  `/memory pending` queue. Either way, dreaming only evicts entries it created itself.
 - **The model plans, the host checks.** A consolidation plan is rejected if it touches unknown entries,
   replaces more than 25% of the store, exceeds the budget, or puts numbers, paths or URLs into a rewritten
   entry that weren't in its sources. A rejected plan falls back to append-only.
