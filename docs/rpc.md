@@ -110,7 +110,7 @@ type Overview = {
   destinations: 'builtin' | 'vault' | 'both';
   destructive: 'apply' | 'stage';
   schedule: string; timezone: string;
-  cron: { installed: boolean; id: string | null; next_run_at: string | null; state: string | null };
+  cron: { installed: boolean; id: string | null; next_run_at: string | null; state: string | null; created_at?: string };
   llm: { provider: string | null; model: string | null; task: string };   // what the sweep will call
   last_run: { at: number; dry_run: boolean; summary: string } | null;
   budgets: Budget[];                      // memory + user (only targets that are enabled)

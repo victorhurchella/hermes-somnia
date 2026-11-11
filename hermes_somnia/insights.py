@@ -78,7 +78,8 @@ def alarm(store: Store, settings: Settings, budgets: list[dict], cron: Optional[
                 "best": None, "action": "review"}
     if cron and cron.get("installed"):
         last = ns[-1]["started_at"] if ns else None
-        if last is None or now - last > 2.5 * DAY_S:
+        since = last if last is not None else _ts(cron.get("created_at"))
+        if since is not None and now - since > 2.5 * DAY_S:
             days = "never" if last is None else f"{(now - last) / DAY_S:.0f} days ago"
             return {"kind": "stale_cron", "nights": 0, "action": "run",
                     "message": f"The nightly job is installed but the last sweep ran {days}. Is the Hermes gateway running?",
@@ -89,6 +90,17 @@ def alarm(store: Store, settings: Settings, budgets: list[dict], cron: Optional[
                     "message": f"{b['target'].upper()}.md is {b['used']}/{b['limit']} chars and every entry is yours: "
                                "Somnia cannot add anything there. Free some room or use the vault."}
     return None
+
+
+def _ts(value) -> Optional[float]:
+    if value in (None, ""):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
 
 
 # --- memory budgets ---

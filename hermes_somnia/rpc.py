@@ -67,7 +67,8 @@ def _cron() -> dict:
     if not job:
         return {"installed": False, "id": None, "next_run_at": None, "state": None}
     return {"installed": True, "id": job.get("id"), "next_run_at": job.get("next_run_at"),
-            "state": job.get("state") or ("paused" if job.get("paused") else "scheduled")}
+            "state": job.get("state") or ("paused" if job.get("paused") else "scheduled"),
+            "created_at": job.get("created_at")}
 
 
 def _rejected_keys(store: Store) -> set[str]:
@@ -158,11 +159,18 @@ def changes(params: dict, **_) -> dict:
         titles = session_titles(sessions_db_path(), ids)
         latest_applied = store.latest_change_run()
         out = []
+        days: dict[tuple, str] = {}
+        for key in {c["key"] for c in items if c["key"]}:
+            e = store.entry(key)
+            for marker in (e.sources if e else []):
+                sid, _, day = marker.rpartition("@")
+                days.setdefault((key, sid), day)
         for c in items:
             out.append({
                 "run_at": c["at"], "key": c["key"], "action": c["action"], "target": c["target"], "text": c["text"],
                 "replaced": c["replaced"], "score": c["score"] or 0.0, "components": c["components"],
-                "sessions": [{"id": sid, **{k: titles.get(sid, {}).get(k) for k in ("title", "source")}, "day": ""}
+                "sessions": [{"id": sid, **{k: titles.get(sid, {}).get(k) for k in ("title", "source")},
+                              "day": days.get((c["key"], sid), "")}
                              for sid in reversed(c["sessions"])],
                 "reason": c["reason"],
                 "undoable": run_id == latest_applied and c["action"] in ("added", "merged", "superseded", "evicted"),

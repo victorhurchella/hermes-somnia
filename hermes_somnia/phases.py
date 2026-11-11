@@ -54,6 +54,7 @@ _EXPLICIT_RE = re.compile(
     r"\b(remember|from now on|always|never|lembr[ae]|a partir de agora|sempre|nunca|não quero|prefiro|i prefer)\b",
     re.I)
 _CORRECTION_RE = re.compile(r"\b(n[aã]o era|errad[oa]|wrong|that's not|isso n[aã]o|never do|nunca fa[cç]a)\b", re.I)
+_CUE_PREFIX_RE = re.compile(r"^\s*(please\s+)?(remember|note|lembr[ae](-se)?|anota)\s*(that|que)?\s*[:,-]?\s*", re.I)
 UNGROUNDED_PENALTY = 0.85
 
 
@@ -174,7 +175,9 @@ def heuristic_observations(chunk: list[Fragment]) -> list[Observation]:
     for f in chunk:
         if f.role == "user" and f.origin == "owner" and len(f.text) <= 400 and _EXPLICIT_RE.search(f.text):
             kind = "correction" if _CORRECTION_RE.search(f.text) else "rule"
-            out.append(Observation(clip(f.text, 240), "memory", 0.6, True, "owner",
+            text = _CUE_PREFIX_RE.sub("", f.text).strip() or f.text
+            text = text[:1].upper() + text[1:]
+            out.append(Observation(clip(text, 240), "memory", 0.6, True, "owner",
                                    sessions=[session_labels(chunk)[f.session_id]], kind=kind,
                                    quote=clip(f.text, 160)))
     return out
