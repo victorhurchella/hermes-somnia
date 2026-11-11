@@ -1,0 +1,89 @@
+name: hermes-dreaming
+label: Dreaming
+version: 0.1.0
+description: "OpenClaw-style memory dreaming for Hermes: a nightly Light -> REM -> Deep sweep that reads your recent sessions, scores what keeps coming back, and consolidates it into MEMORY.md/USER.md or your markdown second brain, with a Dream Diary you can review."
+author: victorhurchella
+license: MIT
+homepage: https://github.com/victorhurchella/hermes-dreaming
+kind: standalone
+tags:
+  - memory
+  - dreaming
+  - consolidation
+  - second-brain
+  - obsidian
+provides_tools: []
+provides_hooks: []
+requires_env: []
+
+config_schema:
+  destinations:
+    type: str
+    choices: [builtin, vault, both]
+    default: builtin
+    label: Destination
+    description: "builtin = curate MEMORY.md/USER.md under their char budget; vault = write to a markdown second brain (Obsidian-style) inbox; both = both"
+  schedule:
+    type: str
+    default: "0 3 * * *"
+    label: Schedule
+    description: Cron expression used by `hermes dreaming setup`
+  vault_path:
+    type: str
+    default: ""
+    label: Vault path
+    description: Root of your second brain. Empty = $OBSIDIAN_VAULT_PATH, then $WIKI_PATH
+  vault_folder:
+    type: str
+    default: dreams
+    label: Vault inbox folder
+    description: Dream-owned folder inside the vault; dreaming never writes anywhere else in the vault
+  protected_paths:
+    type: list
+    default: []
+    label: Protected vault paths
+    description: Vault-relative folders dreaming must never write into (the inbox may not overlap them)
+  vault_pointer:
+    type: bool
+    default: true
+    label: Pointer in MEMORY.md
+    description: Keep one short MEMORY.md entry telling the agent where the dream inbox lives
+  destructive:
+    type: str
+    choices: [stage, apply]
+    default: stage
+    label: Merges and removals
+    description: "stage = merges/replacements wait in /memory pending for your approval; apply = write them directly (backups kept, `hermes dreaming undo`)"
+  max_promotions:
+    type: int
+    default: 3
+    label: Promotions per night
+  min_score:
+    type: float
+    default: 0.65
+    label: Minimum score
+  min_sessions:
+    type: int
+    default: 2
+    label: Minimum distinct sessions
+    description: A fact must show up in this many sessions (explicit "remember this" from you bypasses it)
+  headroom:
+    type: float
+    default: 0.1
+    label: Budget headroom
+    description: Fraction of each memory char budget dreaming leaves free
+  notify:
+    type: str
+    choices: [changes, always, never]
+    default: changes
+    label: Cron output
+    description: When the nightly job prints a summary (and so delivers it)
+  diary:
+    type: bool
+    default: true
+    label: Dream Diary
+  timezone:
+    type: str
+    default: ""
+    label: Timezone
+    description: IANA name for day boundaries; empty = host local time

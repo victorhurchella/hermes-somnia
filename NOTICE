@@ -1,0 +1,35 @@
+hermes-dreaming ports ideas, algorithms, constants and prompts from OpenClaw's memory-core
+"Dreaming" (https://github.com/openclaw/openclaw, extensions/memory-core, studied at commit
+9c2e60f7d, v2026.11.3). OpenClaw is distributed under the MIT License:
+
+  MIT License
+
+  Copyright (c) 2026 OpenClaw Foundation
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+Ported material:
+- hermes_dreaming/scoring.py      short-term-promotion.ts (weights, saturation, half-life, phase boost)
+- hermes_dreaming/phases.py       dreaming-phases.ts (Light staging, REM themes and truths)
+- hermes_dreaming/textutil.py     concept-vocabulary.ts (stop words, glossary, tag order), memory/tokenize.ts
+- hermes_dreaming/diary.py        dreaming-narrative.ts (diary system prompt, verbatim), dreaming-dreams-file.ts
+- hermes_dreaming/sinks.py        dreaming-consolidation.ts (consolidation prompt, adapted; plan validation)
+- hermes_dreaming/ingest.py       session-ingestion.ts (transcript firewalls)
+
+hermes-dreaming is not affiliated with or endorsed by the OpenClaw Foundation or Nous Research.
