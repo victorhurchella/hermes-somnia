@@ -10,14 +10,14 @@ from pathlib import Path
 
 from helpers import FakeMemory, ScriptedLLM, make_sessions_db
 
-from hermes_dreaming import diary
-from hermes_dreaming.config import Settings
-from hermes_dreaming.ingest import read_fragments
-from hermes_dreaming.scoring import consolidation_component, recency_component, score_entry
-from hermes_dreaming.sinks import validate_plan, parse_plan, size_of
-from hermes_dreaming.store import Entry
-from hermes_dreaming.sweep import run_sweep
-from hermes_dreaming.textutil import clip, concept_tags, jaccard, novel_specifics
+from hermes_somnia import diary
+from hermes_somnia.config import Settings
+from hermes_somnia.ingest import read_fragments
+from hermes_somnia.scoring import consolidation_component, recency_component, score_entry
+from hermes_somnia.sinks import validate_plan, parse_plan, size_of
+from hermes_somnia.store import Entry
+from hermes_somnia.sweep import run_sweep
+from hermes_somnia.textutil import clip, concept_tags, jaccard, novel_specifics
 
 DAY = 86_400.0
 NOW = 1_800_000_000.0
@@ -98,7 +98,7 @@ class IngestTests(unittest.TestCase):
 
 class PlanValidationTests(unittest.TestCase):
     def _cands(self, *texts):
-        from hermes_dreaming.scoring import Scored
+        from hermes_somnia.scoring import Scored
 
         return [Scored(Entry(f"k{i}", t), 0.8 - i * 0.01, 0.8) for i, t in enumerate(texts)]
 
@@ -236,12 +236,12 @@ class SweepTests(unittest.TestCase):
         s = run_sweep(settings, complete=ScriptedLLM(extract=_extract), backend=mem, now=NOW,
                       base_dir=self.tmp / "state", sessions_db=self.db)
         self.assertEqual(s.errors, [])
-        notes = list((vault / "dreams").glob("20*.md"))
+        notes = list((vault / "somnia").glob("20*.md"))
         self.assertEqual(len(notes), 1)
         self.assertIn("- [ ] Project eixo builds", notes[0].read_text())
-        self.assertTrue((vault / "dreams" / "DREAMS.md").exists())
+        self.assertTrue((vault / "somnia" / "DREAMS.md").exists())
         self.assertEqual((vault / "self" / "foco.md").read_text(), "mine")
-        self.assertTrue(mem.data["memory"][0].startswith("Dreaming inbox:"))
+        self.assertTrue(mem.data["memory"][0].startswith("Somnia inbox:"))
 
     def test_vault_folder_cannot_overlap_protected(self):
         vault = self.tmp / "brain"

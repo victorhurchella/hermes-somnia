@@ -1,10 +1,10 @@
-name: hermes-dreaming
-label: Dreaming
-version: 0.1.0
-description: "OpenClaw-style memory dreaming for Hermes: a nightly Light -> REM -> Deep sweep that reads your recent sessions, scores what keeps coming back, and consolidates it into MEMORY.md/USER.md or your markdown second brain, with a Dream Diary you can review."
+name: hermes-somnia
+label: Somnia
+version: 0.2.0
+description: "Somnia: OpenClaw-style memory dreaming for Hermes. A nightly Light -> REM -> Deep sweep reads your recent sessions, scores what keeps coming back (with switchable thinking principles: Pareto, Lindy, Inversion, Occam, Feynman) and consolidates it into MEMORY.md/USER.md or your markdown second brain. Includes a desktop page, a Dream Diary, forget/pin/undo."
 author: victorhurchella
 license: MIT
-homepage: https://github.com/victorhurchella/hermes-dreaming
+homepage: https://github.com/victorhurchella/hermes-somnia
 kind: standalone
 tags:
   - memory
@@ -12,6 +12,7 @@ tags:
   - consolidation
   - second-brain
   - obsidian
+  - desktop
 provides_tools: []
 provides_hooks: []
 requires_env: []
@@ -23,11 +24,27 @@ config_schema:
     default: builtin
     label: Destination
     description: "builtin = curate MEMORY.md/USER.md under their char budget; vault = write to a markdown second brain (Obsidian-style) inbox; both = both"
+  destructive:
+    type: str
+    choices: [apply, stage]
+    default: apply
+    label: Merges and removals
+    description: "apply = write them directly, like OpenClaw (backup before every write, `hermes somnia undo`); stage = they wait in /memory pending for your approval"
+  principles:
+    type: list
+    default: [pareto, lindy, occam, feynman]
+    label: Principles
+    description: "Thinking rules Somnia applies: pareto (keep the vital few under pressure), lindy (protect long-confirmed facts), inversion (mistakes first, opt-in), occam (shortest true phrasing), feynman (entries stand alone)"
   schedule:
     type: str
     default: "0 3 * * *"
     label: Schedule
-    description: Cron expression used by `hermes dreaming setup`
+    description: Cron expression used by `hermes somnia setup`
+  timezone:
+    type: str
+    default: ""
+    label: Timezone
+    description: IANA name for day boundaries; empty = host local time
   vault_path:
     type: str
     default: ""
@@ -35,25 +52,19 @@ config_schema:
     description: Root of your second brain. Empty = $OBSIDIAN_VAULT_PATH, then $WIKI_PATH
   vault_folder:
     type: str
-    default: dreams
+    default: somnia
     label: Vault inbox folder
-    description: Dream-owned folder inside the vault; dreaming never writes anywhere else in the vault
+    description: Somnia-owned folder inside the vault; Somnia never writes anywhere else in the vault
   protected_paths:
     type: list
     default: []
     label: Protected vault paths
-    description: Vault-relative folders dreaming must never write into (the inbox may not overlap them)
+    description: Vault-relative folders Somnia must never write into (the inbox may not overlap them)
   vault_pointer:
     type: bool
     default: true
     label: Pointer in MEMORY.md
-    description: Keep one short MEMORY.md entry telling the agent where the dream inbox lives
-  destructive:
-    type: str
-    choices: [apply, stage]
-    default: apply
-    label: Merges and removals
-    description: "apply = write merges/replacements directly, like OpenClaw (backup before every write, `hermes dreaming undo`); stage = they wait in /memory pending for your approval"
+    description: Keep one short MEMORY.md entry telling the agent where the Somnia inbox lives
   max_promotions:
     type: int
     default: 3
@@ -66,24 +77,29 @@ config_schema:
     type: int
     default: 2
     label: Minimum distinct sessions
-    description: A fact must show up in this many sessions (explicit "remember this" from you bypasses it)
+    description: A fact must show up in this many sessions (an explicit "remember this" or a pin bypasses it)
   headroom:
     type: float
     default: 0.1
     label: Budget headroom
-    description: Fraction of each memory char budget dreaming leaves free
+    description: Fraction of each memory char budget Somnia leaves free
   notify:
     type: str
     choices: [changes, always, never]
     default: changes
-    label: Cron output
-    description: When the nightly job prints a summary (and so delivers it)
+    label: Morning report
+    description: When the nightly job prints its morning report (and so delivers it)
   diary:
     type: bool
     default: true
     label: Dream Diary
-  timezone:
-    type: str
-    default: ""
-    label: Timezone
-    description: IANA name for day boundaries; empty = host local time
+  mask_secrets:
+    type: bool
+    default: true
+    label: Mask secrets
+    description: Redact tokens, keys and passwords from conversations before they reach the model
+  max_extract_calls:
+    type: int
+    default: 12
+    label: Max extraction calls per night
+    description: Caps cost; a busy day is spread over the next nights instead of being skipped

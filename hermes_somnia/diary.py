@@ -41,10 +41,10 @@ DIARY_SYSTEM = "\n".join([
 ])
 
 FALLBACK_NARRATIVE = "A memory trace surfaced, but details were unavailable in this run."
-START = "<!-- hermes-dreaming:diary:start -->"
-END = "<!-- hermes-dreaming:diary:end -->"
-DEEP_START = "<!-- hermes-dreaming:deep:start -->"
-DEEP_END = "<!-- hermes-dreaming:deep:end -->"
+START = "<!-- hermes-somnia:diary:start -->"
+END = "<!-- hermes-somnia:diary:end -->"
+DEEP_START = "<!-- hermes-somnia:deep:start -->"
+DEEP_END = "<!-- hermes-somnia:deep:end -->"
 CONTEXT_LIMIT = 3
 CONTEXT_MAX_CHARS = 360
 
@@ -91,6 +91,37 @@ def recent_entries(path: Path, limit: int = 4) -> list[str]:
             continue
         out.append(entry if len(entry) <= CONTEXT_MAX_CHARS else entry[:CONTEXT_MAX_CHARS].rstrip() + "...")
     return list(reversed(out))[:limit]
+
+
+_DATE_LINE_RE = re.compile(r"^\*(.+)\*$")
+
+
+def all_entries(path: Path) -> list[dict]:
+    """Every diary entry, newest first: {date, at, text} (``at`` is unix time when the date parses)."""
+    text = _read(path)
+    if START not in text:
+        return []
+    body = text.split(START, 1)[1].split(END, 1)[0]
+    out = []
+    for block in re.split(r"\n---\n", body):
+        date, at, lines = "", None, []
+        for ln in block.splitlines():
+            s = ln.strip()
+            if not s or s.startswith(("<!--", "#")):
+                continue
+            m = _DATE_LINE_RE.match(s)
+            if m and not date:
+                date = m.group(1)
+                try:
+                    at = datetime.strptime(" ".join(date.split()[:6]), "%B %d, %Y at %I:%M %p").timestamp()
+                except ValueError:
+                    at = None
+                continue
+            lines.append(s)
+        entry = "\n".join(lines).strip()
+        if entry:
+            out.append({"date": date, "at": at, "text": entry})
+    return list(reversed(out))
 
 
 def narrate(complete: Optional[Complete], snippets: list[str], themes: list[str], promotions: list[str],

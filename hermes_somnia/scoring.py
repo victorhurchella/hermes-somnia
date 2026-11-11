@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
 
+from . import principles as P
 from .store import Entry
 
 DAY_S = 86_400.0
@@ -72,14 +73,38 @@ class Scored:
     raw: float
     components: dict = field(default_factory=dict)
     passes: dict = field(default_factory=dict)
+    min_score: float = 0.0
 
     @property
     def eligible(self) -> bool:
         return all(self.passes.values())
 
+    def missing(self, min_signals: int, min_sessions: int, min_durability: float) -> list[str]:
+        """Plain-language reasons the candidate is not (yet) promotable."""
+        e, out = self.entry, []
+        if not self.passes.get("placement", True):
+            out.append("a multi-step procedure: better as a skill than as memory")
+        if not self.passes.get("origin", True):
+            out.append(f"comes from an {e.origin} source, which is never promoted")
+        if not self.passes.get("sessions", True):
+            need = min_sessions - len(e.sessions)
+            out.append(f"needs {need} more session{'s' if need != 1 else ''}")
+        if not self.passes.get("signals", True):
+            need = min_signals - e.signal_count
+            out.append(f"needs {need} more observation{'s' if need != 1 else ''}")
+        if not self.passes.get("durability", True):
+            out.append(f"durability {e.avg_score:.2f} < {min_durability:.2f}")
+        if not self.passes.get("score", True):
+            out.append(f"score {self.raw:.2f} < {self.min_score:.2f}")
+        if not self.passes.get("age", True):
+            out.append("not seen recently enough")
+        return out
+
 
 def score_entry(e: Entry, now: float, *, half_life: float = 14, min_score: float = 0.65, min_signals: int = 2,
-                min_sessions: int = 2, min_durability: float = 0.5, max_age_days: int = 30) -> Scored:
+                min_sessions: int = 2, min_durability: float = 0.5, max_age_days: int = 30,
+                principles: Optional[set] = None) -> Scored:
+    active = set(P.DEFAULT) if principles is None else principles
     n = e.signal_count
     sessions = len(e.sessions)
     age_days = max(0.0, (now - e.last_seen_at) / DAY_S) if e.last_seen_at else 0.0
@@ -94,22 +119,28 @@ def score_entry(e: Entry, now: float, *, half_life: float = 14, min_score: float
     boost = phase_boost(e, now)
     raw = sum(WEIGHTS[k] * v for k, v in comp.items()) + boost
     comp["phase_boost"] = boost
+    for name, bonus in P.score_adjustments(kind=e.kind, first_seen_at=e.first_seen_at, signal_count=n, now=now,
+                                           active=active).items():
+        comp[name] = bonus
+        raw += bonus
+    # an explicit owner instruction ("remember...", "from now on...") or a pin from the page stands in for recurrence
+    vouched = (e.explicit or e.pinned) and e.origin == "owner"
     passes = {
         "origin": e.origin in ("owner", "agent"),
-        "signals": n >= min_signals or (e.explicit and n >= 1),
-        # an explicit owner instruction ("remember...", "from now on...") stands in for recurrence
-        "sessions": sessions >= min_sessions or (e.explicit and e.origin == "owner"),
-        "durability": e.avg_score >= min_durability,
-        "age": max_age_days < 0 or age_days <= max_age_days,
-        "score": raw >= min_score,
+        "placement": e.kind != "procedure",
+        "signals": n >= min_signals or ((e.explicit or e.pinned) and n >= 1),
+        "sessions": sessions >= min_sessions or vouched,
+        "durability": e.avg_score >= min_durability or e.pinned,
+        "age": max_age_days < 0 or age_days <= max_age_days or e.pinned,
+        "score": raw >= min_score or vouched,
         "not_promoted": e.promoted_at is None,
     }
-    return Scored(e, clamp(raw), raw, comp, passes)
+    return Scored(e, clamp(raw), raw, comp, passes, min_score)
 
 
 def rank(entries: list[Entry], now: float, limit: int, **kw) -> tuple[list[Scored], list[Scored]]:
-    """(selected, all scored). Order: score desc, signals desc, key asc (OpenClaw :194-196)."""
+    """(selected, all scored). Order: pinned first, then score desc, signals desc, key asc (OpenClaw :194-196)."""
     scored = [score_entry(e, now, **kw) for e in entries]
     eligible = sorted((s for s in scored if s.eligible),
-                      key=lambda s: (-s.raw, -s.entry.signal_count, s.entry.key))
+                      key=lambda s: (not s.entry.pinned, -s.raw, -s.entry.signal_count, s.entry.key))
     return eligible[:max(0, limit)], scored

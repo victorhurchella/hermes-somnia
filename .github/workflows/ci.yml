@@ -1,0 +1,22 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests (stdlib only, no Hermes needed)
+        working-directory: tests
+        run: python -m unittest -v
+      - name: Principles benchmark (oracle mode)
+        run: python bench/run.py --seeds 5
+      - name: Desktop plugin syntax
+        run: node --check desktop/plugin.js

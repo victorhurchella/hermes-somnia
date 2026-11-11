@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from hermes_dreaming.sinks import DELIM  # noqa: E402
+from hermes_somnia.sinks import DELIM  # noqa: E402
 
 
 def make_sessions_db(path: Path, rows: list[tuple]) -> None:

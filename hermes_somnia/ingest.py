@@ -26,7 +26,7 @@ _INJECTED_PREFIXES = ("[IMPORTANT", "[ASYNC DELEGATION", "[CONTEXT COMPACTION", 
                       "[SYSTEM", "[CRON", "[BACKGROUND", "<memory-context>", "<system-reminder>")
 _OOB_RE = re.compile(r"^\[OUT-OF-BAND USER MESSAGE[^\]]*\]\s*(.*?)\s*(?:\[/OUT-OF-BAND USER MESSAGE\])?\s*$", re.S)
 # Dreaming's own fingerprints (contamination guard, OpenClaw isContaminatedDreamingSnippet).
-_CONTAMINATION = ("hermes-dreaming:", "Write a dream diary entry from these memory fragments",
+_CONTAMINATION = ("hermes-somnia:", "Write a dream diary entry from these memory fragments",
                   "You are keeping a dream diary", "extract candidate long-term memories",
                   "## Light Sleep", "## REM Sleep", "## Deep Sleep")
 
@@ -67,7 +67,7 @@ def day_of(ts: float, tz=None) -> str:
 
 
 def read_fragments(db_path: Path, *, after_id: int, since_ts: float, sources: list[str],
-                   max_messages: int, tz=None) -> tuple[list[Fragment], int]:
+                   max_messages: int, tz=None, until_ts: Optional[float] = None) -> tuple[list[Fragment], int]:
     """Fragments with ``messages.id > after_id`` from interactive sessions active since
     ``since_ts``. Returns (fragments, new cursor). The cursor stops at the last row read when
     ``max_messages`` is hit, so the rest is picked up by the next sweep."""
@@ -86,10 +86,10 @@ def read_fragments(db_path: Path, *, after_id: int, since_ts: float, sources: li
             f"""select m.id, m.session_id, m.role, m.content, m.timestamp, {kind_col} as kind,
                        s.source, {chat_type} as chat_type
                 from messages m join sessions s on s.id = m.session_id
-                where m.id > ? and m.timestamp >= ? and m.role in ('user', 'assistant')
+                where m.id > ? and m.timestamp >= ? and m.timestamp <= ? and m.role in ('user', 'assistant')
                   and s.source in ({marks}) {summary_filter}
                 order by m.id asc""",
-            (after_id, since_ts, *sources)).fetchall()
+            (after_id, since_ts, until_ts if until_ts is not None else 1e18, *sources)).fetchall()
     finally:
         conn.close()
 
@@ -130,6 +130,21 @@ def read_fragments(db_path: Path, *, after_id: int, since_ts: float, sources: li
         flush(sid)
     fragments.sort(key=lambda f: f.message_id)
     return fragments, cursor
+
+
+def fit_budget(fragments: list[Fragment], cursor: int, budget_chars: int) -> tuple[list[Fragment], int]:
+    """Keep the oldest fragments that fit the night's extraction budget (``max_extract_calls`` x
+    ``extract_chunk_chars``) and move the cursor only past what was kept, so a busy day is spread over
+    the following nights instead of being skipped."""
+    kept: list[Fragment] = []
+    used = 0
+    for f in sorted(fragments, key=lambda f: f.message_id):
+        cost = len(f.text) + 24
+        if kept and used + cost > budget_chars:
+            return kept, kept[-1].message_id
+        kept.append(f)
+        used += cost
+    return kept, cursor
 
 
 def pack_chunks(fragments: list[Fragment], chunk_chars: int) -> list[list[Fragment]]:

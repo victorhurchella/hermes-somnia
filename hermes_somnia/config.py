@@ -1,6 +1,6 @@
 """Settings and paths.
 
-Settings live in Hermes' ``config.yaml`` under ``plugins.entries.hermes-dreaming.settings``
+Settings live in Hermes' ``config.yaml`` under ``plugins.entries.hermes-somnia.settings``
 (declared in ``plugin.yaml``'s ``config_schema``). Every key has a default, so the plugin
 works with no configuration at all (destination ``builtin``).
 """
@@ -12,16 +12,10 @@ from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
-PLUGIN_ID = "hermes-dreaming"
+from .hermes_api import PLUGIN_ID, hermes_home, load_config
 
-
-def hermes_home() -> Path:
-    try:
-        from hermes_constants import get_hermes_home
-
-        return Path(get_hermes_home())
-    except Exception:
-        return Path(os.environ.get("HERMES_HOME") or Path.home() / ".hermes")
+# Settings the desktop page may change inline (everything else lives in the Plugins hub).
+PAGE_SETTINGS = ("destructive", "max_promotions", "min_score", "min_sessions", "diary", "notify", "principles")
 
 
 @dataclass
@@ -38,7 +32,7 @@ class Settings:
     max_prior_entry_loss_fraction: float = 0.25
     # vault sink
     vault_path: str = ""  # else $OBSIDIAN_VAULT_PATH, else $WIKI_PATH
-    vault_folder: str = "dreams"  # dream-owned inbox inside the vault
+    vault_folder: str = "somnia"  # Somnia-owned inbox inside the vault
     vault_pointer: bool = True  # keep one short MEMORY.md entry pointing at the inbox
     protected_paths: list = field(default_factory=list)  # vault-relative paths never written
     # ingestion
@@ -65,10 +59,18 @@ class Settings:
     min_durability: float = 0.5
     max_age_days: int = 30
     recency_half_life_days: int = 14
+    # lifecycle
+    stale_days: int = 45  # a Somnia entry not re-observed for this long is flagged stale (never auto-deleted)
+    reask_days: int = 180  # a forgotten fact that keeps recurring is offered again after this long
+    reask_min_recur: int = 3
+    alarm_noop_nights: int = 3  # consecutive nights with material but no promotion before the alarm
     # diary + output
     diary: bool = True
     notify: str = "changes"  # changes | always | never (cron stdout)
     llm: bool = True
+    mask_secrets: bool = True
+    # thinking rules (see principles.py): pareto, lindy, inversion, occam, feynman
+    principles: list = field(default_factory=lambda: ["pareto", "lindy", "occam", "feynman"])
 
     @classmethod
     def from_mapping(cls, raw: dict[str, Any] | None) -> "Settings":
@@ -111,22 +113,19 @@ class Settings:
 
 
 def load_settings() -> Settings:
-    try:
-        from hermes_cli.config import load_config
-
-        cfg = load_config() or {}
-        entry = ((cfg.get("plugins") or {}).get("entries") or {}).get(PLUGIN_ID) or {}
-        return Settings.from_mapping(entry.get("settings"))
-    except Exception:
-        return Settings()
+    cfg = load_config()
+    if not isinstance(cfg, dict):
+        cfg = {}
+    entry = ((cfg.get("plugins") or {}).get("entries") or {}).get(PLUGIN_ID) or {}
+    return Settings.from_mapping(entry.get("settings") if isinstance(entry, dict) else None)
 
 
 def state_dir() -> Path:
-    override = os.environ.get("HERMES_DREAMING_STATE_DIR")
+    override = os.environ.get("HERMES_SOMNIA_STATE_DIR")
     path = Path(override) if override else hermes_home() / "plugin-data" / PLUGIN_ID
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def sessions_db_path() -> Path:
-    return Path(os.environ.get("HERMES_DREAMING_SESSIONS_DB") or hermes_home() / "state.db")
+    return Path(os.environ.get("HERMES_SOMNIA_SESSIONS_DB") or hermes_home() / "state.db")

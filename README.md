@@ -1,141 +1,145 @@
-# hermes-dreaming
+# Somnia
 
-**OpenClaw's Dreaming, for Hermes Agent.** A nightly sweep reads your recent conversations, works out which
-facts keep coming back, and consolidates them into long-term memory. It also keeps a Dream Diary you can read
-over coffee.
+**Your Hermes agent sleeps on what you told it, and wakes up remembering what matters.**
+
+Somnia is OpenClaw's *Dreaming* rebuilt for [Hermes Agent](https://github.com/NousResearch/hermes-agent). Every
+night it rereads your recent conversations, works out which facts keep coming back, and consolidates them into
+long-term memory: `MEMORY.md`/`USER.md`, or your own second brain. You don't have to review anything, but you can
+see everything, change anything and undo any write.
+
+![Somnia desktop page](docs/screenshots/page-dark.png)
 
 ```
-            nightly cron (script-only, no agent turn)
-                            │
-   ┌────────────────────────┼─────────────────────────┐
-   ▼                        ▼                         ▼
- LIGHT                     REM                      DEEP
- new turns → candidate     recurring themes,        6-signal score + gates →
- facts, deduped, staged    "possible lasting        curate MEMORY.md / USER.md
-                           truths" (no LLM)         or write to your vault inbox
-                            │
-                            ▼
-                  DREAMS.md (Dream Diary + Deep Sleep summary)
+              nightly job (script only, no agent turn)
+                               │
+   ┌───────────────────────────┼────────────────────────────┐
+   ▼                           ▼                            ▼
+ LIGHT                        REM                          DEEP
+ new turns → candidate        recurring themes,            6-signal score + principles + gates
+ facts, each backed by        "possible lasting            → curate MEMORY.md / USER.md
+ a verbatim quote             truths" (no LLM)             → or your vault inbox
+                               │
+                               ▼
+        morning report · DREAMS.md (Dream Diary) · desktop page
 ```
 
-Hermes already saves memory during conversations: a background review every few turns can add an entry.
-What it doesn't do is step back and look **across sessions**. It never notices that you've said the same thing
-three times this week, never merges duplicates, never replaces a stale fact, and leaves no trail you can review.
-OpenClaw's memory-core does this offline as "dreaming". This plugin ports the same three-phase design to Hermes,
-with the same scoring math, diary prompt and safety rails, and adapts it to how Hermes stores memory.
+## Why
 
-## Works alone, shines with a second brain
+Hermes already saves memory during a conversation. What it doesn't do is step back and look **across sessions**:
+it won't notice you said the same thing three times this week, merge duplicates, replace a fact that changed, or
+leave a trail you can check. Somnia does that offline, every night, inside Hermes' small memory budget.
 
-Hermes' built-in memory is small on purpose: `MEMORY.md` is about 2,200 characters and `USER.md` about 1,375.
-Dreaming respects that budget. It curates instead of piling up, adds at most 3 facts a night, and merges or
-supersedes old entries instead of appending.
+## What makes it different
 
-If you keep a markdown second brain (an Obsidian vault, an LLM wiki, any folder of notes), point dreaming at it.
-Promoted facts then become inbox notes with no size limit, and `MEMORY.md` keeps just one pointer to them.
-That's the setup this plugin was built around.
+- **Principles you can switch on and off, and that are measured.** Pareto (under pressure, keep the vital few),
+  Lindy (what lasted, lasts), Occam (the shortest true phrasing) and Feynman (every entry stands alone) are on by
+  default. Inversion (mistakes first) is opt-in. Each one is a concrete mechanism, not a line in a prompt, and
+  [the benchmark](docs/bench.md) shows what each is worth. Inversion is opt-in because it showed no gain.
+- **A desktop page with real actions.** What Somnia learned last night and why (the six signals, the source
+  quotes, a link back to the original chat), memory shown as space, the facts almost ready to be remembered, the
+  sleep chart, recurring themes and the diary. On each memory you can keep, forget forever, edit, pin, move it to
+  the vault or ask Hermes about it.
+- **Built for Hermes' small memory.** It works within the char budget: merges, supersedes, and only ever evicts
+  entries it wrote itself, starting with the least re-confirmed ones. Your hand-written entries are never touched.
+- **Shines with a second brain.** Point it at an Obsidian vault or LLM wiki: promoted facts become inbox notes with
+  no size limit, and `MEMORY.md` keeps a single pointer to them.
+- **Honest about failure.** OpenClaw's stock gates can promote nothing for a week while the diary keeps looking
+  healthy. Somnia raises a loud alarm after a few empty nights and names the gate that is blocking.
 
 | `destinations` | Where Deep writes | Good for |
 |---|---|---|
-| `builtin` (default) | `MEMORY.md` / `USER.md`, under their char budget | Everyone |
-| `vault` | `<vault>/dreams/YYYY-MM-DD.md` (inbox, one checkbox per fact) + a pointer in `MEMORY.md` | People with a second brain |
-| `both` | Both of the above | Second brain + a self-curating prompt memory |
-
-Vault mode only writes inside its own folder, never edits a note it didn't create, and refuses to run if its
-folder overlaps one of your `protected_paths`.
+| `builtin` (default) | `MEMORY.md` / `USER.md`, within their char budget | Everyone |
+| `vault` | `<vault>/somnia/YYYY-MM-DD.md` (inbox, one checkbox per fact) + a pointer in `MEMORY.md` | People with a second brain |
+| `both` | Both | A second brain plus a self-curating prompt memory |
 
 ## Install
 
 ```bash
-hermes plugins install victorhurchella/hermes-dreaming --enable
-hermes dreaming setup          # copies the cron script, creates the nightly job (03:00)
-hermes dreaming run --dry-run -v   # preview what it would do, writes nothing
+hermes plugins install victorhurchella/hermes-somnia --enable
+hermes somnia setup              # installs the nightly job (03:00, script only)
+hermes somnia run --dry-run -v   # preview a night: nothing is written
+hermes somnia doctor             # check the wiring
 ```
 
-The cron job runs as a script-only job (`--no-agent`), so there is no agent turn. Its only cost is the
-dreaming LLM calls, by default at most about 13 per night (12 for extraction, 1 for consolidation per memory
-file, 1 for the diary). They go through your own Hermes provider. To run them on a cheaper model:
+Desktop app: turn on **Somnia** under *Settings → Plugins* to get the sidebar page.
+
+Cost: the night job has no agent turn. Somnia's own LLM calls go through your Hermes provider: one extraction call
+per ~20k chars of new conversation (at most 12 a night), one consolidation call per memory file that changes,
+and one diary entry. A night with no new conversation makes **zero** calls. To use a cheaper model:
 
 ```yaml
 # ~/.hermes/config.yaml
 auxiliary:
-  dreaming:
+  somnia:
     model: <a cheap model on your provider>
 ```
-
-Optional one-time backfill of the last 14 days (more LLM calls, once):
-
-```bash
-hermes dreaming run --max-messages 3000
-```
-
-## Configure
-
-All settings are optional. Set them in the Plugins hub of the desktop app, or in `config.yaml`:
-
-```yaml
-plugins:
-  entries:
-    hermes-dreaming:
-      settings:
-        destinations: vault            # builtin | vault | both
-        vault_path: ~/notes            # else $OBSIDIAN_VAULT_PATH, else $WIKI_PATH
-        vault_folder: dreams           # the only place dreaming writes in the vault
-        protected_paths: [self, journal]
-        destructive: apply             # apply (like OpenClaw) or stage merges/removals for /memory pending
-        max_promotions: 3
-        min_sessions: 2
-        schedule: "0 3 * * *"
-        timezone: America/Sao_Paulo
-```
-
-`hermes dreaming setup` reads `schedule` once. To change it later, edit the job with `hermes cron edit`.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `hermes dreaming run [--dry-run] [-v] [--no-llm] [--max-messages N]` | Run one sweep now |
-| `hermes dreaming status` | Settings, cron job, store size, last runs, pending approvals |
-| `hermes dreaming explain "<words>"` | Score breakdown and gates for matching candidates: why something was or wasn't remembered |
-| `hermes dreaming diary [-n 3]` | Recent Dream Diary entries |
-| `hermes dreaming undo [--force]` | Restore `MEMORY.md`/`USER.md` from the backup taken before the last write |
-| `/dreaming [status\|run\|diary\|explain …]` | The same, from any chat |
+| `hermes somnia run [--dry-run] [-v] [--max-messages N]` | Run one night now (or preview it) |
+| `hermes somnia status` · `doctor` | Settings, last nights, alarms · wiring checks |
+| `hermes somnia explain "<words>"` | Why something was or wasn't remembered: signals, gates, evidence quotes |
+| `hermes somnia forget <key>` · `unforget <key>` | Forget for good (removes the entry; never learned again) · undo that |
+| `hermes somnia pin <key>` · `promote <key>` | Remember at the next night regardless of recurrence · right now |
+| `hermes somnia undo` | Restore `MEMORY.md`/`USER.md` from before the last write |
+| `hermes somnia diary` | The Dream Diary |
+| `/somnia …` | The same, from any chat |
+
+## Configure
+
+All settings are optional. Change them in *Settings → Plugins → Somnia*, on the Somnia page, or in `config.yaml`:
+
+```yaml
+plugins:
+  entries:
+    hermes-somnia:
+      settings:
+        destinations: vault              # builtin | vault | both
+        vault_path: ~/notes              # else $OBSIDIAN_VAULT_PATH, else $WIKI_PATH
+        protected_paths: [self, journal] # Somnia never writes there
+        principles: [pareto, lindy, occam, feynman]
+        destructive: apply               # apply (like OpenClaw) | stage (approve in /memory pending)
+        max_promotions: 3
+        timezone: America/Sao_Paulo
+```
 
 ## Safety
 
-- **Reads only what you said.** Ingestion keeps user turns and the agent's final replies from interactive
-  sessions. Tool output, delegation results, cron and subagent sessions, and system notices never enter.
-  Group chats are marked untrusted and are never promoted.
-- **Recurrence, not one-offs.** A fact needs at least 2 observations in at least 2 distinct sessions,
-  durability ≥ 0.5 and a score ≥ 0.65. The one exception is an explicit instruction from you ("remember…",
-  "from now on…").
-- **No review needed, everything reviewable.** Like OpenClaw, dreaming writes on its own: you don't approve
-  anything. Each night's changes are listed in `DREAMS.md` (`## Deep Sleep`), and a backup is taken before every
-  write. Prefer to approve merges and removals yourself? Set `destructive: stage` and they go to Hermes'
-  `/memory pending` queue. Either way, dreaming only evicts entries it created itself.
-- **The model plans, the host checks.** A consolidation plan is rejected if it touches unknown entries,
-  replaces more than 25% of the store, exceeds the budget, or puts numbers, paths or URLs into a rewritten
-  entry that weren't in its sources. A rejected plan falls back to append-only.
-- **Every write is reversible.** Writes go through Hermes' `MemoryStore` (lock, atomic write, injection scan).
-  A backup is taken before each write, and `hermes dreaming undo` restores it.
+- **Reads only what you said.** Only user turns and the agent's final replies from interactive sessions are read.
+  Tool output, delegation results, cron and subagent sessions and system notices never get in. Group chats are
+  untrusted and never promoted. Secrets are masked before anything reaches the model.
+- **Evidence, not vibes.** Every candidate carries a verbatim quote from your conversation. A quote that isn't
+  really there lowers the candidate's score.
+- **Recurrence, not one-offs.** A fact needs at least 2 observations in at least 2 sessions, durability ≥ 0.5 and
+  a score ≥ 0.65. The exceptions are an explicit "remember this" from you, or a pin.
+- **The model plans, the code checks.** A consolidation plan is rejected if it touches unknown entries, replaces
+  more than 25% of the store, goes over budget, or introduces numbers, paths or URLs that its sources don't have.
+  An operation that breaks an active principle is deferred, not written.
+- **Everything is reversible.** Writes go through Hermes' own MemoryStore (lock, atomic write, injection scan).
+  There is a backup before every write and `hermes somnia undo`. "Forget" is permanent: a forgotten fact is only
+  offered again if it keeps coming back for 6 months.
 
-## How it maps to OpenClaw
+## Docs
 
-See [docs/how-it-works.md](docs/how-it-works.md): the OpenClaw algorithm with file:line references, what was
-kept verbatim, and what changed for Hermes and why. Hermes has no recall log, so "distinct search queries"
-becomes "distinct sessions". Hermes has no daily notes, so Light extracts candidates itself.
+- [docs/how-it-works.md](docs/how-it-works.md): OpenClaw's algorithm with file:line references, and what changed
+  for Hermes and why.
+- [docs/bench.md](docs/bench.md): the principles benchmark.
+- [docs/rpc.md](docs/rpc.md): the desktop page ⇄ Python contract.
+- [dev/harness/README.md](dev/harness/README.md): run the desktop page in a browser with demo data.
 
 ## Requirements
 
-- Hermes Agent with the plugin API (`register_cli_command`, script-only cron jobs). Developed against v0.23.
-- Linux or macOS (uses `fcntl` locks).
-
-## Develop
+Hermes Agent with the plugin API (`register_cli_command`, `register_rpc`, script-only cron jobs); developed and
+tested against v0.23.1. Linux or macOS. Python stdlib only.
 
 ```bash
-cd tests && python3 -m unittest -v     # stdlib only, no Hermes needed
+cd tests && python3 -m unittest -v   # no Hermes needed
+python3 bench/run.py                 # principles benchmark (oracle mode)
 ```
 
 ## License
 
-MIT. Ports material from OpenClaw (MIT): see [NOTICE](NOTICE). Not affiliated with OpenClaw or Nous Research.
+MIT. Ports algorithms, constants and prompts from OpenClaw (MIT); see [NOTICE](NOTICE). Not affiliated with
+OpenClaw or Nous Research.

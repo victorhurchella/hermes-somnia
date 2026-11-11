@@ -55,7 +55,7 @@ fim dia dias vez vezes hoje ontem amanhã aí lá precisa precisamos quero queri
 STOP_WORDS = frozenset(_OPENCLAW_STOP) | frozenset(_PT_STOP)
 
 # OpenClaw protected glossary (concept-vocabulary.ts:220-262), verbatim. Configurable via
-# the HERMES_DREAMING_GLOSSARY env var (comma separated) or settings.
+# the HERMES_SOMNIA_GLOSSARY env var (comma separated) or settings.
 OPENCLAW_GLOSSARY = (
     "backup backups embedding embeddings failover gateway glacier gpt kv network openai router s3 vlan "
     "sauvegarde routeur passerelle konfiguration sicherung überwachung configuración respaldo enrutador "
@@ -69,8 +69,8 @@ def normalize_ws(text: str) -> str:
 
 
 def normalize_claim(text: str) -> str:
-    """Comparable form of a fact: NFKC, lowercase, punctuation-light, collapsed whitespace."""
-    t = unicodedata.normalize("NFKC", text or "").lower()
+    """Comparable form of a fact: NFKC, lowercase, accent-folded, punctuation-light, collapsed whitespace."""
+    t = fold(unicodedata.normalize("NFKC", text or "").lower())
     t = re.sub(r"^[\s\-*•·]+", "", t)
     t = re.sub(r"[\"'`“”‘’]", "", t)
     return normalize_ws(t).rstrip(".;:!")
@@ -107,15 +107,38 @@ def clip(text: str, limit: int) -> str:
 
 # --- similarity (port of memory/tokenize.ts) ---
 
+def fold(text: str) -> str:
+    """Strip Latin diacritics (você -> voce) without touching CJK/Hangul."""
+    out = []
+    for ch in unicodedata.normalize("NFD", text):
+        if unicodedata.category(ch) == "Mn" and not _CJK_RE.match(ch):
+            continue
+        out.append(ch)
+    return unicodedata.normalize("NFC", "".join(out))
+
+
+def stem(token: str) -> str:
+    """Light plural folding for pt/es/en/fr (addition, not in OpenClaw): sessões/sessoes/sessao,
+    preferences/preference, cities/city."""
+    if len(token) <= 4 or not token.isalpha():
+        return token
+    for suffix, repl in (("oes", "ao"), ("aes", "ao"), ("ies", "y"), ("ses", "s")):
+        if token.endswith(suffix) and len(token) > len(suffix) + 2:
+            return token[: -len(suffix)] + repl
+    if token.endswith("s") and not token.endswith("ss"):
+        return token[:-1]
+    return token
+
+
 def tokenize(text: str) -> set[str]:
-    t = unicodedata.normalize("NFC", text or "").lower()
+    t = fold(unicodedata.normalize("NFC", text or "").lower())
     tokens: set[str] = set()
     for run in _CJK_RE.findall(t):
         chars = list(run)
         tokens.update(a + b for a, b in zip(chars, chars[1:]))
         tokens.update(chars)
     t = _CJK_RE.sub(" ", t)
-    tokens.update(_WORD_RE.findall(t))
+    tokens.update(stem(w) for w in _WORD_RE.findall(t))
     return tokens
 
 
@@ -131,7 +154,7 @@ def jaccard(a: str, b: str) -> float:
 # --- concept tags (port of concept-vocabulary.ts) ---
 
 def _glossary() -> list[str]:
-    raw = os.environ.get("HERMES_DREAMING_GLOSSARY")
+    raw = os.environ.get("HERMES_SOMNIA_GLOSSARY")
     if raw is None:
         return [str(g) for g in OPENCLAW_GLOSSARY]
     return [g.strip().lower() for g in raw.split(",") if g.strip()]
