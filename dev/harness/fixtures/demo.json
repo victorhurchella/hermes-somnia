@@ -794,13 +794,7 @@
     "errors": 0
    }
   ],
-  "alarm": {
-   "kind": "budget_full",
-   "nights": 1,
-   "message": "MEMORY.md is 91% full, so last night one fact had to wait. Review the 2 stale entries or move some to your vault.",
-   "best": null,
-   "action": "review"
-  },
+  "alarm": null,
   "counts": {
    "candidates": 27,
    "near": 11,
@@ -855,6 +849,7 @@
    "min_score": 0.65,
    "min_sessions": 2,
    "diary": true,
+   "diary_language": "auto",
    "notify": "changes",
    "principles": [
     "pareto",
@@ -967,7 +962,7 @@
       "day": "2026-11-10"
      }
     ],
-    "reason": "needs 2 sessions; seen in 1",
+    "reason": "already in memory",
     "undoable": false
    }
   ],
@@ -1299,7 +1294,7 @@
       "day": "2026-11-10"
      }
     ],
-    "reason": "needs 2 sessions; seen in 1",
+    "reason": "already in memory",
     "undoable": false
    }
   ],
@@ -1335,7 +1330,7 @@
       "day": "2026-11-10"
      }
     ],
-    "reason": "needs 2 sessions; seen in 1",
+    "reason": "already in memory",
     "undoable": false
    }
   ],
@@ -1479,7 +1474,7 @@
       "day": "2026-11-10"
      }
     ],
-    "reason": "needs 2 sessions; seen in 1",
+    "reason": "already in memory",
     "undoable": false
    }
   ],
@@ -1734,7 +1729,7 @@
       "day": "2026-11-10"
      }
     ],
-    "reason": "needs 2 sessions; seen in 1",
+    "reason": "already in memory",
     "undoable": false
    }
   ],
@@ -1847,7 +1842,7 @@
       "day": "2026-11-10"
      }
     ],
-    "reason": "needs 2 sessions; seen in 1",
+    "reason": "already in memory",
     "undoable": false
    }
   ],
@@ -1883,7 +1878,7 @@
       "day": "2026-11-10"
      }
     ],
-    "reason": "needs 2 sessions; seen in 1",
+    "reason": "already in memory",
     "undoable": false
    }
   ],
@@ -1919,7 +1914,7 @@
       "day": "2026-11-10"
      }
     ],
-    "reason": "needs 2 sessions; seen in 1",
+    "reason": "already in memory",
     "undoable": false
    }
   ],
@@ -2157,7 +2152,7 @@
       "day": "2026-11-08"
      }
     ],
-    "reason": "pareto tail: the least-confirmed Somnia entry (34 days), and contradicted by the TileMapLayer note",
+    "reason": "pareto tail",
     "undoable": true
    },
    {
@@ -2191,7 +2186,7 @@
       "day": "2026-11-10"
      }
     ],
-    "reason": "occam: merging it into the oil-meter note would not make either shorter; kept apart for now",
+    "reason": "occam: the merge does not compress its parts",
     "undoable": false
    }
   ]
@@ -2523,7 +2518,7 @@
    "status": "candidate",
    "promoted_to": null,
    "promoted_at": null,
-   "deferred_reason": "occam: merging it into the oil-meter note would not make either shorter; kept apart for now",
+   "deferred_reason": "occam: the merge does not compress its parts",
    "reask": false
   },
   {
@@ -3004,8 +2999,8 @@
     "not_rejected": true
    },
    "missing": [
-    "needs 1 more session (seen in 1 of 2)",
-    "came from a group chat — marked untrusted, never promoted"
+    "comes from an untrusted source, which is never promoted",
+    "needs 1 more session"
    ],
    "signal_count": 2,
    "sessions": [
@@ -3293,8 +3288,8 @@
     "not_rejected": true
    },
    "missing": [
-    "needs 1 more session (seen in 1 of 2)",
-    "needs 1 more mention",
+    "needs 1 more session",
+    "needs 1 more observation",
     "score 0.49 < 0.65"
    ],
    "signal_count": 1,
@@ -3433,7 +3428,7 @@
     "not_rejected": true
    },
    "missing": [
-    "needs 1 more mention",
+    "needs 1 more observation",
     "score 0.45 < 0.65"
    ],
    "signal_count": 1,
@@ -3506,8 +3501,8 @@
     "not_rejected": true
    },
    "missing": [
-    "needs 1 more session (seen in 1 of 2)",
-    "needs 1 more mention",
+    "needs 1 more session",
+    "needs 1 more observation",
     "score 0.59 < 0.65"
    ],
    "signal_count": 1,
@@ -3574,8 +3569,8 @@
     "not_rejected": true
    },
    "missing": [
-    "needs 1 more session (seen in 1 of 2)",
-    "needs 1 more mention",
+    "needs 1 more session",
+    "needs 1 more observation",
     "score 0.34 < 0.65"
    ],
    "signal_count": 1,
@@ -3835,7 +3830,7 @@
     "not_rejected": true
    },
    "missing": [
-    "a procedure: belongs in a skill, not in memory"
+    "a multi-step procedure: better as a skill than as memory"
    ],
    "signal_count": 4,
    "sessions": [
@@ -3915,7 +3910,7 @@
     "not_rejected": true
    },
    "missing": [
-    "a procedure: belongs in a skill, not in memory",
+    "a multi-step procedure: better as a skill than as memory",
     "score 0.64 < 0.65"
    ],
    "signal_count": 2,
@@ -3989,7 +3984,7 @@
     "not_rejected": true
    },
    "missing": [
-    "a procedure: belongs in a skill, not in memory",
+    "a multi-step procedure: better as a skill than as memory",
     "score 0.54 < 0.65"
    ],
    "signal_count": 2,
@@ -4559,7 +4554,15 @@
   }
  },
  "dry_run": {
-  "summary": "Would add 1, supersede 1, and defer 1. No files written.",
+  "dry_run": true,
+  "quiet": false,
+  "fragments": 142,
+  "llm_calls": 3,
+  "promoted": 1,
+  "merged": 1,
+  "deferred": 1,
+  "staged": 0,
+  "evicted": 0,
   "changes": [
    {
     "run_at": 1794388320,
@@ -4662,7 +4665,7 @@
       "day": "2026-11-09"
      }
     ],
-    "reason": "needs 1 more day of evidence (consolidation)",
+    "reason": "memory budget",
     "undoable": false
    },
    {
@@ -4696,7 +4699,7 @@
       "day": "2026-11-10"
      }
     ],
-    "reason": "feynman: the merged sentence needed three clauses to say one thing; kept the parts",
+    "reason": "feynman: the entry refers to something it does not name",
     "undoable": false
    }
   ]
@@ -4704,7 +4707,7 @@
  "noop_alarm": {
   "kind": "noop",
   "nights": 5,
-  "message": "5 nights without remembering anything. The closest candidate scored 0.68 and was blocked by “score”.",
+  "message": "5 nights in a row with new conversations but nothing remembered. Closest: 0.68 — blocked.",
   "best": {
    "key": "claim:c8e1242c57e2",
    "text": "Lanternfall's lantern radius scales with remaining oil (0–100), easing out below 20.",
@@ -4773,10 +4776,10 @@
    "status": "candidate",
    "promoted_to": null,
    "promoted_at": null,
-   "deferred_reason": "occam: merging it into the oil-meter note would not make either shorter; kept apart for now",
+   "deferred_reason": "occam: the merge does not compress its parts",
    "reask": false
   },
-  "action": "review"
+  "action": "settings"
  },
  "sessions": [
   {

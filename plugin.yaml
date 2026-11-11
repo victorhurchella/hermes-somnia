@@ -94,6 +94,11 @@ config_schema:
     type: bool
     default: true
     label: Dream Diary
+  diary_language:
+    type: str
+    default: auto
+    label: Diary language
+    description: "auto = the language of your conversations; or a language name or code, e.g. English, pt-BR"
   mask_secrets:
     type: bool
     default: true

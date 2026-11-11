@@ -78,6 +78,7 @@ class SweepSummary:
     cursor: tuple = (0, 0)
     llm_calls: int = 0
     principles: list = field(default_factory=list)
+    changes: list = field(default_factory=list)  # dry runs only: what a real night would log (rpc Change shape)
 
     def counts(self) -> dict[str, int]:
         c = {"promoted": 0, "merged": 0, "deferred": 0, "evicted": 0, "staged": 0}
@@ -112,7 +113,7 @@ class SweepSummary:
             "ungrounded": self.light.ungrounded, "reasked": self.light.reasked,
             "staged": self.staged, "themes": [t[0] for t in self.themes],
             "truths": [list(t) for t in self.truths], "ranked": self.ranked, "selected": self.selected,
-            "near_misses": self.near_misses, "skills": self.skills, **c,
+            "near_misses": self.near_misses, "skills": self.skills, "changes": self.changes, **c,
             "noop": not self.quiet and not self.changed and self.light.fragments > 0,
             "sinks": [{"target": s.target, "applied": s.applied, "evicted": s.evicted, "staged_id": s.staged_id,
                        "deferred": s.deferred, "error": s.error, "plan": s.plan_source,
@@ -278,9 +279,15 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
     by_key = {s.entry.key: s for s in selected}
 
     def log(key, action, target, text, *, replaced=None, reason=None):
-        if summary.dry_run:
-            return
         s = by_key.get(key)
+        if summary.dry_run:
+            summary.changes.append({
+                "run_at": now, "key": key, "action": action, "target": target, "text": text,
+                "replaced": list(replaced or []), "score": round(s.score, 3) if s else 0.0,
+                "components": {k: round(v, 4) for k, v in s.components.items()} if s else {},
+                "sessions": [{"id": sid} for sid in reversed(s.entry.sessions[-8:])] if s else [],
+                "reason": reason, "undoable": False})
+            return
         store.log_change(run_id, now, key=key, action=action, target=target, text=text, replaced=replaced,
                          score=round(s.score, 3) if s else None,
                          components={k: round(v, 4) for k, v in s.components.items()} if s else None,
@@ -355,7 +362,8 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
         promotions = [e.text for e in (store.entry(k) for k in promoted) if e]
         snippets = [e.text for e in staged] or [t for t, _ in summary.truths]
         narrative, degraded = diary_mod.narrate(llm, snippets, [t[0] for t in (rem_result.themes if rem_result else [])],
-                                                promotions, day, recent[:diary_mod.CONTEXT_LIMIT])
+                                                promotions, day, recent[:diary_mod.CONTEXT_LIMIT],
+                                                settings.diary_language)
         if narrative:
             diary_mod.append_entry(diary_path, narrative, datetime.fromtimestamp(now, tz).astimezone())
             summary.diary, summary.diary_degraded = narrative, degraded

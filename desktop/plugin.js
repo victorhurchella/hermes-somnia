@@ -148,6 +148,16 @@ const plural = (n, one, many) => (n === 1 ? one : many)
 const EN = {
   name: 'Somnia',
   open: { palette: 'Somnia: Open dream journal', keybind: 'Open Somnia' },
+  lang: { title: 'Language', auto: current => `Automatic (${current})`, autoShort: current => `Auto · ${current}`, diary: 'Diary language', diaryAuto: 'Same as my conversations', diaryHint: 'The language the nightly Dream Diary is written in' },
+  result: {
+    quiet: 'No new conversation since the last dream: nothing to read.',
+    promoted: where => `Added to ${where}.`,
+    promoteWait: why => `Not written yet: ${why}`,
+    promoteNone: 'Nothing was written.',
+    vault: 'the vault inbox',
+    line: (read, added, merged, deferred, staged) =>
+      [`${read} ${plural(read, 'turn', 'turns')} read`, `${added} remembered`, `${merged} merged`, deferred ? `${deferred} waiting` : '', staged ? 'sent to /memory pending' : ''].filter(Boolean).join(' · ')
+  },
   settingsPage: { intro: 'Somnia rereads your conversations every night and keeps what keeps coming back. The rules it follows are below; the full journal is on its own page.', open: 'Open Somnia' },
   common: {
     cancel: 'Cancel',
@@ -442,6 +452,16 @@ const EN = {
 const PT = {
   name: 'Somnia',
   open: { palette: 'Somnia: Abrir diário de sonhos', keybind: 'Abrir Somnia' },
+  lang: { title: 'Idioma', auto: current => `Automático (${current})`, autoShort: current => `Auto · ${current}`, diary: 'Idioma do diário', diaryAuto: 'O mesmo das minhas conversas', diaryHint: 'O idioma em que o Diário de sonhos é escrito toda noite' },
+  result: {
+    quiet: 'Nenhuma conversa nova desde o último sonho: nada para ler.',
+    promoted: where => `Adicionado ao ${where}.`,
+    promoteWait: why => `Ainda não gravado: ${why}`,
+    promoteNone: 'Nada foi gravado.',
+    vault: 'inbox do vault',
+    line: (read, added, merged, deferred, staged) =>
+      [`${read} ${plural(read, 'mensagem lida', 'mensagens lidas')}`, `${added} ${plural(added, 'lembrado', 'lembrados')}`, `${merged} ${plural(merged, 'fundido', 'fundidos')}`, deferred ? `${deferred} ${plural(deferred, 'esperando', 'esperando')}` : '', staged ? 'enviado para /memory pending' : ''].filter(Boolean).join(' · ')
+  },
   settingsPage: { intro: 'Toda noite o Somnia relê suas conversas e guarda o que continua voltando. As regras que ele segue estão abaixo; o diário completo fica na página dele.', open: 'Abrir o Somnia' },
   common: {
     cancel: 'Cancelar',
@@ -541,7 +561,7 @@ const PT = {
       recency: 'Recência',
       consolidation: 'Em vários dias',
       conceptual: 'Temas',
-      phase_boost: 'Light + REM',
+      phase_boost: 'Leve + REM',
       lindy: 'Lindy',
       inversion: 'Inversão'
     },
@@ -622,7 +642,7 @@ const PT = {
   chart: {
     title: 'Gráfico do sono',
     hint: 'As últimas 30 noites. Mais fundo significa que algo foi guardado.',
-    stages: { awake: 'Quieta', light: 'Light', rem: 'REM', deep: 'Deep' },
+    stages: { awake: 'Quieta', light: 'Leve', rem: 'REM', deep: 'Profundo' },
     empty: 'Nenhuma noite ainda.',
     summary: (kept, quiet, noop) => `${kept} guardados · ${quiet} quietas · ${noop} sem resultado`,
     tip: {
@@ -741,8 +761,48 @@ const PT = {
 
 const LOCALES = { en: EN, pt: PT, 'pt-br': PT, 'pt-BR': PT }
 
+// Desktop's own language list has no Portuguese, so the page has its own picker:
+// 'auto' follows the app when we ship its language, else the system language, else English.
+const TABLES = { en: EN, 'pt-BR': PT }
+const LANGUAGES = [
+  { id: 'en', label: 'English', short: 'EN' },
+  { id: 'pt-BR', label: 'Português (Brasil)', short: 'PT-BR' }
+]
+
 let i18n = null
 let storage = null
+let langPick = 'auto'
+const langSubs = new Set()
+
+function normalizeLang(code) {
+  const c = String(code || '').toLowerCase()
+  if (c.startsWith('pt')) return 'pt-BR'
+  if (c.startsWith('en')) return 'en'
+  return TABLES[code] ? code : null
+}
+
+function activeLang() {
+  if (langPick !== 'auto' && TABLES[langPick]) return langPick
+  const app = normalizeLang(i18n && i18n.locale)
+  if (app && app !== 'en') return app
+  try {
+    const sys = typeof navigator !== 'undefined' ? normalizeLang(navigator.language) : null
+    if (sys) return sys
+  } catch {
+    /* no navigator */
+  }
+  return 'en'
+}
+
+function setLanguage(pick) {
+  langPick = pick === 'auto' || TABLES[pick] ? pick : 'auto'
+  remember('lang', langPick)
+  langSubs.forEach(fn => fn())
+}
+
+function useLanguagePick() {
+  return useSyncExternalStore(fn => (langSubs.add(fn), () => langSubs.delete(fn)), () => langPick, () => langPick)
+}
 
 function lookup(table, key) {
   return String(key)
@@ -758,13 +818,18 @@ function englishText(key, args) {
 
 /** Outside React: reads the active language at call time. */
 function tr(key, ...args) {
-  return i18n ? i18n.t(key, ...args) : englishText(key, args)
+  const lang = activeLang()
+  if (lang === 'en') return englishText(key, args)
+  const value = lookup(TABLES[lang], key)
+  if (typeof value === 'function') return value(...args)
+  return typeof value === 'string' ? value : englishText(key, args)
 }
 
 /** In components: the SDK hook re-renders on a language switch. */
 function useTr() {
-  const t = typeof usePluginI18n === 'function' ? usePluginI18n(PLUGIN_ID) : null
-  return t && i18n ? t : tr
+  useLanguagePick()
+  if (typeof usePluginI18n === 'function') usePluginI18n(PLUGIN_ID)
+  return tr
 }
 
 // ==== stores ================================================================
@@ -907,6 +972,20 @@ async function startJob(kind, method, params) {
 }
 
 /** Polls `job` every 2 s while one runs; on finish refreshes everything once. */
+/** One localized line from a sweep result (the job's English text is for the CLI). */
+function resultLine(r) {
+  if (!r || typeof r !== 'object') return ''
+  if (r.quiet) return tr('result.quiet')
+  return tr('result.line', r.fragments || 0, r.promoted || 0, r.merged || 0, r.deferred || 0, r.staged || 0)
+}
+
+function promoteLine(r) {
+  const c = r && Array.isArray(r.changes) ? r.changes.find(x => x.action !== 'evicted') : null
+  if (!c) return tr('result.promoteNone')
+  if (c.action === 'deferred' || c.action === 'skipped') return tr('result.promoteWait', serverText(splitPrinciple(c.reason).text || c.reason || ''))
+  return tr('result.promoted', c.target === 'user' ? 'USER.md' : c.target === 'vault' ? tr('result.vault') : 'MEMORY.md')
+}
+
 function JobWatcher() {
   const job = useStore($job)
   const invalidate = useInvalidate()
@@ -924,8 +1003,9 @@ function JobWatcher() {
     $job.set(null)
     invalidate()
     if (data.state === 'done') {
-      if (job.kind === 'dry_run') $preview.set(data.result || { summary: data.summary, changes: [] })
-      else toast('success', data.summary || tr('toast.jobDone'), tr('toast.jobDone'))
+      if (job.kind === 'dry_run') $preview.set(data.result ? { ...data.result, summary: resultLine(data.result) } : { summary: data.summary, changes: [] })
+      else if (job.kind === 'promote') toast('success', promoteLine(data.result), tr('toast.jobDone'))
+      else toast('success', data.result ? resultLine(data.result) : data.summary || tr('toast.jobDone'), tr('toast.jobDone'))
     } else {
       toast('error', data.error || data.summary || tr('toast.jobFailed'), tr('toast.jobFailed'))
     }
@@ -1019,6 +1099,24 @@ async function askHermes(text) {
   return false
 }
 
+const DIARY_LANGUAGES = [['auto', null], ['English', 'English'], ['Portuguese (Brazil)', 'Português (Brasil)']]
+
+function DiaryLanguage({ value }) {
+  const t = useTr()
+  const { write, pending } = useWrite()
+  if (value == null) return null
+  const known = DIARY_LANGUAGES.some(([id]) => id === value)
+  const options = [...DIARY_LANGUAGES, ...(known ? [] : [[value, value]])]
+  return h(
+    'label',
+    { className: 'smn-lang', title: t('lang.diaryHint') },
+    h(Icon, { name: 'book', size: '0.8125rem' }),
+    h('span', null, t('lang.diary')),
+    h('select', { value, disabled: pending, 'aria-label': t('lang.diary'), onChange: e => write('settings.set', { key: 'diary_language', value: e.target.value }, t('thinks.saved')) },
+      options.map(([id, label]) => h('option', { key: id, value: id }, id === 'auto' ? t('lang.diaryAuto') : label)))
+  )
+}
+
 function SettingsLanding() {
   const t = useTr()
   const ov = useOverview().data
@@ -1026,6 +1124,7 @@ function SettingsLanding() {
     h('div', { style: { display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' } },
       h('p', { className: 'smn-hint', style: { flex: 1, margin: 0 } }, t('settingsPage.intro')),
       h(Btn, { variant: 'default', size: 'sm', icon: 'sparkle', onClick: () => go(ROUTE) }, t('settingsPage.open'))),
+    h('div', { style: { display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1rem' } }, h(LanguagePicker, {}), ov && ov.settings ? h(DiaryLanguage, { value: ov.settings.diary_language }) : null),
     ov ? h(Thinks, { ov }) : h(Skel, { height: 120 }))
 }
 
@@ -1042,7 +1141,10 @@ const pct = n => Math.round(clamp(n || 0, 0, 9.99) * 100)
 
 function locale() {
   try {
-    return (i18n && i18n.locale) || (typeof navigator !== 'undefined' && navigator.language) || 'en'
+    const lang = activeLang()
+    if (lang !== 'en') return lang
+    const app = i18n && i18n.locale
+    return app && normalizeLang(app) === 'en' ? app : 'en'
   } catch {
     return 'en'
   }
@@ -1051,7 +1153,7 @@ function locale() {
 function ago(tsSeconds) {
   if (!tsSeconds) return ''
   const ms = tsSeconds * 1000
-  if (typeof relativeTime === 'function') {
+  if (typeof relativeTime === 'function' && activeLang() === 'en') {
     try {
       return relativeTime(ms, Date.now())
     } catch {
@@ -1089,12 +1191,57 @@ function whenNext(iso) {
 }
 
 /** 'occam: …' / 'pareto tail: …' → { principle, text } */
+// The Python half speaks English (the CLI and the logs read it). These patterns translate
+// its user-facing reasons and alarms; anything unmatched (errors, model text) stays as sent.
+const SERVER_TEXT = {
+  'pt-BR': [
+    [/^needs (\d+) more sessions?$/i, (_, n) => `precisa de mais ${n} ${n === '1' ? 'sessão' : 'sessões'}`],
+    [/^needs (\d+) more observations?$/i, (_, n) => `precisa de mais ${n} ${n === '1' ? 'observação' : 'observações'}`],
+    [/^durability ([\d.]+) < ([\d.]+)$/i, (_, a, b) => `durabilidade ${a} < ${b}`],
+    [/^score ([\d.]+) < ([\d.]+)$/i, (_, a, b) => `nota ${a} < ${b}`],
+    [/^not seen recently enough$/i, () => 'não apareceu recentemente'],
+    [/^a multi-step procedure: better as a skill than as memory$/i, () => 'procedimento com vários passos: fica melhor como skill do que na memória'],
+    [/^comes from an? (\w+) source, which is never promoted$/i, (_, k) => `vem de uma fonte ${k}, que nunca é promovida`],
+    [/^already in memory$/i, () => 'já está na memória'],
+    [/^already promoted$/i, () => 'já foi promovido'],
+    [/^pareto tail$/i, () => 'cauda do Pareto: a entrada do Somnia menos confirmada'],
+    [/^room for new facts$/i, () => 'abriu espaço para fatos novos'],
+    [/^memory budget$/i, () => 'sem espaço na memória'],
+    [/^blocked$/i, () => 'bloqueado'],
+    [/^the entry starts with a dangling reference$/i, () => 'a entrada começa com uma referência solta'],
+    [/^the entry refers to something it does not name$/i, () => 'a entrada fala de algo que não nomeia'],
+    [/^the entry is padded beyond the candidate$/i, () => 'a entrada ficou mais longa que o fato original'],
+    [/^the replacement is longer than both versions$/i, () => 'a substituição ficou mais longa que as duas versões'],
+    [/^the merge does not compress its parts$/i, () => 'a fusão não ficou mais curta que as partes'],
+    [/^would supersede a long-confirmed entry without an explicit instruction$/i, () => 'substituiria uma entrada confirmada há muito tempo sem você pedir'],
+    [/^(\d+) nights in a row with new conversations but nothing remembered\.(?: Closest: ([\d.]+) — (.+)\.)?$/i,
+      (_, n, sc, why) => `${n} noites seguidas com conversas novas e nada lembrado.${sc ? ` Mais próximo: ${sc} — ${serverText(why)}.` : ''}`],
+    [/^The last (\d+) sweeps reported errors\.$/i, (_, n) => `As últimas ${n} noites tiveram erros.`],
+    [/^The nightly job is installed but the last sweep ran (never|(\d+) days ago)\. Is the Hermes gateway running\?$/i,
+      (_, w, d) => `O job noturno está instalado, mas ${d ? `a última noite rodou há ${d} dias` : 'nunca rodou'}. O gateway do Hermes está ligado?`],
+    [/^(\w+)\.md is (\d+)\/(\d+) chars and every entry is yours: Somnia cannot add anything there\. Free some room or use the vault\.$/i,
+      (_, f, a, b) => `${f}.md está com ${a}/${b} caracteres e todas as entradas são suas: o Somnia não consegue adicionar nada ali. Libere espaço ou use o vault.`]
+  ]
+}
+
+function serverText(text) {
+  if (!text || typeof text !== 'string') return text
+  const rules = SERVER_TEXT[activeLang()]
+  if (!rules) return text
+  const trimmed = text.trim()
+  for (const [re, fn] of rules) {
+    const m = re.exec(trimmed)
+    if (m) return fn(...m)
+  }
+  return text
+}
+
 function splitPrinciple(reason) {
   if (!reason) return { principle: null, text: '' }
   const m = /^\s*(pareto|lindy|inversion|occam|feynman)\b(?:\s+tail)?\s*:?\s*/i.exec(reason)
-  if (!m) return { principle: null, text: reason }
-  const rest = reason.slice(m[0].length).trim()
-  return { principle: m[1].toLowerCase(), text: rest ? rest[0].toUpperCase() + rest.slice(1) : reason }
+  if (!m) return { principle: null, text: serverText(reason) }
+  const rest = serverText(reason.slice(m[0].length).trim())
+  return { principle: m[1].toLowerCase(), text: rest ? rest[0].toUpperCase() + rest.slice(1) : '' }
 }
 
 function promotedWhere(to) {
@@ -1449,6 +1596,22 @@ function StateLine({ ov }) {
   )
 }
 
+function LanguagePicker({ compact }) {
+  const t = useTr()
+  const pick = useLanguagePick()
+  const current = LANGUAGES.find(l => l.id === activeLang()) || LANGUAGES[0]
+  const options = compact
+    ? [{ id: 'auto', label: t('lang.autoShort', current.short) }, ...LANGUAGES.map(l => ({ id: l.id, label: l.short }))]
+    : [{ id: 'auto', label: t('lang.auto', current.label) }, ...LANGUAGES]
+  return h(
+    'label',
+    { className: `smn-lang${compact ? ' is-compact' : ''}`, title: t('lang.title') },
+    h(Icon, { name: 'globe', size: '0.8125rem' }),
+    compact ? null : h('span', null, t('lang.title')),
+    h('select', { value: pick, 'aria-label': t('lang.title'), onChange: e => setLanguage(e.target.value) }, options.map(o => h('option', { key: o.id, value: o.id }, o.label)))
+  )
+}
+
 function Header({ ov, canUndo, onUndo }) {
   const t = useTr()
   const progress = useJobProgress()
@@ -1478,6 +1641,7 @@ function Header({ ov, canUndo, onUndo }) {
     h(
       'div',
       { className: 'smn-header-actions' },
+      h(LanguagePicker, { compact: true }),
       h(Btn, { size: 'sm', icon: 'eye', disabled: busy || !ov, tip: t('header.previewHint'), onClick: () => startJob('dry_run', 'run', { dry_run: true }) }, t('header.preview')),
       h(Btn, { size: 'sm', icon: 'discard', disabled: busy || !canUndo, tip: t('header.undoHint'), onClick: onUndo }, t('header.undo')),
       typeof pluginSettingsHref === 'function'
@@ -1510,13 +1674,13 @@ function AlarmBanner({ alarm, onReview }) {
       'div',
       { className: 'smn-alarm-text' },
       h('p', { className: 'smn-alarm-title' }, title),
-      h('p', { className: 'smn-body' }, alarm.message),
+      h('p', { className: 'smn-body' }, serverText(alarm.message)),
       alarm.best
         ? h('div', { className: 'smn-alarm-best' },
             h('span', { className: 'smn-meta' }, t('alarm.closest')),
             h('span', { className: 'smn-alarm-best-text' }, alarm.best.text),
             h(ScoreBar, { score: alarm.best.score, min: alarm.best.min_score }),
-            alarm.best.missing && alarm.best.missing[0] ? h('span', { className: 'smn-missing' }, alarm.best.missing[0]) : null)
+            alarm.best.missing && alarm.best.missing[0] ? h('span', { className: 'smn-missing' }, serverText(alarm.best.missing[0])) : null)
         : null
     ),
     act ? h(Btn, { size: 'sm', variant: 'secondary', onClick: onAction }, t(`alarm.action.${act}`)) : null
@@ -1929,7 +2093,7 @@ function CandidateRow({ c, tab, open, onToggle, confirm, vault }) {
         h('span', { className: 'smn-meta' }, facts.join(' · '))),
       tab === 'near' || tab === 'skills'
         ? h('div', { className: 'smn-missing-list' },
-            allPass ? h('span', { className: 'smn-missing is-pass' }, h(Icon, { name: 'pass', size: '0.75rem' }), t('near.passes')) : (c.missing || []).map((m, i) => h('span', { key: i, className: 'smn-missing' }, h(Icon, { name: 'circle-large-outline', size: '0.625rem' }), m)),
+            allPass ? h('span', { className: 'smn-missing is-pass' }, h(Icon, { name: 'pass', size: '0.75rem' }), t('near.passes')) : (c.missing || []).map((m, i) => h('span', { key: i, className: 'smn-missing' }, h(Icon, { name: 'circle-large-outline', size: '0.625rem' }), serverText(m))),
             deferred.text && tab === 'near' ? h('span', { className: 'smn-missing' }, h(Icon, { name: 'clock', size: '0.6875rem' }), deferred.text) : null)
         : null
     ),
@@ -2540,7 +2704,7 @@ function DirectiveCard({ attrs, streaming }) {
       h(ScoreRing, { score: c.score, min: c.min_score, size: 42 }),
       h('div', { className: 'smn-grow' },
         h('p', { className: 'smn-fact' }, c.text),
-        c.status !== 'promoted' && c.missing && c.missing.length ? h('div', { className: 'smn-missing-list' }, c.missing.slice(0, 2).map((m, i) => h('span', { key: i, className: 'smn-missing' }, h(Icon, { name: 'circle-large-outline', size: '0.625rem' }), m))) : null,
+        c.status !== 'promoted' && c.missing && c.missing.length ? h('div', { className: 'smn-missing-list' }, c.missing.slice(0, 2).map((m, i) => h('span', { key: i, className: 'smn-missing' }, h(Icon, { name: 'circle-large-outline', size: '0.625rem' }), serverText(m)))) : null,
         h(SessionChips, { sessions: c.sessions, max: 3 }))),
     h(SignalBars, { components: c.components, score: c.raw ?? c.score, min: c.min_score, compact: true }),
     h('div', { className: 'smn-row-actions' },
@@ -2655,7 +2819,7 @@ const STYLESHEET = `
 
 /* signals */
 .smn-signals{display:flex;flex-direction:column;gap:3px;min-width:0}
-.smn-signal{display:grid;grid-template-columns:72px minmax(0,1fr) 26px;align-items:center;gap:6px;font-size:0.65625rem;color:var(--ui-text-tertiary);cursor:help;border-radius:2px}
+.smn-signal{display:grid;grid-template-columns:84px minmax(0,1fr) 26px;align-items:center;gap:6px;font-size:0.65625rem;color:var(--ui-text-tertiary);cursor:help;border-radius:2px}
 .smn-signal:hover{color:var(--ui-text-secondary)}
 .smn-signal-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .smn-signal-track{display:block;height:6px}
@@ -2666,7 +2830,7 @@ const STYLESHEET = `
 .smn-bonus{display:inline-flex;align-items:center;gap:3px;font-size:0.65625rem;color:var(--ui-text-secondary);padding:1px 5px;border-radius:3px;background:var(--ui-bg-quaternary);cursor:help}
 .smn-bonus-principle{color:color-mix(in srgb,var(--ui-purple) 70%,var(--ui-text-primary));background:color-mix(in srgb,var(--ui-purple) 12%,transparent)}
 .smn-signal-total{margin-left:auto;font-size:0.6875rem;font-weight:600;font-variant-numeric:tabular-nums}
-.smn-signals-compact .smn-signal{grid-template-columns:66px minmax(0,1fr) 24px}
+.smn-signals-compact .smn-signal{grid-template-columns:80px minmax(0,1fr) 24px}
 
 /* score bar */
 .smn-scorebar{display:inline-flex;align-items:center;gap:6px;flex:none}
@@ -2726,6 +2890,11 @@ const STYLESHEET = `
 
 /* editor */
 .smn-editor{display:flex;flex-direction:column;gap:6px}
+.smn-lang{display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--ui-text-secondary);cursor:pointer}
+.smn-lang select{font:inherit;font-size:0.75rem;color:var(--ui-text-primary);background:transparent;color-scheme:inherit;border:1px solid var(--ui-stroke-secondary);border-radius:4px;padding:3px 6px;cursor:pointer}
+.smn-lang select option{background:var(--ui-bg-primary,Canvas);color:var(--ui-text-primary,CanvasText)}
+.smn-lang.is-compact select{border-color:transparent;background:transparent;padding:3px 2px}
+.smn-lang.is-compact:hover select{border-color:var(--ui-stroke-secondary)}
 .smn-textarea{width:100%;resize:vertical;font:inherit;font-size:0.8125rem;line-height:1.5}
 textarea.smn-textarea-native{padding:6px 8px;border-radius:4px;border:1px solid var(--ui-stroke-secondary);background:var(--ui-bg-input,transparent);color:var(--ui-text-primary)}
 .smn-editor-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -2869,6 +3038,7 @@ export default {
     i18n = ctx.i18n && typeof ctx.i18n.register === 'function' && typeof ctx.i18n.t === 'function' ? ctx.i18n : null
     if (i18n) i18n.register(LOCALES)
     storage = ctx.storage || null
+    langPick = stored('lang', 'auto')
     $seenRun.set(stored('seen_run', 0))
     $dismissed.set(stored('dismissed', []))
     injectStyles(onDispose)
@@ -2909,6 +3079,12 @@ export default {
       return ctx.registerSettingsPage({ id: 'somnia', title: tr('name'), icon: 'sparkle', order: 10, render: () => h(SettingsLanding) })
     }
     disposeSettings = settingsPage()
+    const relabel = () => {
+      if (typeof disposeLabels === 'function') disposeLabels()
+      disposeLabels = register(labelled())
+    }
+    langSubs.add(relabel)
+    onDispose(() => langSubs.delete(relabel))
     if (i18n && typeof i18n.onLocaleChange === 'function')
       i18n.onLocaleChange(() => {
         if (typeof disposeLabels === 'function') disposeLabels()

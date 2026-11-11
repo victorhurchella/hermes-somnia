@@ -58,7 +58,7 @@ export function createMockServer(fixture, { mode = 'normal', latency = 90 } = {}
   function finishJob(job) {
     if (job.kind === 'dry_run') {
       job.result = clone(db.dry_run)
-      job.summary = db.dry_run.summary
+      job.summary = 'Dry run finished.'
     } else if (job.kind === 'promote') {
       const c = cand(job.params.key)
       const target = job.params.target || c.target
@@ -77,7 +77,7 @@ export function createMockServer(fixture, { mode = 'normal', latency = 90 } = {}
     } else {
       // A real run on the demo data: nothing new since the last dream → a quiet night.
       job.summary = 'Quiet: no new conversations since the last dream.'
-      job.result = { changes: [] }
+      job.result = { dry_run: false, quiet: true, fragments: 0, promoted: 0, merged: 0, deferred: 0, staged: 0, changes: [] }
     }
   }
 

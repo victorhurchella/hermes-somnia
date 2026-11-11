@@ -15,7 +15,8 @@ from typing import Any
 from .hermes_api import PLUGIN_ID, hermes_home, load_config
 
 # Settings the desktop page may change inline (everything else lives in the Plugins hub).
-PAGE_SETTINGS = ("destructive", "max_promotions", "min_score", "min_sessions", "diary", "notify", "principles")
+PAGE_SETTINGS = ("destructive", "max_promotions", "min_score", "min_sessions", "diary", "diary_language", "notify",
+                 "principles")
 
 
 @dataclass
@@ -66,6 +67,7 @@ class Settings:
     alarm_noop_nights: int = 3  # consecutive nights with material but no promotion before the alarm
     # diary + output
     diary: bool = True
+    diary_language: str = "auto"  # auto = the language of your conversations; or e.g. English, pt-BR
     notify: str = "changes"  # changes | always | never (cron stdout)
     llm: bool = True
     mask_secrets: bool = True

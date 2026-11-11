@@ -2,7 +2,7 @@ name: hermes-somnia
 title: Somnia
 repo: https://github.com/victorhurchella/hermes-somnia
 sha: 0000000000000000000000000000000000000000
-description: "OpenClaw-style memory dreaming with a desktop page. Every night a script-only cron job (no agent turn) runs Light -> REM -> Deep over your recent interactive sessions: it extracts candidate facts, each backed by a verbatim quote, scores what keeps coming back across sessions (six signals plus switchable principles: Pareto, Lindy, Occam, Feynman; Inversion opt-in, with a published benchmark) and consolidates the winners into MEMORY.md/USER.md within their char budget, or into an inbox folder of your markdown vault. A desktop sidebar page shows what was learned and why, memory as space, near-misses, the sleep chart and the Dream Diary, with keep, forget forever, edit, pin, move to vault and undo. Disclosure: reads state.db (read-only), MEMORY.md/USER.md, config.yaml and cron/jobs.json; writes memory through Hermes' MemoryStore (or the /memory pending queue with destructive: stage), its own state and backups in $HERMES_HOME/plugin-data/hermes-somnia, one cron job plus its script in $HERMES_HOME/scripts, and, in vault mode, only <vault>/somnia/. Model calls go to the user's own Hermes provider (or auxiliary.somnia) and contain excerpts of user turns and final agent replies, with secrets masked first; a night with no new conversation makes no call. No other network calls, telemetry or credentials. Imports private modules with fallbacks: tools.memory_tool, tools.write_approval, agent.auxiliary_client, hermes_cli.plugins_state."
+description: "OpenClaw-style memory dreaming with a desktop page (English and Brazilian Portuguese). Every night a script-only cron job (no agent turn) runs Light -> REM -> Deep over your recent interactive sessions: it extracts candidate facts, each backed by a verbatim quote, scores what keeps coming back across sessions (six signals plus switchable principles: Pareto, Lindy, Occam, Feynman; Inversion opt-in, with a published benchmark) and consolidates the winners into MEMORY.md/USER.md within their char budget, or into an inbox folder of your markdown vault. A desktop sidebar page shows what was learned and why, memory as space, near-misses, the sleep chart and the Dream Diary, with keep, forget forever, edit, pin, move to vault and undo. Disclosure: reads state.db (read-only), MEMORY.md/USER.md, config.yaml and cron/jobs.json; writes memory through Hermes' MemoryStore (or the /memory pending queue with destructive: stage), its own state and backups in $HERMES_HOME/plugin-data/hermes-somnia, one cron job plus its script in $HERMES_HOME/scripts, and, in vault mode, only <vault>/somnia/. Model calls go to the user's own Hermes provider (or auxiliary.somnia) and contain excerpts of user turns and final agent replies, with secrets masked first; a night with no new conversation makes no call. No other network calls, telemetry or credentials. Imports private modules with fallbacks: tools.memory_tool, tools.write_approval, agent.auxiliary_client, hermes_cli.plugins_state."
 maintainer: victorhurchella
 tier: community
 category: memory
@@ -11,11 +11,11 @@ docs_url: https://github.com/victorhurchella/hermes-somnia/blob/0000000000000000
 version: "0.2.0"
 image: "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/banner.png"
 screenshots:
-  - "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/screenshots/page-dark.png"
-  - "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/screenshots/memory-detail.png"
-  - "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/screenshots/almost-there.png"
-  - "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/screenshots/directive-card.png"
-  - "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/screenshots/settings-page.png"
+  - "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/screenshots/en/page.png"
+  - "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/screenshots/en/memory.png"
+  - "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/screenshots/en/almost-there.png"
+  - "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/screenshots/en/preview.png"
+  - "https://raw.githubusercontent.com/victorhurchella/hermes-somnia/0000000000000000000000000000000000000000/docs/screenshots/en/settings.png"
 platforms: [linux, macos]
 capabilities:
   provides_tools: []

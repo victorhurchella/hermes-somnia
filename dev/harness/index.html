@@ -379,7 +379,7 @@
       click(await waitFor(() => byText('Dream now')))
       await waitFor(() => $('.smn-progress'))
       await waitFor(() => window.__host.toasts.length, 9000)
-      return { ok: /Quiet/.test(window.__host.toasts[0].message), toast: window.__host.toasts[0] }
+      return { ok: /No new conversation/.test(window.__host.toasts[0].message), toast: window.__host.toasts[0] }
     },
     async undo() {
       click(await waitFor(() => { const b = byText('Undo last write'); return b && !b.disabled && b }))

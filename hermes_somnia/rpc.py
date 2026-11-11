@@ -7,6 +7,7 @@ detached subprocess on Hermes' own interpreter and is tracked as a job file the 
 from __future__ import annotations
 
 import json
+import re
 import os
 import subprocess
 import sys
@@ -555,6 +556,8 @@ def settings_set(params: dict, **_) -> dict:
         raise RpcError("destructive must be 'apply' or 'stage'")
     if key == "notify" and new_value not in ("changes", "always", "never"):
         raise RpcError("notify must be changes, always or never")
+    if key == "diary_language" and not re.fullmatch(r"[A-Za-z][A-Za-z \-()]{0,29}", str(new_value)):
+        raise RpcError("diary_language must be 'auto' or a language name or code")
     if type(new_value) is not type(current):
         raise RpcError(f"bad value for {key}")
     if not hermes_api.save_plugin_setting(key, new_value):

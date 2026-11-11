@@ -49,8 +49,15 @@ CONTEXT_LIMIT = 3
 CONTEXT_MAX_CHARS = 360
 
 
+def language_rule(language: str) -> str:
+    lang = (language or "auto").strip()
+    if lang.lower() in ("", "auto"):
+        return "Write the entry in the language most of the memory fragments are written in."
+    return f"Write the entry in {lang}."
+
+
 def build_diary_prompt(snippets: list[str], themes: list[str], promotions: list[str], current_date: str,
-                       recent: list[str]) -> str:
+                       recent: list[str], language: str = "auto") -> str:
     lines = ["Write a dream diary entry from these memory fragments:\n", *[f"- {s}" for s in snippets[:12]]]
     for heading, items, limit in (("\nRecurring themes:", themes, 6),
                                   ("\nMemories that crystallized into something lasting:", promotions, 5)):
@@ -66,6 +73,7 @@ def build_diary_prompt(snippets: list[str], themes: list[str], promotions: list[
             lines += [f"  - {e}" for e in recent[:CONTEXT_LIMIT]]
         lines.append("- Prefer a fresh angle; do not replay the same first-day framing unless newer fragments "
                      "change it.")
+    lines.append("\n" + language_rule(language))
     return "\n".join(lines)
 
 
@@ -125,14 +133,14 @@ def all_entries(path: Path) -> list[dict]:
 
 
 def narrate(complete: Optional[Complete], snippets: list[str], themes: list[str], promotions: list[str],
-            current_date: str, recent: list[str]) -> tuple[str, bool]:
+            current_date: str, recent: list[str], language: str = "auto") -> tuple[str, bool]:
     """(narrative, degraded)."""
     if not snippets and not promotions:
         return "", False
     if complete is None:
         return FALLBACK_NARRATIVE, True
     try:
-        text = complete(DIARY_SYSTEM, build_diary_prompt(snippets, themes, promotions, current_date, recent), 600)
+        text = complete(DIARY_SYSTEM, build_diary_prompt(snippets, themes, promotions, current_date, recent, language), 600)
         text = (text or "").strip()
         return (text, False) if text else (FALLBACK_NARRATIVE, True)
     except Exception:

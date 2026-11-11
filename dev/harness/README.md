@@ -29,3 +29,6 @@ preview dream undo promote pin expand search tabs ask session night theme princi
 (fixture=disabled) directive directiveOpen (view=chat). Opening `index.html` in a desktop browser also works when
 launched with file access allowed for modules (e.g. serve the repo with `python3 -m http.server` and open
 `/dev/harness/index.html`).
+
+README screenshots: `bash dev/harness/screenshots.sh` regenerates `docs/screenshots/en/` and `docs/screenshots/pt-BR/`
+(the same shots in each language) and fails if any page logged an error.

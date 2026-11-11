@@ -132,7 +132,7 @@ type Overview = {
     descriptions: Record<string, string>; // one plain sentence each
   };
   settings: { destructive: 'apply' | 'stage'; max_promotions: number; min_score: number; min_sessions: number;
-              diary: boolean; notify: 'changes' | 'always' | 'never'; principles: string[] };
+              diary: boolean; diary_language: string; notify: 'changes' | 'always' | 'never'; principles: string[] };
 }
 ```
 
@@ -152,7 +152,7 @@ All return `{ ok: true, ... }` or raise. Each one is idempotent where noted.
 | `undo` | `{}` | Restores MEMORY.md/USER.md from the backup taken before the latest applied write (refuses if they changed since). Returns `{ ok, restored: string[] }`. |
 | `run` | `{ dry_run?: boolean }` | Starts a sweep as a background job; returns `{ ok, job }`. Only one at a time (`job` of the running one is returned with `already_running: true`). |
 | `skill.dismiss` | `{ key }` | Hides a skill suggestion (rejects it). |
-| `settings.set` | `{ key: string, value: any }` | Only for the few toggles the page exposes inline (`destructive`, `max_promotions`, `min_score`, `min_sessions`, `diary`, `notify`, `principles` — a string[] of enabled principles). Everything else lives in the Plugins hub. Returns `{ ok, key, value }`. |
+| `settings.set` | `{ key: string, value: any }` | Only for the few toggles the page exposes inline (`destructive`, `max_promotions`, `min_score`, `min_sessions`, `diary`, `diary_language` (`auto` or a language name/code), `notify`, `principles` — a string[] of enabled principles). Everything else lives in the Plugins hub. Returns `{ ok, key, value }`. |
 
 ## Inline chat card
 
@@ -171,7 +171,12 @@ RPC methods (all via `host.request('plugin.hermes-somnia.<name>', …)`):
 - Write: `run` (`{}` and `{dry_run:true}`; dry-run `job.result` is read as `{summary, changes: Change[]}`), `promote`
   (`{key, target?}`), `forget` (`{key, remove_entry}`), `unforget`, `pin` (`{key, pinned}`), `skill.dismiss`,
   `entry.edit` / `entry.remove` (`reject` for "Forget") / `entry.to_vault` (`{target, index, old}`), `undo`,
-  `settings.set` for `principles`, `destructive`, `max_promotions`, `min_score`, `min_sessions`.
+  `settings.set` for `principles`, `destructive`, `max_promotions`, `min_score`, `min_sessions`, `diary_language`.
+- Dry-run jobs: `job.result` is the sweep summary (`fragments`, `promoted`, `merged`, `deferred`, `staged`, `quiet`, …)
+  plus `changes: Change[]`, the operations a real night would log (with `undoable: false`).
+- UI language: the page picks its own (`auto` follows the app when the app's language is shipped, else the system
+  language, else English) and stores the choice in `ctx.storage`. The Python half always answers in English; the
+  page translates known reasons and alarms and leaves anything else (errors, model text) as sent.
 - `-32601` on `overview` renders the "run `hermes plugins enable hermes-somnia`" empty state.
 
 SDK exports (namespace import, every optional one feature-detected): `host` (`request`, `state.gateway`, `navigate`,

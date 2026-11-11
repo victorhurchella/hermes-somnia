@@ -218,6 +218,21 @@ class SweepTests(unittest.TestCase):
                          base_dir=self.tmp / "state", sessions_db=self.db, dry_run=True)
         self.assertEqual(real.light.fragments, 4)  # cursor was not advanced by the first dry run
 
+    def test_dry_run_reports_structured_changes(self):
+        mem = FakeMemory(self.tmp, memory=["Host has no Docker."])
+        s = run_sweep(self.settings, complete=ScriptedLLM(extract=_extract), backend=mem, now=NOW, dry_run=True,
+                      base_dir=self.tmp / "state", sessions_db=self.db)
+        d = s.as_dict()
+        self.assertTrue(d["changes"])
+        c = d["changes"][0]
+        self.assertEqual(set(c) >= {"action", "target", "text", "replaced", "score", "sessions", "reason"}, True)
+        self.assertFalse(c["undoable"])
+
+    def test_diary_language_reaches_the_prompt(self):
+        from hermes_somnia.diary import build_diary_prompt
+        self.assertIn("Write the entry in pt-BR.", build_diary_prompt(["a"], [], [], "2026-11-11", [], "pt-BR"))
+        self.assertIn("language most of the memory fragments", build_diary_prompt(["a"], [], [], "", [], "auto"))
+
     def test_invalid_plan_falls_back_to_append(self):
         mem = FakeMemory(self.tmp)
         llm = ScriptedLLM(extract=_extract, consolidate=lambda p: {"operations": "nope"})

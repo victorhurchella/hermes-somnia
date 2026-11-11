@@ -72,7 +72,7 @@ const RAW = [
     ['s-lf-oil', 's-lf-shader'], ['lanternfall', 'lantern', 'gameplay'],
     ['radius should ease out hard below 20 oil, it feels like the dark closing in'],
     { frequency: 0.48, relevance: 0.78, diversity: 0.4, recency: 0.97, consolidation: 0.42, conceptual: 0.5, phase_boost: 0.05 },
-    { deferred_reason: 'occam: merging it into the oil-meter note would not make either shorter; kept apart for now' }],
+    { deferred_reason: 'occam: the merge does not compress its parts' }],
   // older promotions ---------------------------------------------------
   ['Godot 4.4: use TileMapLayer — the old TileMap node is deprecated in Lanternfall.', 'memory', 'rule',
     ['s-lf-tiles', 's-lf-save'], ['godot', 'lanternfall', 'tilemap'],
@@ -109,7 +109,7 @@ const RAW = [
     ['s-lg-tax'], ['ledgerly', 'vat', 'invoicing'],
     ['reverse charge text has to be on the invoice for b2b in the EU'],
     { frequency: 0.46, relevance: 0.88, diversity: 0.2, recency: 0.6, consolidation: 0.2, conceptual: 0.5, phase_boost: 0.03 },
-    { missing: ['needs 1 more session (seen in 1 of 2)', 'came from a group chat — marked untrusted, never promoted'], origin: 'untrusted' }],
+    { missing: ['comes from an untrusted source, which is never promoted', 'needs 1 more session'], origin: 'untrusted' }],
   ['Preview deploys of Ledgerly each get their own Neon branch, deleted on merge.', 'memory', 'fact',
     ['s-lg-neon', 's-lg-drizzle'], ['ledgerly', 'neon', 'deploy'],
     ['branch per preview, and the github action deletes it on merge'],
@@ -222,11 +222,11 @@ const candidates = RAW.map(([text, target, kind, sess, tags, quotes, comps, extr
   let missing = extra.missing
   if (!missing) {
     missing = []
-    if (!passes.sessions) missing.push(`needs ${2 - sessions.length} more session (seen in ${sessions.length} of 2)`)
-    if (!passes.signals) missing.push('needs 1 more mention')
+    if (!passes.sessions) missing.push(`needs ${2 - sessions.length} more session${2 - sessions.length === 1 ? '' : 's'}`)
+    if (!passes.signals) missing.push('needs 1 more observation')
     if (!passes.score) missing.push(`score ${raw.toFixed(2)} < ${MIN_SCORE.toFixed(2)}`)
-    if (!passes.durability) missing.push('looks temporary (durability < 0.5)')
-    if (!passes.placement) missing.unshift('a procedure: belongs in a skill, not in memory')
+    if (!passes.durability) missing.push(`durability ${Math.min(0.49, (comps && comps.durability) || 0.4).toFixed(2)} < 0.50`)
+    if (!passes.placement) missing.unshift('a multi-step procedure: better as a skill than as memory')
   }
   if (status === 'promoted' || status === 'rejected' || status === 'skill') missing = status === 'skill' ? missing : []
   const lastSeen = NOW - (1 - comps.recency) * 20 * DAY - 6 * 3600
@@ -350,7 +350,7 @@ runs[last.started_at] = [
     replaced: [], score: 0.312,
     components: { frequency: 0.2, relevance: 0.5, diversity: 0.2, recency: 0.05, consolidation: 0.4, conceptual: 0.33, phase_boost: 0 },
     sessions: [ref('s-lf-tiles')],
-    reason: 'pareto tail: the least-confirmed Somnia entry (34 days), and contradicted by the TileMapLayer note',
+    reason: 'pareto tail',
     undoable: true },
   chg(last, byStart('Lanternfall\'s lantern'), 'deferred', 'memory', { reason: byStart('Lanternfall\'s lantern').deferred_reason })
 ]
@@ -370,7 +370,7 @@ nights.slice(0, -1).forEach(n => {
   }
   if (n.noop) {
     const c = byStart('Lanternfall targets')
-    list.push(chg(n, c, 'skipped', 'memory', { reason: n.errors ? 'consolidation call timed out (provider 504)' : 'needs 2 sessions; seen in 1' }))
+    list.push(chg(n, c, 'skipped', 'memory', { reason: n.errors ? 'consolidation call timed out (provider 504)' : 'already in memory' }))
   }
   runs[n.started_at] = list
 })
@@ -458,39 +458,33 @@ const overview = {
   last_run: { at: last.started_at, dry_run: false, summary: '2 added, 1 merged, 1 deferred (memory full)' },
   budgets,
   nights,
-  alarm: {
-    kind: 'budget_full',
-    nights: 1,
-    message: `MEMORY.md is ${Math.round(budgets[0].used / budgets[0].limit * 100)}% full, so last night one fact had to wait. Review the 2 stale entries or move some to your vault.`,
-    best: null,
-    action: 'review'
-  },
+  alarm: null,
   counts,
   vault: { path: '~/notes', folder: 'dreams', inbox_notes: 4, open_items: 7 },
   pressure: { memory: r3(budgets[0].used / budgets[0].limit), user: r3(budgets[1].used / budgets[1].limit) },
   principles: PRINCIPLES(['pareto', 'lindy', 'occam', 'feynman']),
-  settings: { destructive: 'apply', max_promotions: 3, min_score: MIN_SCORE, min_sessions: 2, diary: true, notify: 'changes', principles: ['pareto', 'lindy', 'occam', 'feynman'] }
+  settings: { destructive: 'apply', max_promotions: 3, min_score: MIN_SCORE, min_sessions: 2, diary: true, diary_language: 'auto', notify: 'changes', principles: ['pareto', 'lindy', 'occam', 'feynman'] }
 }
 
 // Noop alarm variant (harness ?alarm=noop).
 const nearBest = candidates.filter(c => c.status === 'candidate').sort((a, b) => b.raw - a.raw)[0]
 const noopAlarm = {
   kind: 'noop', nights: 5,
-  message: `5 nights without remembering anything. The closest candidate scored ${nearBest.score.toFixed(2)} and was blocked by “${nearBest.missing[0] || 'score'}”.`,
-  best: nearBest, action: 'review'
+  message: `5 nights in a row with new conversations but nothing remembered. Closest: ${nearBest.raw.toFixed(2)} — ${nearBest.missing[0] || 'blocked'}.`,
+  best: nearBest, action: 'settings'
 }
 
 // Dry-run proposal (what tonight would do right now).
 const dryRun = {
-  summary: 'Would add 1, supersede 1, and defer 1. No files written.',
+  dry_run: true, quiet: false, fragments: 142, llm_calls: 3, promoted: 1, merged: 1, deferred: 1, staged: 0, evicted: 0,
   changes: [
     { ...chg({ started_at: NOW }, byStart('Lanternfall targets'), 'added', 'memory'), score: 0.67 },
     { ...chg({ started_at: NOW }, byStart('Maya works in Lisbon'), 'superseded', 'user', {
       text: 'Maya works in Lisbon time (WET/WEST); mornings are for deep work.',
       replaced: ['Maya works in Lisbon time (WET/WEST).']
     }) },
-    chg({ started_at: NOW }, byStart('Preview deploys'), 'deferred', 'memory', { reason: 'needs 1 more day of evidence (consolidation)' }),
-    chg({ started_at: NOW }, byStart('Pixel art'), 'skipped', 'memory', { reason: 'feynman: the merged sentence needed three clauses to say one thing; kept the parts' })
+    chg({ started_at: NOW }, byStart('Preview deploys'), 'deferred', 'memory', { reason: 'memory budget' }),
+    chg({ started_at: NOW }, byStart('Pixel art'), 'skipped', 'memory', { reason: 'feynman: the entry refers to something it does not name' })
   ]
 }
 
@@ -539,13 +533,13 @@ const empty = {
     counts: { candidates: 0, near: 0, promoted: 0, rejected: 0, skills: 0, stale: 0, pending: 0 },
     vault: null, pressure: { memory: 0.04, user: 0 },
     principles: PRINCIPLES(['pareto', 'lindy', 'occam', 'feynman']),
-    settings: { destructive: 'apply', max_promotions: 3, min_score: MIN_SCORE, min_sessions: 2, diary: true, notify: 'changes', principles: ['pareto', 'lindy', 'occam', 'feynman'] }
+    settings: { destructive: 'apply', max_promotions: 3, min_score: MIN_SCORE, min_sessions: 2, diary: true, diary_language: 'auto', notify: 'changes', principles: ['pareto', 'lindy', 'occam', 'feynman'] }
   },
   runs: {}, latest_run: null, candidates: [], themes: { themes: [], links: [] },
   diary: { entries: [], path: '~/.hermes/plugin-data/hermes-somnia/DREAMS.md' },
   stats: { histogram: histogram.map(h => ({ ...h, count: 0 })), min_score: MIN_SCORE, by_gate: Object.fromEntries(Object.keys(by_gate).map(k => [k, 0])), promoted_total: 0, rejected_total: 0, candidates_total: 0 },
   sessions_fed: { sessions: {} },
-  dry_run: { summary: 'Nothing to do yet: no conversations since install.', changes: [] },
+  dry_run: { dry_run: true, quiet: true, fragments: 0, promoted: 0, merged: 0, deferred: 0, staged: 0, changes: [] },
   noop_alarm: null,
   sessions: sessionsList.slice(0, 4),
   transcript: [{ role: 'user', text: 'hi!' }, { role: 'assistant', text: 'Hello Maya.' }],

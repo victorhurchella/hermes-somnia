@@ -97,6 +97,7 @@
    "min_score": 0.65,
    "min_sessions": 2,
    "diary": true,
+   "diary_language": "auto",
    "notify": "changes",
    "principles": [
     "pareto",
@@ -220,7 +221,13 @@
   "sessions": {}
  },
  "dry_run": {
-  "summary": "Nothing to do yet: no conversations since install.",
+  "dry_run": true,
+  "quiet": true,
+  "fragments": 0,
+  "promoted": 0,
+  "merged": 0,
+  "deferred": 0,
+  "staged": 0,
   "changes": []
  },
  "noop_alarm": null,
