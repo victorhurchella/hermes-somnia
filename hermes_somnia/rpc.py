@@ -160,6 +160,7 @@ def changes(params: dict, **_) -> dict:
         ids = {sid for c in items for sid in c["sessions"]}
         titles = session_titles(sessions_db_path(), ids)
         latest_applied = store.latest_change_run()
+        forgotten = _rejected_keys(store)
         out = []
         days: dict[tuple, str] = {}
         for key in {c["key"] for c in items if c["key"]}:
@@ -175,6 +176,7 @@ def changes(params: dict, **_) -> dict:
                               "day": days.get((c["key"], sid), "")}
                              for sid in reversed(c["sessions"])],
                 "reason": c["reason"],
+                "forgotten": bool(c["key"]) and c["key"] in forgotten,
                 "undoable": run_id == latest_applied and c["action"] in ("added", "merged", "superseded", "evicted"),
             })
         return r3({"run_at": at, "date": datetime.fromtimestamp(at).strftime("%Y-%m-%d") if at else None,
@@ -502,13 +504,37 @@ def forget(params: dict, **_) -> dict:
                         raise RpcError(str(out.get("error") or out))
                     store.disown(sha1_12(text))
                     removed = True
+        warning = None
+        if remove_entry and e.promoted_to and e.promoted_to.startswith("vault:"):
+            removed, warning = _forget_in_vault(key, Path(e.promoted_to.split(":", 1)[1]))
         store.reject(e.text, key, reason)
         e.pinned = False
         store.save(e)
         store.commit()
-        return {"ok": True, "removed_entry": removed}
+        return {"ok": True, "removed_entry": removed, "warning": warning}
     finally:
         store.close()
+
+
+def _forgotten_file(key: str) -> Path:
+    return state_dir() / "forgotten" / f"{sha1_12(key)}.json"
+
+
+def _forget_in_vault(key: str, note: Path) -> tuple[bool, Optional[str]]:
+    """Remove a forgotten fact from its vault note (kept aside so `unforget` can put it back), then sync."""
+    from .sinks import remove_from_vault, run_vault_sync
+
+    s = load_settings()
+    vault = s.resolved_vault()
+    if vault is None or not str(note.resolve()).startswith(str(Path(vault).resolve())):
+        return False, None
+    block = remove_from_vault(note, key)
+    if block is None:
+        return False, None
+    f = _forgotten_file(key)
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps({"key": key, "note": str(note), "block": block}, ensure_ascii=False), encoding="utf-8")
+    return True, run_vault_sync(s, note, note.stem)
 
 
 def unforget(params: dict, **_) -> dict:
@@ -520,7 +546,18 @@ def unforget(params: dict, **_) -> dict:
         if e and not ok:
             ok = store.unreject(e.text)
         store.commit()
-        return {"ok": ok}
+        f = _forgotten_file(key)
+        restored = False
+        if f.exists():
+            from .sinks import restore_to_vault, run_vault_sync
+
+            d = json.loads(f.read_text(encoding="utf-8"))
+            note = Path(d["note"])
+            restore_to_vault(note, d["block"])
+            f.unlink()
+            restored = True
+            run_vault_sync(load_settings(), note, note.stem)
+        return {"ok": ok or restored, "restored_to_vault": restored}
     finally:
         store.close()
 

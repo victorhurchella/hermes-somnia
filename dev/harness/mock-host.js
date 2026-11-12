@@ -115,7 +115,9 @@ export function createMockServer(fixture, { mode = 'normal', latency = 90 } = {}
     changes: ({ run = 'latest' } = {}) => {
       const at = run === 'latest' ? db.latest_run : Number(run)
       const night = db.overview.nights.find(n => n.started_at === at)
-      return { run_at: at ?? null, date: night ? night.date : null, changes: at != null ? db.runs[at] || [] : [] }
+      const gone = new Set(db.candidates.filter(c => c.status === 'rejected').map(c => c.key))
+      const list = (at != null ? db.runs[at] || [] : []).map(c => ({ ...c, forgotten: !!c.key && gone.has(c.key) }))
+      return { run_at: at ?? null, date: night ? night.date : null, changes: list }
     },
     candidates: ({ filter = 'near', q, limit = 50 } = {}) => {
       let items = db.candidates

@@ -327,3 +327,42 @@ class BudgetAlarmTests(Base):
             self.assertIsNone(alarm(store, Settings(destinations="vault", vault_path=str(vault)), full, None, NOW))
         finally:
             store.close()
+
+
+class ForgetInVaultTests(unittest.TestCase):
+    NOTE = """---
+title: Somnia 2026-11-12
+---
+# Somnia 2026-11-12
+
+## Night 03:03
+
+### Promoted
+- [ ] Keep me: the team uses pnpm.
+  - target: memory | kind: fact | score: 0.72 | key: `claim:aaa`
+  - evidence: "we use pnpm"
+- [ ] Forget me: something private.
+  - target: user | kind: fact | score: 0.54 | key: `claim:bbb`
+  - evidence: "private"
+
+### Themes
+- `pnpm` across 3 sessions
+"""
+
+    def test_remove_and_restore_a_block(self):
+        from hermes_somnia.sinks import remove_from_vault, restore_to_vault
+
+        with tempfile.TemporaryDirectory() as d:
+            note = Path(d) / "2026-11-12.md"
+            note.write_text(self.NOTE, encoding="utf-8")
+            block = remove_from_vault(note, "claim:bbb")
+            text = note.read_text(encoding="utf-8")
+            self.assertTrue(block.startswith("- [ ] Forget me"))
+            self.assertNotIn("private", text)
+            self.assertIn("Keep me", text)
+            self.assertIn("### Themes", text)
+            self.assertIsNone(remove_from_vault(note, "claim:zzz"))
+            remove_from_vault(note, "claim:aaa")
+            self.assertNotIn("### Promoted", note.read_text(encoding="utf-8"))
+            restore_to_vault(note, block)
+            self.assertIn("Forget me: something private.", note.read_text(encoding="utf-8"))

@@ -212,6 +212,9 @@ const EN = {
     action: { run: 'Dream now', settings: 'Open settings', review: 'Review' }
   },
   morning: {
+    forgottenTitle: n => `${n} ${plural(n, 'fact', 'facts')} from this night forgotten`,
+    unforget: 'Undo',
+    unforgetHint: 'Remember it again (and put it back in its vault note).',
     title: 'This morning',
     titleOlder: date => `Last dream · ${date}`,
     titleNight: date => `Night of ${date}`,
@@ -430,7 +433,7 @@ const EN = {
   },
   confirm: {
     forgetTitle: 'Forget this forever?',
-    forgetBody: 'The entry is removed from memory and Somnia will not learn it again from the same words (unless it keeps coming back for months).',
+    forgetBody: 'The entry is removed from memory (or from its vault note) and Somnia will not learn it again from the same words (unless it keeps coming back for months).',
     forgetLabel: 'Forget',
     undoTitle: 'Undo the last write?',
     undoBody: 'MEMORY.md and USER.md go back to the backup taken right before the last dream wrote to them. If you edited them since, the undo is refused.',
@@ -441,6 +444,7 @@ const EN = {
   },
   toast: {
     forgotten: 'Forgotten. It will not come back from the same words.',
+    unforgotten: 'Remembered again.',
     unforgotten: 'Unforgotten. It can be learned again.',
     pinned: 'Pinned. It counts as something you asked to remember.',
     unpinned: 'Unpinned.',
@@ -546,6 +550,9 @@ const PT = {
     action: { run: 'Sonhar agora', settings: 'Abrir configurações', review: 'Revisar' }
   },
   morning: {
+    forgottenTitle: n => `${n} ${plural(n, 'fato desta noite esquecido', 'fatos desta noite esquecidos')}`,
+    unforget: 'Desfazer',
+    unforgetHint: 'Volta a lembrar (e devolve à nota do vault).',
     title: 'Esta manhã',
     titleOlder: date => `Último sonho · ${date}`,
     titleNight: date => `Noite de ${date}`,
@@ -770,7 +777,7 @@ const PT = {
   },
   confirm: {
     forgetTitle: 'Esquecer para sempre?',
-    forgetBody: 'A entrada sai da memória e o Somnia não vai aprendê-la de novo com as mesmas palavras (a menos que continue voltando por meses).',
+    forgetBody: 'A entrada sai da memória (ou da nota no vault) e o Somnia não vai aprendê-la de novo com as mesmas palavras (a menos que continue voltando por meses).',
     forgetLabel: 'Esquecer',
     undoTitle: 'Desfazer a última escrita?',
     undoBody: 'MEMORY.md e USER.md voltam ao backup feito logo antes do último sonho escrever neles. Se você os editou depois, o desfazer é recusado.',
@@ -781,6 +788,7 @@ const PT = {
   },
   toast: {
     forgotten: 'Esquecido. Não volta com as mesmas palavras.',
+    unforgotten: 'Lembrado de novo.',
     unforgotten: 'Desesquecido. Pode ser aprendido de novo.',
     pinned: 'Fixado. Conta como algo que você pediu para lembrar.',
     unpinned: 'Desafixado.',
@@ -1813,7 +1821,9 @@ function MorningSection({ ov, run, onBack, confirm }) {
   const dismissed = useStore($dismissed)
   const [showKept, setShowKept] = useState(false)
   const data = q.data
-  const changes = (data && data.changes) || []
+  const all = (data && data.changes) || []
+  const changes = all.filter(c => !c.forgotten)
+  const forgotten = all.filter(c => c.forgotten)
   const visible = showKept ? changes : changes.filter(c => !dismissed.includes(changeId(c)))
   const keptCount = changes.length - changes.filter(c => !dismissed.includes(changeId(c))).length
   const isLatest = run == null
@@ -1843,10 +1853,22 @@ function MorningSection({ ov, run, onBack, confirm }) {
           h(Btn, { size: 'sm', variant: 'default', icon: 'sparkle', onClick: () => startJob('run', 'run', {}) }, t('header.dreamNow')),
           h(Btn, { size: 'sm', icon: 'eye', onClick: () => startJob('dry_run', 'run', { dry_run: true }) }, t('header.preview'))))
     )
-  } else if (!changes.length) body = h(Empty, { icon: 'eye-closed', title: t('morning.nothing') }, t('morning.nothingHint'))
+  } else if (!all.length) body = h(Empty, { icon: 'eye-closed', title: t('morning.nothing') }, t('morning.nothingHint'))
   else if (!visible.length) body = null
   else body = h('div', { className: 'smn-list' }, visible.map(c => h(ChangeCard, { key: changeId(c), change: c, ov, confirm, kept: dismissed.includes(changeId(c)) })))
-  return h(Section, { id: 'smn-morning', title, hint: t('morning.hint'), actions }, body)
+  const gone = forgotten.length && ov && !q.isLoading ? h(ForgottenList, { items: forgotten }) : null
+  return h(Section, { id: 'smn-morning', title, hint: t('morning.hint'), actions }, body, gone)
+}
+
+function ForgottenList({ items }) {
+  const t = useTr()
+  const { write, pending } = useWrite()
+  return h('div', { className: 'smn-forgotten' },
+    h('p', { className: 'smn-meta' }, t('morning.forgottenTitle', items.length)),
+    items.map(c => h('div', { key: changeId(c), className: 'smn-forgotten-row' },
+      h(Icon, { name: 'trash', size: '0.8125rem' }),
+      h('span', { className: 'smn-forgotten-text', title: c.text }, c.text),
+      h(Btn, { size: 'xs', disabled: pending, tip: t('morning.unforgetHint'), onClick: () => write('unforget', { key: c.key }, t('toast.unforgotten')) }, t('morning.unforget')))))
 }
 
 function ChangeCard({ change, ov, confirm, kept }) {
@@ -3074,6 +3096,9 @@ const STYLESHEET = `
 .smn-cap{display:flex;flex-direction:column;gap:6px}
 .smn-cap-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .smn-cap-file{color:var(--ui-text-secondary);font-weight:600}
+.smn-forgotten{display:flex;flex-direction:column;gap:4px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--ui-stroke-tertiary)}
+.smn-forgotten-row{display:flex;align-items:center;gap:8px;min-width:0;color:var(--ui-text-tertiary);font-size:0.75rem}
+.smn-forgotten-text{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through}
 .smn-cap-tools{display:flex;gap:2px;margin:2px 0 -2px -6px}
 .smn-limit{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--ui-stroke-tertiary);border-radius:8px;margin-top:2px}
 .smn-limit-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}

@@ -395,6 +395,19 @@
       const num = document.querySelector('.smn-cap-num').textContent
       return { ok: /3,300/.test(num), num }
     },
+    async forgetMorning() {
+      const card = await waitFor(() => document.querySelector('#smn-morning .smn-change'))
+      const text = card.querySelector('.smn-fact, .smn-diff')?.textContent.slice(0, 40)
+      click([...card.querySelectorAll('button')].find(b => /^(Forget|Esquecer)$/.test(b.textContent.trim())))
+      click(await waitFor(() => [...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Forget' && b.closest('[role="alertdialog"], [data-slot="dialog-content"], .smn-modal'))))
+      await waitFor(() => document.querySelector('.smn-forgotten-row'))
+      const stillCard = [...document.querySelectorAll('#smn-morning .smn-change')].some(c => c.textContent.includes(text))
+      click(document.querySelector('.smn-forgotten-row button'))
+      await waitFor(() => rpcCalls('unforget').some(e => e.ok))
+      await sleep(900)
+      const back = [...document.querySelectorAll('#smn-morning .smn-change')].some(c => c.textContent.includes(text))
+      return { ok: !stillCard && back && !document.querySelector('.smn-forgotten-row'), stillCard, back }
+    },
     async cancel() {
       click(await waitFor(() => byText('Preview')))
       const btn = await waitFor(() => byText('Cancel preview'))

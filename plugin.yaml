@@ -1,6 +1,6 @@
 name: hermes-somnia
 label: Somnia
-version: 0.3.0
+version: 0.3.1
 requires_hermes: ">=0.23.1"
 description: "Somnia: OpenClaw-style memory dreaming for Hermes. A nightly Light -> REM -> Deep sweep reads your recent sessions, scores what keeps coming back (with switchable thinking principles: Pareto, Lindy, Inversion, Occam, Feynman) and consolidates it into MEMORY.md/USER.md or your markdown second brain. Includes a desktop page, a Dream Diary, forget/pin/undo, and Optimize to shrink a full MEMORY.md/USER.md without losing behaviour."
 author: victorhurchella

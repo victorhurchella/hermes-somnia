@@ -440,6 +440,43 @@ def append_to_vault(settings, text: str, day: str, note_line: str) -> Path:
     return note
 
 
+def remove_from_vault(note: Path, key: str) -> Optional[str]:
+    """Cut one promoted fact out of a vault note: its ``- [ ] text`` line and the indented lines under it
+    (target/score/key, evidence). Found by the ``key: `<key>``` marker, so an edit of the text by the user
+    does not matter. A "### Promoted" heading left with nothing under it goes too. Returns the removed block."""
+    if not note.exists():
+        return None
+    lines = note.read_text(encoding="utf-8").split("\n")
+    marker = f"key: `{key}`"
+    for i, line in enumerate(lines):
+        if marker not in line or not line.startswith("  "):
+            continue
+        start = i
+        while start > 0 and lines[start].startswith("  "):
+            start -= 1
+        if not lines[start].startswith("- "):
+            return None
+        end = i + 1
+        while end < len(lines) and lines[end].startswith("  "):
+            end += 1
+        block = "\n".join(lines[start:end])
+        del lines[start:end]
+        head = start - 1
+        if head >= 0 and lines[head].startswith("### ") and (start >= len(lines) or not lines[start].startswith("- ")):
+            del lines[head]
+            if head < len(lines) and lines[head] == "" and head > 0 and lines[head - 1] == "":
+                del lines[head]
+        note.write_text("\n".join(lines), encoding="utf-8")
+        return block
+    return None
+
+
+def restore_to_vault(note: Path, block: str) -> None:
+    note.parent.mkdir(parents=True, exist_ok=True)
+    text = note.read_text(encoding="utf-8") if note.exists() else ""
+    note.write_text(text.rstrip("\n") + "\n\n" + block.rstrip("\n") + "\n", encoding="utf-8")
+
+
 def pointer_text(folder: Path) -> str:
     return (f"{POINTER_PREFIX} memories consolidated from past sessions land in {folder}/ "
             "(one note per night, status: inbox). Read the newest notes when past context matters.")
