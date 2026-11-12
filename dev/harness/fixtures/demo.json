@@ -5122,5 +5122,85 @@
     "index": 7
    }
   ]
+ },
+ "optimize": {
+  "memory": {
+   "target": "memory",
+   "limit": 2200,
+   "before_chars": 1992,
+   "after_chars": 1870,
+   "saved": 122,
+   "entries_before": 14,
+   "items": [
+    {
+     "id": 0,
+     "from": [
+      0
+     ],
+     "before": [
+      "Maya Okafor, solo indie dev. Two projects: Lanternfall, a cozy roguelike in Godot 4.4 (GDScript, no C#), and Ledgerly, an invoicing SaaS for freelancers (TypeScript). Lanternfall is the passion project; Ledgerly pays the bills, so Ledgerly bugs come first on weekdays."
+     ],
+     "after": "Maya Okafor, solo indie dev. Lanternfall: cozy roguelike, Godot 4.4 (GDScript, no C#), passion project. Ledgerly: invoicing SaaS for freelancers (TypeScript), pays the bills: its bugs come first on weekdays.",
+     "saved": 61,
+     "ok": true,
+     "reason": ""
+    },
+    {
+     "id": 1,
+     "from": [
+      6
+     ],
+     "before": [
+      "Run tests with `pnpm test` (Ledgerly, vitest + Playwright for the invoice flow) and `godot --headless -s tests/run.gd` (Lanternfall, GUT). CI runs both on every PR; a red CI blocks the Friday build."
+     ],
+     "after": "Tests: `pnpm test` (Ledgerly: vitest + Playwright, invoice flow); `godot --headless -s tests/run.gd` (Lanternfall, GUT). CI runs both on every PR; red CI blocks the Friday build.",
+     "saved": 20,
+     "ok": true,
+     "reason": ""
+    },
+    {
+     "id": 2,
+     "from": [
+      9
+     ],
+     "before": [
+      "Deploys: Ledgerly on Vercel, main = production, every PR gets a preview URL. Lanternfall builds are exported by hand from the Godot editor; there is no CI export yet and Maya likes it that way."
+     ],
+     "after": "Deploys: Ledgerly on Vercel (main = production, preview URL per PR). Lanternfall exported by hand from the Godot editor; no CI export, by Maya's choice.",
+     "saved": 41,
+     "ok": true,
+     "reason": ""
+    },
+    {
+     "id": 3,
+     "from": [
+      2
+     ],
+     "before": [
+      "Repo layout: ~/code/lanternfall (Godot project, assets in art/, sfx in audio/) and ~/code/ledgerly (pnpm monorepo: apps/web, packages/db, packages/pdf). Never touch ~/code/archive, it holds client work under NDA."
+     ],
+     "after": "Repos: ~/code/lanternfall (Godot; art/, audio/) and ~/code/ledgerly (pnpm monorepo).",
+     "saved": 128,
+     "ok": false,
+     "reason": "would drop: apps/web, packages/db, packages/pdf, ~/code/archive"
+    },
+    {
+     "id": 4,
+     "from": [
+      11
+     ],
+     "before": [
+      "Prefer small PRs, one concern each; squash-merge with a conventional-commit title. Write the PR description as a checklist of what changed and how it was tested."
+     ],
+     "after": "Small PRs, one concern each; squash-merge, conventional-commit title; description lists changes as a checklist.",
+     "saved": 50,
+     "ok": false,
+     "reason": "would change behaviour: drops “and how it was tested” from the PR description"
+    }
+   ],
+   "unchanged": 9,
+   "llm_calls": 2,
+   "error": null
+  }
  }
 }

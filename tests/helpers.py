@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import sys
 from pathlib import Path
@@ -11,6 +12,10 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from hermes_somnia.sinks import DELIM  # noqa: E402
+
+# Tests must not see the developer's vault: `destinations: auto` would pick it up.
+for _var in ("OBSIDIAN_VAULT_PATH", "WIKI_PATH"):
+    os.environ.pop(_var, None)
 
 
 def make_sessions_db(path: Path, rows: list[tuple]) -> None:
@@ -58,6 +63,10 @@ class FakeMemory:
                 working.remove(op["old_text"])
             elif op["action"] == "add":
                 working.append(op["content"])
+            elif op["action"] == "replace":
+                if op["old_text"] not in working:
+                    return {"success": False, "error": "no match"}
+                working[working.index(op["old_text"])] = op["content"]
         if len(DELIM.join(working)) > self.limits[target]:
             return {"success": False, "error": "over limit"}
         self.data[target] = working

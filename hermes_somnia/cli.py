@@ -47,8 +47,13 @@ def _diary_path(settings) -> Path:
 
 def _finish_job(args, *, ok: bool, summary: str = "", result=None, error: Optional[str] = None) -> None:
     if getattr(args, "job", None):
-        from .rpc import write_job
+        from .rpc import _jobs_dir, write_job
 
+        try:
+            if json.loads((_jobs_dir() / f"{args.job}.json").read_text(encoding="utf-8")).get("state") == "cancelled":
+                return  # the user stopped this preview; its late result is not wanted
+        except (OSError, ValueError):
+            pass
         write_job(args.job, state="done" if ok else "failed", finished_at=time.time(), summary=summary,
                   result=result, error=error)
 
@@ -162,7 +167,7 @@ def cmd_status(args) -> int:
         entries = store.entries()
         promoted = sum(1 for e in entries if e.promoted_at)
         print(f"Somnia {__version__}")
-        print(f"- destinations: {settings.destinations} | schedule: {settings.schedule} | writes: {settings.destructive}")
+        print(f"- destinations: {settings.resolved_destinations}{" (auto)" if settings.destinations == "auto" else ""} | schedule: {settings.schedule} | writes: {settings.destructive}")
         print(f"- principles: {', '.join(p for p in P.ALL if p in P.enabled(settings.principles)) or 'none'}")
         if settings.wants_vault:
             print(f"- vault: {settings.resolved_vault()} / {settings.vault_folder}")
@@ -294,6 +299,56 @@ def undo_last(force: bool = False) -> tuple[list[str], str]:
     return [], " ".join(notes) or "Nothing restored."
 
 
+def optimize_run_dir() -> Path:
+    from .sweep import tz_of
+
+    # Same clock as the nightly run dirs, so `undo` (newest manifest first) sorts them together.
+    return state_dir() / "runs" / (datetime.now(tz_of(load_settings())).strftime("%Y%m%dT%H%M%S") + "-optimize")
+
+
+def cmd_optimize(args) -> int:
+    from . import optimize as opt
+    from .store import Store
+
+    backend = _backend()
+    complete = default_complete()
+    if backend is None or complete is None:
+        msg = "Hermes memory or the model is not available."
+        _finish_job(args, ok=False, error=msg)
+        print(msg)
+        return 1
+    try:
+        prop = opt.propose(args.target, backend.entries(args.target), backend.limit(args.target), complete)
+    except Exception as exc:
+        _finish_job(args, ok=False, error=f"{type(exc).__name__}: {exc}")
+        raise
+    data = prop.as_dict()
+    _finish_job(args, ok=prop.error is None or bool(prop.items), summary=f"{data['saved']} chars could be saved",
+                result=data, error=prop.error)
+    if args.json:
+        print(json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        print(f"{args.target.upper()}.md: {data['before_chars']}/{data['limit']} chars -> "
+              f"{data['after_chars']} if every checked rewrite is applied ({data['llm_calls']} LLM calls).")
+        for it in data["items"]:
+            mark = "ok  " if it["ok"] else "kept"
+            print(f"\n[{it['id']}] {mark} -{it['saved']} chars{'' if it['ok'] else ' (' + it['reason'] + ')'}")
+            for b in it["before"]:
+                print(f"  - {b}")
+            print(f"  + {it['after']}")
+        if prop.error:
+            print(f"\nNote: {prop.error}")
+    if args.apply and not args.job:
+        accept = [i["id"] for i in data["items"] if i["ok"]]
+        store = Store(state_dir() / "state.db")
+        try:
+            res = opt.apply(backend, args.target, data, accept, optimize_run_dir(), store)
+        finally:
+            store.close()
+        print(f"\nApplied {res['applied']} rewrite(s), {res['saved']} chars saved. Undo: hermes somnia undo")
+    return 0
+
+
 def cmd_undo(args) -> int:
     restored, message = undo_last(args.force)
     print(message)
@@ -371,6 +426,12 @@ def build_parser(parser: Optional[argparse.ArgumentParser] = None) -> argparse.A
     p = sub.add_parser("diary", help="print recent dream diary entries")
     p.add_argument("-n", type=int, default=3)
     p.set_defaults(somnia_func=cmd_diary)
+    p = sub.add_parser("optimize", help="propose a shorter MEMORY.md/USER.md that keeps every instruction")
+    p.add_argument("--target", choices=["memory", "user"], default="memory")
+    p.add_argument("--apply", action="store_true", help="apply every rewrite that passed the checks (backup + undo)")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--job", help=argparse.SUPPRESS)
+    p.set_defaults(somnia_func=cmd_optimize)
     p = sub.add_parser("undo", help="restore MEMORY.md/USER.md from before the last write")
     p.add_argument("--force", action="store_true")
     p.set_defaults(somnia_func=cmd_undo)

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import signal
 import os
 import subprocess
 import sys
@@ -110,7 +111,7 @@ def overview(params: dict, **_) -> dict:
                          "open_items": 0, "error": str(exc)}
         pending = len(backend.pending()) if backend is not None and hasattr(backend, "pending") else 0
         result = {
-            "version": __version__, "destinations": s.destinations, "destructive": s.destructive,
+            "version": __version__, "destinations": s.resolved_destinations, "destructive": s.destructive,
             "schedule": s.schedule, "timezone": s.timezone, "cron": cron, "llm": hermes_api.describe_llm(),
             "last_run": last, "budgets": b, "nights": nights(store, 30),
             "alarm": alarm(store, s, b, cron, now, near),
@@ -361,6 +362,98 @@ def job(params: dict, **_) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def job_cancel(params: dict, **_) -> dict:
+    """Stop a running preview. Only dry runs can be cancelled: they write nothing, so killing one
+    mid-flight is always safe. A real night may be halfway through a memory write."""
+    job_id = _str(params, "id", max_len=40)
+    if not job_id.isalnum():
+        raise RpcError("bad job id")
+    path = _jobs_dir() / f"{job_id}.json"
+    if not path.exists():
+        raise RpcError(f"unknown job {job_id}")
+    d = json.loads(path.read_text(encoding="utf-8"))
+    if d.get("state") != "running":
+        return {"ok": True, "state": d.get("state")}
+    if d.get("kind") not in ("dry_run", "optimize"):
+        raise RpcError("only a preview can be cancelled; a real night may be in the middle of a write")
+    pid = d.get("pid")
+    if pid:
+        try:
+            os.killpg(int(pid), signal.SIGTERM)  # start_new_session: the job leads its own group
+        except (ProcessLookupError, PermissionError, OSError):
+            try:
+                os.kill(int(pid), signal.SIGTERM)
+            except OSError:
+                pass
+    write_job(job_id, state="cancelled", finished_at=time.time(), error=None)
+    return {"ok": True, "state": "cancelled"}
+
+
+def optimize_start(params: dict, **_) -> dict:
+    """Propose a shorter MEMORY.md/USER.md (2 LLM calls, writes nothing). Poll with `job`."""
+    return start_job("optimize", ["optimize", "--target", _target(params)])
+
+
+def optimize_apply(params: dict, **_) -> dict:
+    from . import optimize as opt
+    from .cli import optimize_run_dir
+
+    job_id = _str(params, "job", max_len=40)
+    if not job_id.isalnum():
+        raise RpcError("bad job id")
+    path = _jobs_dir() / f"{job_id}.json"
+    if not path.exists():
+        raise RpcError(f"unknown job {job_id}")
+    d = json.loads(path.read_text(encoding="utf-8"))
+    proposal = d.get("result") or {}
+    if d.get("kind") != "optimize" or d.get("state") != "done" or not proposal.get("items"):
+        raise RpcError("no finished optimize proposal for this job")
+    accept = params.get("accept")
+    if not isinstance(accept, list) or not all(isinstance(a, int) for a in accept):
+        raise RpcError("'accept' must be a list of item ids")
+    backend = _backend()
+    if backend is None:
+        raise RpcError("Hermes memory is not available")
+    store = _store()
+    try:
+        out = opt.apply(backend, proposal["target"], proposal, accept, optimize_run_dir(), store)
+    except opt.StaleProposal as exc:
+        raise RpcError(str(exc)) from exc
+    finally:
+        store.close()
+    write_job(job_id, applied=accept)
+    return out
+
+
+MIN_LIMIT, MAX_LIMIT = 500, 20000
+CHARS_PER_TOKEN = 2.75  # Hermes' own estimate (config_defaults: "~800 tokens at 2.75 chars/token")
+
+
+def memory_limit_set(params: dict, **_) -> dict:
+    """Change Hermes' memory_char_limit / user_char_limit (core config, read by new sessions)."""
+    target = _target(params)
+    try:
+        limit = int(params.get("limit"))
+    except (TypeError, ValueError):
+        raise RpcError("'limit' must be a number")
+    backend = _backend()
+    used = 0
+    if backend is not None:
+        entries = backend.entries(target)
+        used = sum(len(e) for e in entries) + 2 * max(0, len(entries) - 1)
+    if limit < MIN_LIMIT:
+        raise RpcError(f"the limit cannot go below {MIN_LIMIT} chars")
+    if limit < used:
+        raise RpcError(f"the limit cannot go below what is in use ({used} chars)")
+    if limit > MAX_LIMIT:
+        raise RpcError(f"the limit cannot go above {MAX_LIMIT} chars")
+    key = "memory.memory_char_limit" if target == "memory" else "memory.user_char_limit"
+    res = hermes_api.set_core_config(key, str(limit))
+    if not res:
+        raise RpcError("could not save the limit")
+    return {"ok": True, "target": target, "limit": limit, "tokens": round(limit / CHARS_PER_TOKEN)}
+
+
 def run(params: dict, **_) -> dict:
     dry = bool(params.get("dry_run"))
     return start_job("dry_run" if dry else "run", ["run", "--verbose"] + (["--dry-run"] if dry else []))
@@ -570,7 +663,8 @@ HANDLERS: dict[str, Callable[..., Any]] = {
     "themes": themes, "diary": diary, "stats": stats_rpc, "sessions.fed": sessions_fed, "job": job,
     "forget": forget, "unforget": unforget, "pin": pin, "promote": promote, "entry.edit": entry_edit,
     "entry.remove": entry_remove, "entry.to_vault": entry_to_vault, "undo": undo, "run": run,
-    "skill.dismiss": skill_dismiss, "settings.set": settings_set,
+    "skill.dismiss": skill_dismiss, "settings.set": settings_set, "job.cancel": job_cancel,
+    "optimize": optimize_start, "optimize.apply": optimize_apply, "memory.limit.set": memory_limit_set,
 }
 
 

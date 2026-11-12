@@ -290,7 +290,7 @@
     useRegistry()
     return h('footer', { className: 'hx-status' },
       h('div', null, h('span', { className: 'hx-si' }, h('i', { className: 'codicon codicon-circle-filled', style: { color: 'var(--ui-green)', fontSize: 8 } }), 'gateway open'), h('span', { className: 'hx-si' }, 'default')),
-      h('div', null, byArea(sdk.STATUSBAR_AREAS.right).map(c => h(Slot, { key: c.id, c, props: {} })), h('span', { className: 'hx-si' }, 'gemini-2.5-flash'), h('span', { className: 'hx-si' }, h('i', { className: 'codicon codicon-bell' }))))
+      h('div', null, byArea(sdk.STATUSBAR_AREAS.right).map(c => h(Slot, { key: c.id, c, props: {} })), h('span', { className: 'hx-si' }, (fixture.overview.llm && fixture.overview.llm.model) || 'gemini-2.5-flash'), h('span', { className: 'hx-si' }, h('i', { className: 'codicon codicon-bell' }))))
   }
 
   function Toasts() {
@@ -375,6 +375,35 @@
       await sleep(300)
       return { ok: /What tonight would change/.test(dlg.textContent) && rpcCalls('job').length >= 2, jobs: rpcCalls('job').length }
     },
+    async optimize() {
+      click(await waitFor(() => byText('Optimize')))
+      const apply = await waitFor(() => [...document.querySelectorAll('button')].find(b => /^Apply \d/.test(b.textContent.trim())), 8000)
+      const before = document.querySelector('.smn-cap-num').textContent
+      click(apply)
+      await waitFor(() => rpcCalls('optimize.apply').some(e => e.ok))
+      await sleep(900)
+      const after = document.querySelector('.smn-cap-num').textContent
+      const toastOk = window.__host.toasts.some(t => /rewritten/.test(t.message))
+      return { ok: toastOk && before !== after && !$('[data-slot="dialog-content"]'), before, after, toasts: window.__host.toasts.map(t => t.message) }
+    },
+    async limit() {
+      click(await waitFor(() => byText('Limit')))
+      click(await waitFor(() => document.querySelectorAll('.smn-lchip')[2]))
+      click(await waitFor(() => byText('Save limit')))
+      await waitFor(() => rpcCalls('memory.limit.set').some(e => e.ok))
+      await sleep(900)
+      const num = document.querySelector('.smn-cap-num').textContent
+      return { ok: /3,300/.test(num), num }
+    },
+    async cancel() {
+      click(await waitFor(() => byText('Preview')))
+      const btn = await waitFor(() => byText('Cancel preview'))
+      click(btn)
+      await waitFor(() => rpcCalls('job.cancel').some(e => e.ok))
+      await sleep(600)
+      const toastOk = window.__host.toasts.some(t => /cancelled/i.test(t.message))
+      return { ok: toastOk && !!byText('Preview') && !$('[data-slot="dialog-content"]'), toasts: window.__host.toasts }
+    },
     async dream() {
       click(await waitFor(() => byText('Dream now')))
       await waitFor(() => $('.smn-progress'))
@@ -382,7 +411,7 @@
       return { ok: /No new conversation/.test(window.__host.toasts[0].message), toast: window.__host.toasts[0] }
     },
     async undo() {
-      click(await waitFor(() => { const b = byText('Undo last write'); return b && !b.disabled && b }))
+      click(await waitFor(() => { const b = byText('Undo'); return b && !b.disabled && b }))
       click(await waitFor(() => $('[data-confirm="ok"]')))
       await waitFor(() => rpcCalls('undo').some(e => e.ok))
       return { ok: true, toast: await waitFor(() => window.__host.toasts[0]) }

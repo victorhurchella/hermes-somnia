@@ -21,8 +21,9 @@ PAGE_SETTINGS = ("destructive", "max_promotions", "min_score", "min_sessions", "
 
 @dataclass
 class Settings:
-    # where Deep writes: builtin (MEMORY.md/USER.md), vault (markdown second brain) or both
-    destinations: str = "builtin"
+    # where Deep writes: auto (the vault when one is configured, else builtin), builtin (MEMORY.md/USER.md),
+    # vault (markdown second brain) or both
+    destinations: str = "auto"
     schedule: str = "0 3 * * *"
     timezone: str = ""  # IANA name; empty = local time of the host
     # builtin sink
@@ -36,6 +37,10 @@ class Settings:
     vault_folder: str = "somnia"  # Somnia-owned inbox inside the vault
     vault_pointer: bool = True  # keep one short MEMORY.md entry pointing at the inbox
     protected_paths: list = field(default_factory=list)  # vault-relative paths never written
+    vault_note_type: str = "inbox"  # frontmatter `type:` of the inbox notes (match your vault's schema)
+    vault_note_tags: list = field(default_factory=lambda: ["somnia"])
+    vault_language: str = "en"  # en | pt-BR: headings and labels of the inbox notes
+    vault_sync_command: str = ""  # run after each vault write, e.g. a git commit+push; {note} {folder} {day}
     # ingestion
     ingest_days: int = 14
     max_messages: int = 600
@@ -67,6 +72,7 @@ class Settings:
     alarm_noop_nights: int = 3  # consecutive nights with material but no promotion before the alarm
     # diary + output
     diary: bool = True
+    fact_language: str = "auto"  # auto = the language the user spoke; or e.g. English, pt-BR
     diary_language: str = "auto"  # auto = the language of your conversations; or e.g. English, pt-BR
     notify: str = "changes"  # changes | always | never (cron stdout)
     llm: bool = True
@@ -100,12 +106,19 @@ class Settings:
         return s
 
     @property
+    def resolved_destinations(self) -> str:
+        if self.destinations != "auto":
+            return self.destinations
+        vault = self.resolved_vault()
+        return "vault" if vault is not None and vault.is_dir() else "builtin"
+
+    @property
     def wants_builtin(self) -> bool:
-        return self.destinations in ("builtin", "both")
+        return self.resolved_destinations in ("builtin", "both")
 
     @property
     def wants_vault(self) -> bool:
-        return self.destinations in ("vault", "both")
+        return self.resolved_destinations in ("vault", "both")
 
     def resolved_vault(self) -> Path | None:
         for candidate in (self.vault_path, os.environ.get("OBSIDIAN_VAULT_PATH"), os.environ.get("WIKI_PATH")):

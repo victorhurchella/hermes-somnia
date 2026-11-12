@@ -102,7 +102,11 @@ type Change = {                // one per Deep operation of a night
 | `diary` | `{ limit?: number }` | `{ entries: {date: string, at: number \| null, text: string, fallback: boolean}[], path: string }` newest first; `date` is the display string written in DREAMS.md (e.g. 'November 11, 2026 at 3:00 AM UTC') |
 | `stats` | `{}` | `{ histogram: {bucket: number, count: number}[] (20 buckets of 0.05), min_score: number, by_gate: Record<Gate, number> (how many candidates each gate blocks), promoted_total, rejected_total, candidates_total }` |
 | `sessions.fed` | `{}` | `{ sessions: Record<string, string[]> }` session id → keys of promoted candidates it fed (for ✦ badges) |
-| `job` | `{ id: string }` | `{ id, kind: 'run' \| 'dry_run' \| 'promote', state: 'running' \| 'done' \| 'failed', started_at, finished_at, summary: string, result: object \| null, error: string \| null }` |
+| `job` | `{ id: string }` | `{ id, kind: 'run' \| 'dry_run' \| 'promote', state: 'running' \| 'done' \| 'failed' \| 'cancelled', started_at, finished_at, summary: string, result: object \| null, error: string \| null }` |
+| `job.cancel` | `{ id: string }` | `{ ok, state }`. Stops a running **preview** (dry run) or **optimize** proposal and marks it `cancelled`; a late result is discarded. A real night cannot be cancelled (it may be mid-write): `RpcError`. |
+| `optimize` | `{ target: 'memory' \| 'user' }` | `{ ok, job }`. Starts a proposal (2 model calls, writes nothing). The finished job's `result` is `{ target, limit, before_chars, after_chars, saved, items: [{ id, from: number[], before: string[], after, saved, ok, reason }], unchanged, llm_calls, error }`. `ok: false` items failed a check (`reason`) and cannot be applied. |
+| `optimize.apply` | `{ job: string, accept: number[] }` | `{ ok, applied, saved }`. One MemoryStore batch (`replace` + `remove` for merges), backup + undo manifest. `RpcError` if the originals changed since the proposal. |
+| `memory.limit.set` | `{ target, limit: number }` | `{ ok, target, limit, tokens }`. Sets `memory.memory_char_limit` / `memory.user_char_limit` via `hermes config set` (500–20000, never below what is in use). New chats pick it up. |
 
 ```ts
 type Overview = {

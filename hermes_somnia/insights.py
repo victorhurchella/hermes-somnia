@@ -84,7 +84,7 @@ def alarm(store: Store, settings: Settings, budgets: list[dict], cron: Optional[
             return {"kind": "stale_cron", "nights": 0, "action": "run",
                     "message": f"The nightly job is installed but the last sweep ran {days}. Is the Hermes gateway running?",
                     "best": None}
-    for b in budgets:
+    for b in (budgets if settings.wants_builtin else []):  # vault-only: a full MEMORY.md blocks nothing
         if b["limit"] and b["used"] / b["limit"] >= 0.97 and not any(e["owner"] == "somnia" for e in b["entries"]):
             return {"kind": "budget_full", "nights": 0, "action": "review", "best": None,
                     "message": f"{b['target'].upper()}.md is {b['used']}/{b['limit']} chars and every entry is yours: "

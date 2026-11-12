@@ -313,3 +313,17 @@ class RpcTests(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BudgetAlarmTests(Base):
+    def test_full_memory_alarms_only_when_somnia_writes_there(self):
+        from hermes_somnia.insights import alarm
+        full = [{"target": "user", "used": 1370, "limit": 1375, "entries": [{"owner": "human"}]}]
+        store = Store(self.tmp / "alarm.db")
+        try:
+            self.assertEqual(alarm(store, Settings(destinations="builtin"), full, None, NOW)["kind"], "budget_full")
+            vault = self.tmp / "vault"
+            vault.mkdir()
+            self.assertIsNone(alarm(store, Settings(destinations="vault", vault_path=str(vault)), full, None, NOW))
+        finally:
+            store.close()

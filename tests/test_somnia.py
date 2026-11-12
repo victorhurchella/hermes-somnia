@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 import shutil
 import re
@@ -227,6 +228,58 @@ class SweepTests(unittest.TestCase):
         c = d["changes"][0]
         self.assertEqual(set(c) >= {"action", "target", "text", "replaced", "score", "sessions", "reason"}, True)
         self.assertFalse(c["undoable"])
+
+    def test_auto_destination_follows_the_vault(self):
+        self.assertEqual(Settings().resolved_destinations, "builtin")
+        vault = self.tmp / "vault"
+        vault.mkdir()
+        self.assertEqual(Settings(vault_path=str(vault)).resolved_destinations, "vault")
+        self.assertEqual(Settings(vault_path=str(self.tmp / "missing")).resolved_destinations, "builtin")
+        self.assertEqual(Settings(destinations="builtin", vault_path=str(vault)).resolved_destinations, "builtin")
+
+    def test_vault_note_conventions_and_sync_command(self):
+        vault = self.tmp / "vault"
+        vault.mkdir()
+        marker = self.tmp / "synced.txt"
+        settings = Settings(destinations="vault", vault_path=str(vault), vault_note_type="inbox",
+                            vault_note_tags=["somnia", "bots"], vault_language="pt-BR", min_score=0.5,
+                            vault_sync_command=f"echo {{day}} {{note}} > {marker}")
+        s = run_sweep(settings, complete=ScriptedLLM(extract=_extract), backend=FakeMemory(self.tmp), now=NOW,
+                      base_dir=self.tmp / "state", sessions_db=self.db)
+        self.assertFalse(s.errors, s.errors)
+        notes = [n for n in (vault / "somnia").glob("*.md") if n.name != "DREAMS.md"]
+        self.assertEqual(len(notes), 1, [n.name for n in notes])
+        text = notes[0].read_text()
+        for needle in ("type: inbox", "tags: [somnia, bots]", "updated: ", "source: ", "### Promovidos", "key: `"):
+            self.assertIn(needle, text)
+        self.assertIn(str(notes[0]), marker.read_text())
+
+    def test_failing_sync_is_an_error_and_full_memory_pointer_is_not(self):
+        vault = self.tmp / "vault"
+        vault.mkdir()
+        settings = Settings(destinations="vault", vault_path=str(vault), min_score=0.5, vault_sync_command="exit 3")
+        mem = FakeMemory(self.tmp, memory=["x" * 2190])
+        s = run_sweep(settings, complete=ScriptedLLM(extract=_extract), backend=mem, now=NOW,
+                      base_dir=self.tmp / "state", sessions_db=self.db)
+        self.assertTrue(any(e.startswith("vault sync: exit 3") for e in s.errors), s.errors)
+        self.assertTrue(any("no room" in w for w in s.warnings), s.warnings)
+        self.assertEqual(mem.data["memory"], ["x" * 2190])
+
+    def test_fact_language_override_reaches_the_extraction_prompt(self):
+        seen = []
+
+        def extract(system, user, _max):
+            seen.append(system)
+            return json.dumps({"observations": []})
+
+        s = Settings(fact_language="pt-BR", min_score=0.5)
+        run_sweep(s, complete=extract, backend=FakeMemory(self.tmp), now=NOW, dry_run=True,
+                  base_dir=self.tmp / "state", sessions_db=self.db)
+        self.assertTrue(any("write every \"text\" in pt-BR" in x for x in seen))
+
+    def test_possessive_tags_fold_into_the_name(self):
+        from hermes_somnia.textutil import normalize_concept_token
+        self.assertEqual(normalize_concept_token("victor's"), "victor")
 
     def test_diary_language_reaches_the_prompt(self):
         from hermes_somnia.diary import build_diary_prompt

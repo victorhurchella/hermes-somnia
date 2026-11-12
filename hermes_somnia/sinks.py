@@ -365,31 +365,60 @@ def vault_dir(settings) -> Path:
     return folder
 
 
-def vault_note_header(day: str) -> list[str]:
-    return ["---", f"title: Somnia {day}", f"created: {day}", "type: dream", "status: inbox",
-            "tags: [somnia]", "---", f"# Somnia {day}", "",
-            "> Written by hermes-somnia. Review, then move what matters into the right note.", ""]
+VAULT_TEXT = {
+    "en": {"intro": "> Written by hermes-somnia. Review, then move what matters into the right note.",
+           "sweep": "Sweep", "promoted": "Promoted", "themes": "Recurring themes", "across": "across {n} memories",
+           "target": "target", "kind": "kind", "score": "score", "sessions": "sessions", "days": "days",
+           "evidence": "evidence", "source": "conversations consolidated by hermes-somnia"},
+    "pt-BR": {"intro": "> Escrito pelo hermes-somnia. Revise e mova o que importa para a nota certa; "
+                       "o que estiver errado: `hermes somnia forget <key>`.",
+              "sweep": "Noite", "promoted": "Promovidos", "themes": "Temas recorrentes",
+              "across": "em {n} memórias", "target": "destino", "kind": "tipo", "score": "nota",
+              "sessions": "sessões", "days": "dias", "evidence": "evidência",
+              "source": "conversas consolidadas pelo hermes-somnia"},
+}
+
+
+def _vt(settings, key: str) -> str:
+    lang = "pt-BR" if str(getattr(settings, "vault_language", "en")).lower().startswith("pt") else "en"
+    return VAULT_TEXT[lang][key]
+
+
+def vault_note_header(day: str, settings=None) -> list[str]:
+    note_type = (getattr(settings, "vault_note_type", "") or "inbox").strip()
+    tags = [str(t).strip() for t in (getattr(settings, "vault_note_tags", None) or ["somnia"]) if str(t).strip()]
+    return ["---", f"title: Somnia {day}", f"created: {day}", f"updated: {day}", f"type: {note_type}",
+            "status: inbox", f"tags: [{', '.join(tags)}]", f"source: {_vt(settings, 'source')} ({day})", "---",
+            f"# Somnia {day}", "", _vt(settings, "intro"), ""]
 
 
 def write_vault(settings, selected: list[Scored], rem_result, day: str, *, dry_run: bool) -> tuple[Optional[Path], list[str]]:
     folder = vault_dir(settings)
     note = folder / f"{day}.md"
-    lines = [] if note.exists() else vault_note_header(day)
-    stamp = datetime.now().strftime("%H:%M")
-    lines += [f"## Sweep {stamp}", ""]
+    lines = [] if note.exists() else vault_note_header(day, settings)
+    tz = None
+    if getattr(settings, "timezone", ""):
+        try:
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo(settings.timezone)
+        except Exception:
+            tz = None
+    stamp = datetime.now(tz).strftime("%H:%M")
+    t = lambda k: _vt(settings, k)  # noqa: E731
+    lines += [f"## {t('sweep')} {stamp}", ""]
     if selected:
-        lines.append("### Promoted")
+        lines.append(f"### {t('promoted')}")
         for s in selected:
             e = s.entry
             lines.append(f"- [ ] {e.text}")
-            lines.append(f"  - target: {e.target} | kind: {e.kind} | score: {s.score:.2f} | "
-                         f"sessions: {len(e.sessions)} | days: {', '.join(e.days[-5:])}")
+            lines.append(f"  - {t('target')}: {e.target} | {t('kind')}: {e.kind} | {t('score')}: {s.score:.2f} | "
+                         f"{t('sessions')}: {len(e.sessions)} | {t('days')}: {', '.join(e.days[-5:])} | key: `{e.key}`")
             if e.evidence:
-                lines.append(f"  - evidence: \"{e.evidence[0].get('quote', '')}\"")
+                lines.append(f"  - {t('evidence')}: \"{e.evidence[0].get('quote', '')}\"")
         lines.append("")
     if rem_result is not None and rem_result.themes:
-        lines.append("### Recurring themes")
-        lines += [f"- `{tag}` across {count} memories" for tag, count, _ in rem_result.themes]
+        lines.append(f"### {t('themes')}")
+        lines += [f"- `{tag}` " + t("across").format(n=count) for tag, count, _ in rem_result.themes]
         lines.append("")
     if dry_run or not selected:
         return (note if selected else None), lines
@@ -404,7 +433,7 @@ def append_to_vault(settings, text: str, day: str, note_line: str) -> Path:
     folder = vault_dir(settings)
     note = folder / f"{day}.md"
     folder.mkdir(parents=True, exist_ok=True)
-    lines = [] if note.exists() else vault_note_header(day)
+    lines = [] if note.exists() else vault_note_header(day, settings)
     lines += [f"- [ ] {text}", f"  - {note_line}", ""]
     with open(note, "a", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
@@ -417,8 +446,37 @@ def pointer_text(folder: Path) -> str:
 
 
 def ensure_pointer(backend: MemoryBackend, folder: Path) -> Optional[str]:
+    """Add the inbox pointer once. A full MEMORY.md is not an error: the vault still works, the pointer
+    is retried on a later night (returned text is a note for the log, never a failed sweep)."""
     entries = backend.entries("memory")
     if any(e.startswith(POINTER_PREFIX) for e in entries):
         return None
-    out = backend.apply("memory", [{"action": "add", "content": pointer_text(folder)}])
+    text = pointer_text(folder)
+    used = sum(len(e) for e in entries) + 2 * max(0, len(entries))
+    if used + len(text) + 2 > backend.limit("memory"):
+        return "skipped: MEMORY.md has no room for the inbox pointer"
+    out = backend.apply("memory", [{"action": "add", "content": text}])
     return None if out.get("success") else str(out.get("error") or out)[:200]
+
+
+def run_vault_sync(settings, note: Path, day: str) -> Optional[str]:
+    """``vault_sync_command`` after a vault write (e.g. commit + push of a git-synced vault). Returns an
+    error line, or None. Runs from the vault root; ``{note}``, ``{folder}`` and ``{day}`` are substituted."""
+    import shlex
+    import subprocess
+
+    cmd = (getattr(settings, "vault_sync_command", "") or "").strip()
+    if not cmd:
+        return None
+    vault = settings.resolved_vault()
+    filled = cmd.replace("{note}", shlex.quote(str(note))).replace("{folder}", shlex.quote(str(note.parent))) \
+        .replace("{day}", shlex.quote(day))
+    try:
+        proc = subprocess.run(filled, shell=True, cwd=str(vault) if vault else None, capture_output=True,
+                              text=True, timeout=180)
+    except subprocess.TimeoutExpired:
+        return "vault sync: timed out after 180 s"
+    if proc.returncode != 0:
+        tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-1:] or [""]
+        return f"vault sync: exit {proc.returncode}: {tail[0][:200]}"
+    return None

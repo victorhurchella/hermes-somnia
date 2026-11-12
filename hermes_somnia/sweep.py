@@ -21,7 +21,7 @@ from .ingest import fit_budget, pack_chunks, read_fragments
 from .llm import Complete
 from .phases import LightResult, RejectFilter, light_block, light_extract, light_stage, rem, rem_block
 from .scoring import rank
-from .sinks import MemoryBackend, ensure_pointer, vault_dir, write_builtin, write_vault
+from .sinks import MemoryBackend, ensure_pointer, run_vault_sync, vault_dir, write_builtin, write_vault
 from .store import Store
 
 DAY_S = 86_400.0
@@ -75,6 +75,7 @@ class SweepSummary:
     diary: str = ""
     diary_degraded: bool = False
     errors: list = field(default_factory=list)
+    warnings: list = field(default_factory=list)  # worth a line in the report, not a failed night
     cursor: tuple = (0, 0)
     llm_calls: int = 0
     principles: list = field(default_factory=list)
@@ -113,7 +114,8 @@ class SweepSummary:
             "ungrounded": self.light.ungrounded, "reasked": self.light.reasked,
             "staged": self.staged, "themes": [t[0] for t in self.themes],
             "truths": [list(t) for t in self.truths], "ranked": self.ranked, "selected": self.selected,
-            "near_misses": self.near_misses, "skills": self.skills, "changes": self.changes, **c,
+            "near_misses": self.near_misses, "skills": self.skills, "changes": self.changes,
+            "warnings": self.warnings, **c,
             "noop": not self.quiet and not self.changed and self.light.fragments > 0,
             "sinks": [{"target": s.target, "applied": s.applied, "evicted": s.evicted, "staged_id": s.staged_id,
                        "deferred": s.deferred, "error": s.error, "plan": s.plan_source,
@@ -240,7 +242,7 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
         rejects = RejectFilter(store, now, settings.reask_days, settings.reask_min_recur)
         light_extract(store, pack_chunks(fragments, settings.extract_chunk_chars), _memory_snapshot(backend), llm,
                       max_calls=settings.max_extract_calls, dedupe=settings.light_dedupe_similarity,
-                      result=summary.light, rejects=rejects, active=active)
+                      result=summary.light, rejects=rejects, active=active, language=settings.fact_language)
         store.put("cursor", new_cursor)
         staged = light_stage(store, now, lookback_days=settings.light_lookback_days, limit=settings.light_limit,
                              dedupe=settings.light_dedupe_similarity, recent_diary=recent)
@@ -337,7 +339,7 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
             if not summary.dry_run and settings.vault_pointer and backend is not None:
                 err = ensure_pointer(backend, vault_dir(settings))
                 if err:
-                    summary.errors.append(f"vault pointer: {err}")
+                    (summary.warnings if err.startswith("skipped") else summary.errors).append(f"vault pointer: {err}")
         except Exception as exc:
             summary.errors.append(f"vault: {exc}")
 
@@ -369,6 +371,14 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
             summary.diary, summary.diary_degraded = narrative, degraded
         diary_mod.replace_block(diary_path, "## Deep Sleep", diary_mod.DEEP_START, diary_mod.DEEP_END,
                                 deep_block(summary))
+    # One sync for the whole night, after the inbox note and the diary (both live in the vault folder).
+    if settings.wants_vault and (summary.vault_note or summary.diary):
+        try:
+            err = run_vault_sync(settings, Path(summary.vault_note) if summary.vault_note else diary_path, day)
+        except Exception as exc:
+            err = f"vault sync: {exc}"
+        if err:
+            summary.errors.append(err)
     summary.llm_calls = llm.calls if llm else 0
     store.prune()
 
@@ -426,6 +436,7 @@ def render_summary(summary: SweepSummary, verbose: bool = False) -> str:
     if d.light.rejected_hits:
         lines.append(f"- {d.light.rejected_hits} observation(s) matched facts you told Somnia to forget.")
     lines += [f"- Error: {e}" for e in d.errors]
+    lines += [f"- Note: {w}" for w in d.warnings]
     if verbose and d.dry_run and d.vault_lines:
         lines += ["", "Vault note preview:", *d.vault_lines]
     return "\n".join(lines)

@@ -55,8 +55,37 @@ export function createMockServer(fixture, { mode = 'normal', latency = 90 } = {}
     return ov
   }
 
+  function optimizeProposal(target) {
+    if (db.optimize && db.optimize[target]) {
+      const r = clone(db.optimize[target])
+      r.before_chars = budget(target).used
+      r.after_chars = r.before_chars - r.saved
+      return r
+    }
+    const b = budget(target)
+    const items = []
+    const shorten = t => t
+      .replace(/\b(always|really|basically|that|please|the user's|in order|usually|for everything|so that) /gi, '')
+      .replace(/ (and|but) (she|he|they) /gi, '; ')
+      .replace(/\s*\([^)]{18,}\)/, '')
+      .replace(/\s+/g, ' ').trim()
+    b.entries.forEach((e, i) => {
+      const after = shorten(e.text)
+      if (e.text.length - after.length >= 8) items.push({ id: items.length, from: [i], before: [e.text], after, saved: e.text.length - after.length, ok: true, reason: '' })
+    })
+    if (b.entries.length > 3) {
+      const e = b.entries[b.entries.length - 1]
+      items.push({ id: items.length, from: [e.index], before: [e.text], after: e.text.slice(0, Math.floor(e.text.length * 0.6)), saved: Math.ceil(e.text.length * 0.4), ok: false, reason: 'would drop: 5433' })
+    }
+    const saved = items.filter(i => i.ok).reduce((a, i) => a + i.saved, 0)
+    return { target, limit: b.limit, before_chars: b.used, after_chars: b.used - saved, saved, entries_before: b.entries.length, items, unchanged: b.entries.length - items.length, llm_calls: 2, error: null }
+  }
+
   function finishJob(job) {
-    if (job.kind === 'dry_run') {
+    if (job.kind === 'optimize') {
+      job.result = optimizeProposal(job.params.target)
+      job.summary = `${job.result.saved} chars could be saved`
+    } else if (job.kind === 'dry_run') {
       job.result = clone(db.dry_run)
       job.summary = 'Dry run finished.'
     } else if (job.kind === 'promote') {
@@ -115,6 +144,37 @@ export function createMockServer(fixture, { mode = 'normal', latency = 90 } = {}
       return { ...db.stats, histogram: hist, min_score: min, by_gate, candidates_total: db.candidates.length }
     },
     'sessions.fed': () => db.sessions_fed,
+    optimize: ({ target = 'memory' } = {}) => startJob('optimize', { target }),
+    'optimize.apply': ({ job, accept }) => {
+      const j = jobs.get(job)
+      if (!j || j.kind !== 'optimize' || j.state !== 'done') throw rpcError(4001, 'RpcError: no finished optimize proposal for this job')
+      const b = budget(j.result.target)
+      const chosen = j.result.items.filter(i => accept.includes(i.id))
+      chosen.forEach(i => {
+        const e = b.entries.find(x => x.text === i.before[0])
+        if (e) { e.text = i.after; e.chars = i.after.length }
+        i.before.slice(1).forEach(t => { b.entries = b.entries.filter(x => x.text !== t) })
+      })
+      if (db.optimize) delete db.optimize[j.result.target]
+      reindex(b)
+      return { ok: true, applied: chosen.length, saved: chosen.reduce((a, i) => a + i.saved, 0) }
+    },
+    'memory.limit.set': ({ target, limit }) => {
+      const b = budget(target)
+      if (limit < Math.max(500, b.used)) throw rpcError(4001, `RpcError: the limit cannot go below what is in use (${b.used} chars)`)
+      b.limit = limit
+      reindex(b)
+      return { ok: true, target, limit, tokens: Math.round(limit / 2.75) }
+    },
+    'job.cancel': ({ id }) => {
+      const job = jobs.get(id)
+      if (!job) throw rpcError(4001, `KeyError: unknown job ${id}`)
+      if (job.state !== 'running') return { ok: true, state: job.state }
+      if (job.kind !== 'dry_run' && job.kind !== 'optimize') throw rpcError(4001, 'RpcError: only a preview can be cancelled')
+      job.state = 'cancelled'
+      job.finished_at = now()
+      return { ok: true, state: 'cancelled' }
+    },
     job: ({ id }) => {
       const job = jobs.get(id)
       if (!job) throw rpcError(4001, `KeyError: unknown job ${id}`)

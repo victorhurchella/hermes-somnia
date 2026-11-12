@@ -177,18 +177,22 @@ const EN = {
     noSchedule: 'no nightly schedule',
     writesTo: where => `writes to ${where}`,
     dest: { builtin: 'MEMORY.md + USER.md', vault: 'vault inbox', both: 'MEMORY.md + vault' },
-    stage: 'merges wait for your review',
+    stage: 'merges need approval',
     model: m => `Model: ${m}`,
     dreamNow: 'Dream now',
     dreaming: 'Dreaming…',
     preview: 'Preview',
     previewHint: 'Dry run: see what tonight would change. Writes nothing.',
-    undo: 'Undo last write',
+    undo: 'Undo',
+    cancel: 'Cancel preview',
+    cancelHint: 'Stop the preview. Nothing was written.',
     undoHint: 'Restore MEMORY.md / USER.md from the backup taken before the last write',
     settings: 'Settings',
     running: (label, s) => `${label} · ${s}s`,
     jobRun: 'Dreaming',
     jobDry: 'Previewing tonight',
+    jobOptimize: 'Optimizing memory',
+    cancelOptimize: 'Cancel',
     jobPromote: 'Writing it now'
   },
   time: {
@@ -283,6 +287,17 @@ const EN = {
     pressure: (file, pct) => `${file} is ${pct}% full. New facts will wait, or push out Somnia’s least-confirmed entries.`,
     reviewStale: n => `Review ${n} stale`,
     pick: 'Select a block to see the entry.',
+    optimize: 'Optimize',
+    optimizeHint: 'Proposes a shorter version that keeps every instruction. You review each change; nothing is written until you apply it.',
+    limit: 'Limit',
+    limitHint: tokens => `Hermes injects this file into every chat (≈ ${tokens} tokens).`,
+    limitLabel: 'Character limit',
+    limitNow: v => `${v} (now)`,
+    limitCost: (tokens, delta) => `≈ ${tokens.toLocaleString()} tokens in every chat${delta ? ` (${delta > 0 ? '+' : ''}${delta})` : ''}.`,
+    limitInvalid: min => `Between ${min} and 20,000 characters.`,
+    limitWhen: 'Applies to new chats. A higher limit costs tokens in every chat; Optimize frees space without that cost.',
+    limitSave: 'Save limit',
+    limitSaved: 'Limit saved. New chats use it.',
     owner: 'Written by',
     ownerSomnia: 'Somnia (a dream)',
     ownerHuman: 'You or Hermes, in a chat',
@@ -394,6 +409,20 @@ const EN = {
     optInHint: 'Off by default: it showed no measurable gain in the benchmark.',
     saved: 'Saved. Applies from the next dream.'
   },
+  optimize: {
+    title: file => `Optimize ${file}`,
+    hint: 'Shorter wording for the same behaviour. Every rewrite was checked: it keeps all numbers, paths, commands and names, and a second pass confirmed the agent would act the same. Uncheck anything you prefer as it is.',
+    from: (a, b, l) => `${a.toLocaleString()} → ${b.toLocaleString()} of ${l.toLocaleString()} chars`,
+    saved: (n, tok) => `−${n} chars · −${tok} tokens per chat`,
+    shorter: 'Shorter',
+    merge: n => `Merges ${n}`,
+    kept: 'Kept as is',
+    chars: n => `−${n}`,
+    none: 'Already tight: nothing worth rewriting.',
+    note: n => `${n} other ${plural(n, 'entry stays', 'entries stay')} as ${plural(n, 'it is', 'they are')}. A backup is taken first; “Undo” restores it.`,
+    apply: n => `Apply ${n}`,
+    applied: (n, saved, file) => `${n} ${plural(n, 'entry', 'entries')} rewritten in ${file}: ${saved} characters free.`
+  },
   preview: {
     title: 'What tonight would change',
     none: 'Nothing would change right now.',
@@ -421,6 +450,7 @@ const EN = {
     undone: files => `Restored ${files}.`,
     dismissed: 'Dismissed.',
     jobDone: 'Dream finished',
+    previewCancelled: 'Preview cancelled. Nothing was written.',
     jobFailed: 'Dream failed',
     askFailed: 'Open a new chat to ask about it. The question was not placed.',
     alreadyRunning: 'A dream is already running.'
@@ -478,21 +508,25 @@ const PT = {
     lastDream: ago => `Último sonho ${ago}`,
     neverDreamed: 'Ainda não sonhou',
     next: when => `próximo ${when}`,
-    noSchedule: 'sem agendamento noturno',
+    noSchedule: 'sem agendamento',
     writesTo: where => `escreve em ${where}`,
     dest: { builtin: 'MEMORY.md + USER.md', vault: 'caixa de entrada do vault', both: 'MEMORY.md + vault' },
-    stage: 'fusões esperam sua revisão',
+    stage: 'fusões com aprovação',
     model: m => `Modelo: ${m}`,
     dreamNow: 'Sonhar agora',
     dreaming: 'Sonhando…',
     preview: 'Prévia',
     previewHint: 'Simulação: veja o que esta noite mudaria. Não grava nada.',
-    undo: 'Desfazer última escrita',
+    undo: 'Desfazer',
+    cancel: 'Cancelar prévia',
+    cancelHint: 'Para a prévia. Nada foi gravado.',
     undoHint: 'Restaura MEMORY.md / USER.md do backup feito antes da última escrita',
     settings: 'Configurações',
     running: (label, s) => `${label} · ${s}s`,
     jobRun: 'Sonhando',
     jobDry: 'Simulando esta noite',
+    jobOptimize: 'Otimizando a memória',
+    cancelOptimize: 'Cancelar',
     jobPromote: 'Gravando agora'
   },
   time: {
@@ -586,6 +620,17 @@ const PT = {
     pressure: (file, pct) => `${file} está ${pct}% cheio. Novos fatos vão esperar, ou empurrar para fora as entradas menos confirmadas do Somnia.`,
     reviewStale: n => `Revisar ${n} ${plural(n, 'desatualizada', 'desatualizadas')}`,
     pick: 'Selecione um bloco para ver a entrada.',
+    optimize: 'Otimizar',
+    optimizeHint: 'Propõe uma versão mais curta que mantém todas as instruções. Você revisa cada mudança; nada é gravado até você aplicar.',
+    limit: 'Limite',
+    limitHint: tokens => `O Hermes coloca este arquivo em toda conversa (≈ ${tokens} tokens).`,
+    limitLabel: 'Limite de caracteres',
+    limitNow: v => `${v} (atual)`,
+    limitCost: (tokens, delta) => `≈ ${tokens.toLocaleString('pt-BR')} tokens em toda conversa${delta ? ` (${delta > 0 ? '+' : ''}${delta})` : ''}.`,
+    limitInvalid: min => `Entre ${min} e 20.000 caracteres.`,
+    limitWhen: 'Vale para conversas novas. Um limite maior custa tokens em toda conversa; Otimizar libera espaço sem esse custo.',
+    limitSave: 'Salvar limite',
+    limitSaved: 'Limite salvo. As conversas novas já usam.',
     owner: 'Escrita por',
     ownerSomnia: 'Somnia (um sonho)',
     ownerHuman: 'Você ou o Hermes, numa conversa',
@@ -704,6 +749,20 @@ const PT = {
     occam: { label: 'Occam: funda só quando simplifica', description: 'Uma fusão só é aplicada quando o resultado é mais curto que as entradas que substitui.' },
     feynman: { label: 'Feynman: se não dá para dizer simples, espere', description: 'Uma entrada reescrita precisa caber numa frase simples; senão as partes são mantidas.' }
   },
+  optimize: {
+    title: file => `Otimizar ${file}`,
+    hint: 'O mesmo comportamento com menos texto. Cada reescrita foi conferida: mantém todos os números, caminhos, comandos e nomes, e uma segunda leitura confirmou que o agente agiria igual. Desmarque o que preferir como está.',
+    from: (a, b, l) => `${a.toLocaleString('pt-BR')} → ${b.toLocaleString('pt-BR')} de ${l.toLocaleString('pt-BR')} caracteres`,
+    saved: (n, tok) => `−${n} caracteres · −${tok} tokens por conversa`,
+    shorter: 'Mais curta',
+    merge: n => `Junta ${n}`,
+    kept: 'Fica como está',
+    chars: n => `−${n}`,
+    none: 'Já está enxuto: nada vale a pena reescrever.',
+    note: n => `${n} ${plural(n, 'outra entrada fica', 'outras entradas ficam')} como ${plural(n, 'está', 'estão')}. Antes de gravar há backup; “Desfazer” restaura.`,
+    apply: n => `Aplicar ${n}`,
+    applied: (n, saved, file) => `${n} ${plural(n, 'entrada reescrita', 'entradas reescritas')} no ${file}: ${saved} caracteres livres.`
+  },
   preview: {
     title: 'O que esta noite mudaria',
     none: 'Nada mudaria agora.',
@@ -731,6 +790,7 @@ const PT = {
     undone: files => `${files} restaurado.`,
     dismissed: 'Dispensado.',
     jobDone: 'Sonho concluído',
+    previewCancelled: 'Prévia cancelada. Nada foi gravado.',
     jobFailed: 'O sonho falhou',
     askFailed: 'Abra uma conversa nova para perguntar. A pergunta não foi colocada.',
     alreadyRunning: 'Um sonho já está rodando.'
@@ -864,7 +924,8 @@ const $preview = createStore(null) //        dry-run job result → dialog
 const $focusKey = createStore(null) //       candidate key to reveal on the page
 const $seenRun = createStore(0) //           last run the user has seen (statusbar chip)
 const $dismissed = createStore([]) //        change ids the user kept (hidden)
-const STORES = [$job, $preview, $focusKey, $seenRun, $dismissed]
+const $optimize = createStore(null) //       { job, result } of a finished optimize proposal → dialog
+const STORES = [$job, $preview, $focusKey, $seenRun, $dismissed, $optimize]
 
 function stored(key, fallback) {
   try {
@@ -984,7 +1045,7 @@ function useWrite() {
 }
 
 /** Start a background job (run / dry run / promote). Polling lives in JobWatcher. */
-async function startJob(kind, method, params) {
+async function startJob(kind, method, params, extra) {
   if ($job.get()) {
     toast('info', tr('toast.alreadyRunning'))
     return null
@@ -993,11 +1054,23 @@ async function startJob(kind, method, params) {
     const res = await rpc(method, params)
     const id = res && (res.job || res.id)
     if (!id) throw new Error('no job id returned')
-    $job.set({ id, kind, startedAt: Date.now() })
+    $job.set({ id, kind, startedAt: Date.now(), ...(extra || {}) })
     return id
   } catch (err) {
     toastError(err)
     return null
+  }
+}
+
+async function cancelJob() {
+  const j = $job.get()
+  if (!j) return
+  try {
+    await rpc('job.cancel', { id: j.id })
+    $job.set(null)
+    toast('info', tr('toast.previewCancelled'))
+  } catch (err) {
+    toastError(err)
   }
 }
 
@@ -1032,7 +1105,11 @@ function JobWatcher() {
     if (!job || !data || data.id !== job.id || data.state === 'running') return
     $job.set(null)
     invalidate()
-    if (data.state === 'done') {
+    if (data.state === 'cancelled') {
+      toast('info', tr('toast.previewCancelled'))
+    } else if (data.state === 'done' && job.kind === 'optimize') {
+      $optimize.set({ job: data.id, result: data.result })
+    } else if (data.state === 'done') {
       if (job.kind === 'dry_run') $preview.set(data.result ? { ...data.result, summary: resultLine(data.result) } : { summary: data.summary, changes: [] })
       else if (job.kind === 'promote') toast('success', promoteLine(data.result), tr('toast.jobDone'))
       else toast('success', data.result ? resultLine(data.result) : data.summary || tr('toast.jobDone'), tr('toast.jobDone'))
@@ -1233,6 +1310,15 @@ const SERVER_TEXT = {
     [/^a multi-step procedure: better as a skill than as memory$/i, () => 'procedimento com vários passos: fica melhor como skill do que na memória'],
     [/^comes from an? (\w+) source, which is never promoted$/i, (_, k) => `vem de uma fonte ${k}, que nunca é promovida`],
     [/^already in memory$/i, () => 'já está na memória'],
+    [/^not shorter than the original$/i, () => 'não ficou mais curta que a original'],
+    [/^the limit cannot go below what is in use \((\d+) chars\)$/i, (_, n) => `o limite não pode ficar abaixo do que já está em uso (${n} caracteres)`],
+    [/^the limit cannot go below (\d+) chars$/i, (_, n) => `o limite não pode ficar abaixo de ${n} caracteres`],
+    [/^memory changed since the proposal; run Optimize again$/i, () => 'a memória mudou desde a proposta; rode Otimizar de novo'],
+    [/^would drop: (.+)$/i, (_, x) => `perderia: ${x}`],
+    [/^would add: (.+)$/i, (_, x) => `acrescentaria: ${x}`],
+    [/^would change behaviour: (.*)$/i, (_, x) => `mudaria o comportamento: ${x}`],
+    [/^not verified$/i, () => 'não foi possível conferir'],
+    [/^empty rewrite$/i, () => 'reescrita vazia'],
     [/^already promoted$/i, () => 'já foi promovido'],
     [/^pareto tail$/i, () => 'cauda do Pareto: a entrada do Somnia menos confirmada'],
     [/^room for new facts$/i, () => 'abriu espaço para fatos novos'],
@@ -1621,7 +1707,7 @@ function StateLine({ ov }) {
     'p',
     { className: 'smn-state' },
     h('span', { className: `smn-dot${ov.alarm ? ' is-warn' : ov.last_run ? ' is-ok' : ''}`, 'aria-hidden': true }),
-    parts.join(' · '),
+    h('span', { className: 'smn-state-text', title: parts.join(' · ') }, parts.join(' · ')),
     ov.llm && ov.llm.model ? h(Tooltip, { label: t('header.model', `${ov.llm.provider ? `${ov.llm.provider}/` : ''}${ov.llm.model}`) }, h('span', { className: 'smn-state-model', tabIndex: 0 }, h(Icon, { name: 'info', size: '0.75rem' }))) : null
   )
 }
@@ -1646,7 +1732,7 @@ function Header({ ov, canUndo, onUndo }) {
   const t = useTr()
   const progress = useJobProgress()
   const busy = !!progress
-  const label = progress ? t(progress.kind === 'dry_run' ? 'header.jobDry' : progress.kind === 'promote' ? 'header.jobPromote' : 'header.jobRun') : ''
+  const label = progress ? t(progress.kind === 'dry_run' ? 'header.jobDry' : progress.kind === 'promote' ? 'header.jobPromote' : progress.kind === 'optimize' ? 'header.jobOptimize' : 'header.jobRun') : ''
   return h(
     'header',
     { className: 'smn-header' },
@@ -1672,8 +1758,10 @@ function Header({ ov, canUndo, onUndo }) {
       'div',
       { className: 'smn-header-actions' },
       h(LanguagePicker, { compact: true }),
-      h(Btn, { size: 'sm', icon: 'eye', disabled: busy || !ov, tip: t('header.previewHint'), onClick: () => startJob('dry_run', 'run', { dry_run: true }) }, t('header.preview')),
-      h(Btn, { size: 'sm', icon: 'discard', disabled: busy || !canUndo, tip: t('header.undoHint'), onClick: onUndo }, t('header.undo')),
+      busy && (progress.kind === 'dry_run' || progress.kind === 'optimize')
+        ? h(Btn, { size: 'sm', icon: 'close', tip: t('header.cancelHint'), onClick: cancelJob }, h('span', { className: 'smn-btn-label' }, t(progress.kind === 'optimize' ? 'header.cancelOptimize' : 'header.cancel')))
+        : h(Btn, { size: 'sm', icon: 'eye', disabled: busy || !ov, tip: t('header.previewHint'), onClick: () => startJob('dry_run', 'run', { dry_run: true }) }, h('span', { className: 'smn-btn-label smn-collapse' }, t('header.preview'))),
+      h(Btn, { size: 'sm', icon: 'discard', disabled: busy || !canUndo, tip: t('header.undoHint'), onClick: onUndo }, h('span', { className: 'smn-btn-label smn-collapse' }, t('header.undo'))),
       typeof pluginSettingsHref === 'function'
         ? h(Btn, { size: 'sm', icon: 'gear', tip: t('header.settings'), 'aria-label': t('header.settings'), onClick: openSettings })
         : null,
@@ -1896,7 +1984,7 @@ function MemorySpace({ ov, latestKeys, confirm, focusRef }) {
       { className: 'smn-space', ref: focusRef },
       budgets.map(b => h(CapacityBar, { key: b.target, budget: b, latestKeys, selected: sel && sel.target === b.target ? sel.index : null, onSelect: e => setSel(e ? { target: b.target, index: e.index, text: e.text } : null) })),
       h(Legend, { budgets }),
-      budgets.filter(b => b.used / b.limit >= 0.9).map(b =>
+      budgets.filter(b => b.used / b.limit >= 0.9 && (!ov || ov.destinations !== 'vault')).map(b =>
         h('div', { key: `p${b.target}`, className: 'smn-pressure', role: 'status' },
           h(Icon, { name: 'warning', size: '0.8125rem' }),
           h('span', null, t('space.pressure', b.target === 'user' ? 'USER.md' : 'MEMORY.md', pct(b.used / b.limit))),
@@ -1909,8 +1997,41 @@ function MemorySpace({ ov, latestKeys, confirm, focusRef }) {
   )
 }
 
+const CHARS_PER_TOKEN = 2.75 // Hermes' own estimate for the memory budget
+
+function LimitEditor({ budget, onDone }) {
+  const t = useTr()
+  const { write, pending } = useWrite()
+  const [value, setValue] = useState(budget.limit)
+  const presets = [...new Set([budget.limit, Math.round(budget.limit * 1.25 / 50) * 50, Math.round(budget.limit * 1.5 / 50) * 50, budget.limit * 2])]
+  const n = Number(value)
+  const valid = Number.isFinite(n) && n >= Math.max(500, budget.used) && n <= 20000
+  const delta = Math.round((n - budget.limit) / CHARS_PER_TOKEN)
+  const save = async () => {
+    try {
+      await write('memory.limit.set', { target: budget.target, limit: Math.round(n) }, t('space.limitSaved'))
+      onDone()
+    } catch {
+      /* toast shown by useWrite */
+    }
+  }
+  return h('div', { className: 'smn-limit' },
+    h('div', { className: 'smn-limit-row' },
+      presets.map(v => h('button', { key: v, type: 'button', className: `smn-lchip${n === v ? ' is-on' : ''}`, onClick: () => setValue(v) }, v === budget.limit ? t('space.limitNow', v.toLocaleString(locale())) : v.toLocaleString(locale()))),
+      h('input', { type: 'number', className: 'smn-limit-input', min: Math.max(500, budget.used), max: 20000, step: 50, value, onChange: e => setValue(e.target.value), 'aria-label': t('space.limitLabel') })),
+    h('p', { className: 'smn-limit-note' },
+      valid ? t('space.limitCost', Math.round(n / CHARS_PER_TOKEN), delta) : t('space.limitInvalid', Math.max(500, budget.used))),
+    h('p', { className: 'smn-limit-note smn-meta' }, t('space.limitWhen')),
+    h('div', { className: 'smn-row-actions' },
+      h(Btn, { size: 'xs', onClick: onDone }, t('common.cancel')),
+      h(Btn, { size: 'xs', variant: 'default', disabled: !valid || n === budget.limit || pending, onClick: save }, t('space.limitSave'))))
+}
+
 function CapacityBar({ budget, selected, onSelect, latestKeys }) {
   const t = useTr()
+  const [editing, setEditing] = useState(false)
+  const progress = useJobProgress()
+  const optimizing = progress && progress.kind === 'optimize'
   const file = budget.target === 'user' ? 'USER.md' : 'MEMORY.md'
   const ratio = budget.used / budget.limit
   const goalPct = clamp((budget.goal / budget.limit) * 100, 0, 100)
@@ -1923,6 +2044,10 @@ function CapacityBar({ budget, selected, onSelect, latestKeys }) {
       h('span', { className: 'smn-cap-file smn-mono' }, file),
       h('span', { className: `smn-cap-num${ratio >= 0.9 ? ' smn-warn' : ''}` }, t('space.used', budget.used, budget.limit), h('span', { className: 'smn-meta' }, ` · ${pct(ratio)}%`))
     ),
+    h('div', { className: 'smn-cap-tools' },
+      h(Btn, { size: 'xs', icon: 'sparkle', disabled: !!progress || !budget.entries.length, loading: optimizing && progress.target === budget.target, tip: t('space.optimizeHint'), onClick: () => startJob('optimize', 'optimize', { target: budget.target }, { target: budget.target }) }, t('space.optimize')),
+      h(Btn, { size: 'xs', icon: 'settings', tip: t('space.limitHint', Math.round(budget.limit / CHARS_PER_TOKEN)), onClick: () => setEditing(v => !v) }, t('space.limit'))),
+    editing ? h(LimitEditor, { budget, onDone: () => setEditing(false) }) : null,
     h(
       'div',
       { className: 'smn-cap-bar', role: 'list', 'aria-label': file },
@@ -2567,6 +2692,67 @@ function PreviewDialog() {
     h('div', { className: 'smn-modal smn-dialog' }, h('h3', { className: 'smn-h2' }, t('preview.title')), ...content, h('div', { className: 'smn-row-actions smn-end' }, ...footer)))
 }
 
+function OptimizeDialog() {
+  const t = useTr()
+  const state = useStore($optimize)
+  const invalidate = useInvalidate()
+  const [picked, setPicked] = useState(null)
+  const [busy, setBusy] = useState(false)
+  if (!state || !state.result) return null
+  const r = state.result
+  const items = r.items || []
+  const chosen = picked || new Set(items.filter(i => i.ok).map(i => i.id))
+  const saved = items.filter(i => chosen.has(i.id)).reduce((a, i) => a + i.saved, 0)
+  const file = r.target === 'user' ? 'USER.md' : 'MEMORY.md'
+  const close = () => { $optimize.set(null); setPicked(null) }
+  const toggle = id => { const next = new Set(chosen); next.has(id) ? next.delete(id) : next.add(id); setPicked(next) }
+  const apply = async () => {
+    setBusy(true)
+    try {
+      const out = await rpc('optimize.apply', { job: state.job, accept: [...chosen] })
+      toast('success', t('optimize.applied', out.applied, out.saved, file))
+      invalidate()
+      close()
+    } catch (err) {
+      toastError(err)
+    } finally {
+      setBusy(false)
+    }
+  }
+  const content = [
+    h('div', { key: 'sum', className: 'smn-opt-sum' },
+      h('span', { className: 'smn-mono' }, file),
+      h('span', null, t('optimize.from', r.before_chars, r.before_chars - saved, r.limit)),
+      h('span', { className: 'smn-opt-saved' }, t('optimize.saved', saved, Math.round(saved / CHARS_PER_TOKEN)))),
+    h('div', { key: 'list', className: 'smn-preview' },
+      items.length
+        ? items.map(i => h('label', { key: i.id, className: `smn-opt-row${i.ok ? '' : ' is-kept'}` },
+            h('input', { type: 'checkbox', checked: chosen.has(i.id), disabled: !i.ok || busy, onChange: () => toggle(i.id) }),
+            h('div', { className: 'smn-opt-body' },
+              h('div', { className: 'smn-change-meta' },
+                h(Pill, { color: i.ok ? 'var(--ui-green)' : 'var(--ui-text-tertiary)', icon: i.ok ? 'check' : 'shield', strong: true }, i.ok ? (i.from.length > 1 ? t('optimize.merge', i.from.length) : t('optimize.shorter')) : t('optimize.kept')),
+                i.ok ? h('span', { className: 'smn-meta' }, t('optimize.chars', i.saved)) : null),
+              h(Diff, { removed: i.before, added: i.after }),
+              i.ok ? null : h('p', { className: 'smn-reason' }, serverText(i.reason))))
+          )
+        : h(Empty, { icon: 'pass' }, t('optimize.none'))),
+    h('p', { key: 'note', className: 'smn-meta' }, t('optimize.note', r.unchanged))
+  ]
+  const footer = [
+    h(Btn, { key: 'c', size: 'sm', onClick: close }, t('common.close')),
+    h(Btn, { key: 'a', size: 'sm', variant: 'default', icon: 'check', disabled: !chosen.size || busy, loading: busy, onClick: apply }, t('optimize.apply', chosen.size))
+  ]
+  if (Dialog && DialogContent) {
+    return h(Dialog, { open: true, onOpenChange: v => !v && close() },
+      h(DialogContent, { className: 'smn-dialog' },
+        h(DialogHeader, null, h(DialogTitle, null, t('optimize.title', file)), DialogDescription ? h(DialogDescription, null, t('optimize.hint')) : null),
+        ...content,
+        DialogFooter ? h(DialogFooter, null, ...footer) : h('div', { className: 'smn-row-actions smn-end' }, ...footer)))
+  }
+  return h('div', { className: 'smn-modal-backdrop', role: 'dialog', 'aria-modal': true },
+    h('div', { className: 'smn-modal smn-dialog' }, h('h3', { className: 'smn-h2' }, t('optimize.title', file)), ...content, h('div', { className: 'smn-row-actions smn-end' }, ...footer)))
+}
+
 // ==== page ==================================================================
 
 function Disabled({ onRetry }) {
@@ -2656,6 +2842,7 @@ function Page() {
       )
     ),
     h(PreviewDialog),
+    h(OptimizeDialog),
     confirmNode,
     null && write
   )
@@ -2770,19 +2957,23 @@ const STYLESHEET = `
 .smn-danger,.smn-danger:hover{color:var(--ui-red)!important}
 
 /* header */
-.smn-header{position:relative;display:flex;align-items:center;gap:16px;padding:26px 0 20px;border-bottom:1px solid var(--ui-stroke-tertiary);isolation:isolate}
+.smn-header{position:relative;display:flex;flex-wrap:nowrap;align-items:center;gap:16px;padding:26px 0 20px;border-bottom:1px solid var(--ui-stroke-tertiary);isolation:isolate}
 .smn-stars{position:absolute;inset:0 -28px;width:calc(100% + 56px);height:100%;z-index:-1;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,transparent 0%,black 30%,black 70%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0%,black 30%,black 70%,transparent 100%);opacity:.7}
 .smn-header-main{display:flex;align-items:flex-start;gap:12px;flex:1 1 auto;min-width:0}
 .smn-moon{flex:none;margin-top:1px}
-.smn-header-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+.smn-header-text{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 auto}
 .smn-h1{margin:0;font-size:1.125rem;line-height:1.3;font-weight:600;letter-spacing:-0.01em;color:var(--ui-text-primary)}
-.smn-state{margin:0;display:flex;align-items:center;flex-wrap:wrap;gap:6px;color:var(--ui-text-secondary);font-size:0.75rem}
+.smn-state{margin:0;display:flex;align-items:center;flex-wrap:nowrap;gap:6px;min-width:0;color:var(--ui-text-secondary);font-size:0.75rem}
 .smn-state-model{display:inline-flex;color:var(--ui-text-tertiary);cursor:help}
 .smn-dot{width:6px;height:6px;border-radius:50%;background:var(--ui-text-quaternary);flex:none}
 .smn-dot.is-ok{background:var(--ui-green)}
 .smn-dot.is-warn{background:var(--ui-yellow)}
 .smn-progress{margin:2px 0 0;display:flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--ui-accent)}
-.smn-header-actions{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.smn-header-actions{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;flex:none}
+.smn-header-actions>*{flex:none}
+.smn-state-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.smn-progress{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@container smn (max-width: 1020px){.smn-header .smn-collapse{display:none}}
 
 /* sections */
 .smn-section{display:flex;flex-direction:column;gap:12px;min-width:0;scroll-margin-top:16px}
@@ -2883,6 +3074,20 @@ const STYLESHEET = `
 .smn-cap{display:flex;flex-direction:column;gap:6px}
 .smn-cap-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .smn-cap-file{color:var(--ui-text-secondary);font-weight:600}
+.smn-cap-tools{display:flex;gap:2px;margin:2px 0 -2px -6px}
+.smn-limit{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--ui-stroke-tertiary);border-radius:8px;margin-top:2px}
+.smn-limit-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.smn-lchip{font:inherit;font-size:0.6875rem;padding:2px 8px;border-radius:999px;border:1px solid var(--ui-stroke-secondary);background:transparent;color:var(--ui-text-secondary);cursor:pointer;font-variant-numeric:tabular-nums}
+.smn-lchip.is-on{border-color:var(--ui-accent);color:var(--ui-text-primary);background:color-mix(in srgb,var(--ui-accent) 14%,transparent)}
+.smn-limit-input{width:84px;font:inherit;font-size:0.75rem;padding:2px 6px;border-radius:4px;border:1px solid var(--ui-stroke-secondary);background:transparent;color:var(--ui-text-primary)}
+.smn-limit-note{margin:0;font-size:0.71875rem;color:var(--ui-text-secondary)}
+.smn-opt-sum{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-size:0.8125rem;color:var(--ui-text-secondary)}
+.smn-opt-saved{color:var(--ui-green);font-weight:600}
+.smn-opt-row{display:grid;grid-template-columns:18px minmax(0,1fr);gap:10px;padding-bottom:12px;border-bottom:1px solid var(--ui-stroke-tertiary);cursor:pointer}
+.smn-opt-row:last-child{border-bottom:0}
+.smn-opt-row input{margin-top:3px}
+.smn-opt-row.is-kept{opacity:.62;cursor:default}
+.smn-opt-body{display:flex;flex-direction:column;gap:6px;min-width:0}
 .smn-cap-num{font-size:0.75rem;font-weight:600;font-variant-numeric:tabular-nums}
 .smn-cap-bar{position:relative;display:flex;gap:1.5px;height:26px;padding:0;border-radius:5px;background:color-mix(in srgb,var(--ui-base,var(--ui-text-primary)) 3%,transparent);box-shadow:inset 0 0 0 1px var(--ui-stroke-tertiary)}
 .smn-seg{flex:none;min-width:3px;height:100%;border:0;padding:0;cursor:pointer;border-radius:2px;transition:filter .12s,transform .12s,box-shadow .12s}
@@ -2975,6 +3180,7 @@ textarea.smn-textarea-native{padding:6px 8px;border-radius:4px;border:1px solid 
 /* diary */
 .smn-diary{display:flex;flex-direction:column;gap:22px}
 .smn-diary-entry{display:flex;flex-direction:column;gap:6px;max-width:68ch}
+.smn-diary-text p{white-space:pre-line}
 .smn-diary-entry.is-fallback{opacity:.6}
 .smn-diary-date{margin:0;font-size:0.6875rem;font-weight:600;color:var(--ui-text-tertiary);letter-spacing:.01em}
 .smn-diary-text{font-size:0.84375rem;line-height:1.72;color:var(--ui-text-secondary)}

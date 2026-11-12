@@ -1,8 +1,8 @@
 name: hermes-somnia
 label: Somnia
-version: 0.2.0
+version: 0.3.0
 requires_hermes: ">=0.23.1"
-description: "Somnia: OpenClaw-style memory dreaming for Hermes. A nightly Light -> REM -> Deep sweep reads your recent sessions, scores what keeps coming back (with switchable thinking principles: Pareto, Lindy, Inversion, Occam, Feynman) and consolidates it into MEMORY.md/USER.md or your markdown second brain. Includes a desktop page, a Dream Diary, forget/pin/undo."
+description: "Somnia: OpenClaw-style memory dreaming for Hermes. A nightly Light -> REM -> Deep sweep reads your recent sessions, scores what keeps coming back (with switchable thinking principles: Pareto, Lindy, Inversion, Occam, Feynman) and consolidates it into MEMORY.md/USER.md or your markdown second brain. Includes a desktop page, a Dream Diary, forget/pin/undo, and Optimize to shrink a full MEMORY.md/USER.md without losing behaviour."
 author: victorhurchella
 license: MIT
 homepage: https://github.com/victorhurchella/hermes-somnia
@@ -21,10 +21,10 @@ requires_env: []
 config_schema:
   destinations:
     type: str
-    choices: [builtin, vault, both]
-    default: builtin
+    choices: [auto, builtin, vault, both]
+    default: auto
     label: Destination
-    description: "builtin = curate MEMORY.md/USER.md under their char budget; vault = write to a markdown second brain (Obsidian-style) inbox; both = both"
+    description: "auto = your vault when one is configured (vault_path, OBSIDIAN_VAULT_PATH or WIKI_PATH), else builtin; builtin = curate MEMORY.md/USER.md under their char budget; vault = write to a markdown second brain (Obsidian-style) inbox; both = both"
   destructive:
     type: str
     choices: [apply, stage]
@@ -66,6 +66,25 @@ config_schema:
     default: true
     label: Pointer in MEMORY.md
     description: Keep one short MEMORY.md entry telling the agent where the Somnia inbox lives
+  vault_note_type:
+    type: str
+    default: inbox
+    label: Inbox note type
+    description: "Frontmatter `type:` of the inbox notes, to match your vault's schema"
+  vault_note_tags:
+    type: list
+    default: [somnia]
+    label: Inbox note tags
+  vault_language:
+    type: str
+    choices: [en, pt-BR]
+    default: en
+    label: Inbox note language
+  vault_sync_command:
+    type: str
+    default: ""
+    label: Command after a vault write
+    description: "Optional shell command run from the vault root after each write, e.g. a git commit + push. {note}, {folder} and {day} are substituted."
   max_promotions:
     type: int
     default: 3
@@ -94,6 +113,11 @@ config_schema:
     type: bool
     default: true
     label: Dream Diary
+  fact_language:
+    type: str
+    default: auto
+    label: Memory language
+    description: "auto = the language you spoke in; or a language name or code (English, pt-BR) to write every remembered fact in it"
   diary_language:
     type: str
     default: auto

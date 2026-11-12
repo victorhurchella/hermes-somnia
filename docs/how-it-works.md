@@ -83,16 +83,23 @@ sources.
 Dropped: OpenClaw's grounded REM backfill over historical notes (`rem-evidence.ts`, whose regexes are tuned to
 one author's notes), multi-workspace fan-out, and QMD/LanceDB integrations.
 
-## 3. The second-brain mode (`destinations: vault`)
+## 3. The second-brain mode (`destinations: vault`, or `auto` with a vault configured)
 
 With a markdown vault, the size problem goes away: promoted facts become notes, and `MEMORY.md` keeps a single
-pointer entry ("Somnia inbox: …"). The rules that keep the vault clean:
+pointer entry ("Somnia inbox: …") when it has room (`vault_pointer`; a full `MEMORY.md` only skips the pointer).
+The default `destinations: auto` picks this mode whenever `vault_path`, `$OBSIDIAN_VAULT_PATH` or `$WIKI_PATH`
+names an existing folder. The rules that keep the vault clean:
 
 - Somnia writes **only** inside `vault_folder` (default `somnia/`): one note per night
   (`YYYY-MM-DD.md`, `status: inbox`, each fact as a `- [ ]` checkbox with its evidence) plus `DREAMS.md`.
 - It never edits notes it did not create. `protected_paths` lists folders the inbox may not overlap.
 - Moving a fact from the inbox into a curated note is a human decision, or an agent decision that the human
   confirms.
+- The notes follow your vault's conventions: `vault_note_type` and `vault_note_tags` set the frontmatter, which
+  also carries `created`, `updated` and `source`; `vault_language` sets the headings (en, pt-BR).
+- `vault_sync_command` runs once per night after the inbox note and the diary are written, from the vault root
+  (`{note}`, `{folder}`, `{day}` are substituted), for vaults synced with git. A failure counts as a night error,
+  so a sync that keeps failing raises the errors alarm.
 
 `both` writes to the vault and also curates `MEMORY.md`/`USER.md`.
 

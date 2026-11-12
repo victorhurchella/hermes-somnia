@@ -52,7 +52,9 @@ não sim com sem para por que qual quais quem como mesmo mesma outro outra outro
 fim dia dias vez vezes hoje ontem amanhã aí lá precisa precisamos quero queria acho deve devem
 """.split()
 
-STOP_WORDS = frozenset(_OPENCLAW_STOP) | frozenset(_PT_STOP)
+# Words that leaked into REM themes on real chats ("only", "app", "api"): too generic to be a theme.
+_EXTRA_STOP = {"only", "also", "just", "app", "api", "use", "uses", "used", "should", "must", "never", "always"}
+STOP_WORDS = frozenset(_OPENCLAW_STOP) | frozenset(_PT_STOP) | frozenset(_EXTRA_STOP)
 
 # OpenClaw protected glossary (concept-vocabulary.ts:220-262), verbatim. Configurable via
 # the HERMES_SOMNIA_GLOSSARY env var (comma separated) or settings.
@@ -167,6 +169,7 @@ def _script_min_len(token: str) -> int:
 def normalize_concept_token(raw: str, glossary: Iterable[str] = ()) -> str | None:
     t = unicodedata.normalize("NFKC", raw or "")
     t = _EDGE_RE.sub("", t).replace("_", "-").lower()
+    t = re.sub(r"['’]s$", "", t)  # possessives: "victor's" is the concept "victor"
     if not t or not _ALNUM_RE.search(t) or len(t) > _MAX_TOKEN_LEN:
         return None
     if _NUMERIC_RE.match(t) or _DATE_FILE_RE.match(t):

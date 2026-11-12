@@ -8,7 +8,7 @@
 // Godot roguelike) and "Ledgerly" (invoicing SaaS for freelancers).
 // The harness pins the clock to `now` so relative times are stable.
 
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -546,6 +546,8 @@ const empty = {
   undo_backup: null
 }
 
+// A hand-written Optimize proposal for the demo memory (what the model + checks would return).
+demo.optimize = JSON.parse(readFileSync(join(here, 'demo-optimize.json'), 'utf8'))
 writeFileSync(join(here, 'demo.json'), JSON.stringify(demo, null, 1))
 writeFileSync(join(here, 'empty.json'), JSON.stringify(empty, null, 1))
 console.log('demo:', candidates.length, 'candidates,', nights.length, 'nights,', themes.length, 'themes; memory', budgets[0].used, '/', budgets[0].limit, 'user', budgets[1].used, '/', budgets[1].limit)

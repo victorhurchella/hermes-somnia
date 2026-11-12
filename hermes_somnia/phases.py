@@ -281,9 +281,13 @@ def ingest_observations(store: Store, entries: dict[str, Entry], observations: l
 
 def light_extract(store: Store, chunks: list[list[Fragment]], memory_snapshot: dict[str, list[str]],
                   complete: Optional[Complete], *, max_calls: int, dedupe: float, result: LightResult,
-                  rejects: Optional[RejectFilter] = None, active: Optional[set] = None) -> None:
+                  rejects: Optional[RejectFilter] = None, active: Optional[set] = None,
+                  language: str = "auto") -> None:
     entries = {e.key: e for e in store.entries()}
     system = EXTRACT_SYSTEM + P.lens("extract", active if active is not None else set(P.DEFAULT))
+    lang = (language or "auto").strip()
+    if lang.lower() not in ("", "auto"):
+        system += f"\nOverride: write every \"text\" in {lang}, whatever language the fragment is in. Keep \"quote\" verbatim."
     for chunk in chunks:
         result.fragments += len(chunk)
         origin = _chunk_origin(chunk)

@@ -4,6 +4,10 @@
 
 **English** · [Português (Brasil)](README.pt-BR.md)
 
+[![Release](https://img.shields.io/github/v/release/victorhurchella/hermes-somnia?label=release)](https://github.com/victorhurchella/hermes-somnia/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Hermes Agent plugin](https://img.shields.io/badge/Hermes%20Agent-plugin-7c5cff)](https://github.com/NousResearch/hermes-agent)
+
 <a href="hermes://plugin/install?repo=victorhurchella/hermes-somnia&enable=1"><b>Install in Hermes</b></a>
 
 **Your Hermes agent sleeps on what you told it, and wakes up remembering what matters.**
@@ -45,8 +49,12 @@ leave a trail you can check. Somnia does that offline, every night, inside Herme
   vault or ask Hermes about it.
 - **Built for Hermes' small memory.** It works within the char budget: merges, supersedes, and only ever evicts
   entries it wrote itself, starting with the least re-confirmed ones. Your hand-written entries are never touched.
-- **Shines with a second brain.** Point it at an Obsidian vault or LLM wiki: promoted facts become inbox notes with
-  no size limit, and `MEMORY.md` keeps a single pointer to them.
+- **Optimize when memory is full.** One click proposes a shorter `MEMORY.md`/`USER.md` with the same behaviour:
+  rewrites that drop or invent a number, path, command or name are refused by code, a second model pass checks the
+  agent would act the same, and you approve entry by entry. Or raise the limit and see what it costs in tokens.
+- **Shines with a second brain.** If you have an Obsidian vault or LLM wiki configured, Somnia uses it by default:
+  promoted facts become inbox notes with no size limit, in your vault's own frontmatter, and an optional command
+  (a git commit + push, say) syncs them after each night.
 - **Honest about failure.** OpenClaw's stock gates can promote nothing for a week while the diary keeps looking
   healthy. Somnia raises a loud alarm after a few empty nights and names the gate that is blocking.
 - **Speaks your language.** The page ships in English and Brazilian Portuguese, with a language picker. The Dream
@@ -61,6 +69,16 @@ conversations each fact came from (one click opens the chat), and a before/after
 stale ones are told apart. Click one to edit it, forget it or move it to the vault.
 
 ![Memory, as space](docs/screenshots/en/memory.png)
+
+**Optimize** rewrites a full `MEMORY.md` or `USER.md` in fewer characters with the same behaviour. The model proposes
+(shorten, or merge entries on the same subject); the code refuses any rewrite that drops or adds a number, path,
+command, name or identifier; a second model pass checks the agent would act the same. You tick what to apply, there
+is a backup, and *Undo* restores it. **Limit** raises Hermes' character budget for a file and shows what it costs in
+tokens per chat. Both are also on the CLI: `hermes somnia optimize --target user`.
+
+| | |
+|---|---|
+| ![Optimize](docs/screenshots/en/optimize.png) | ![Limit](docs/screenshots/en/limit.png) |
 
 **Almost there.** The facts that keep coming back but haven't passed every gate yet, and what each one is missing.
 Pin one to remember it at the next night, or promote it now.
@@ -79,7 +97,7 @@ material but nothing was kept), and the diary Somnia writes each night.
 
 ![How Somnia thinks](docs/screenshots/en/principles.png)
 
-**Preview a night** before it happens (nothing is written), a **chat card** when you ask Hermes why it remembers
+**Preview a night** before it happens (nothing is written; cancel it any time), a **chat card** when you ask Hermes why it remembers
 something, and a **settings page** under *Settings → Plugins → Somnia*.
 
 | | |
@@ -96,7 +114,8 @@ Light theme: [screenshot](docs/screenshots/en/page-light.png). The whole page: [
   English. The choice is saved on your machine.
 - **Dream Diary:** `diary_language: auto` (default) writes it in the language most of your conversations use. Set a
   language name or code (`English`, `pt-BR`, …) to fix it. You can also change it from the settings page.
-- **Memory entries** are written in the language you used in the conversation they came from.
+- **Memory entries** are written in the language you used in the conversation they came from, or in the one set
+  by `fact_language`.
 - **CLI and logs** are in English.
 
 Adding a language takes one translation table in `desktop/plugin.js` (`EN` is the reference) plus its line in
@@ -138,7 +157,8 @@ auxiliary:
 | `hermes somnia explain "<words>"` | Why something was or wasn't remembered: signals, gates, evidence quotes |
 | `hermes somnia forget <key>` · `unforget <key>` | Forget for good (removes the entry; never learned again) · undo that |
 | `hermes somnia pin <key>` · `promote <key>` | Remember at the next night regardless of recurrence · right now |
-| `hermes somnia undo` | Restore `MEMORY.md`/`USER.md` from before the last write |
+| `hermes somnia optimize [--target user] [--apply]` | Propose a shorter `MEMORY.md`/`USER.md` that keeps every instruction (2 model calls; `--apply` writes the checked rewrites) |
+| `hermes somnia undo` | Restore `MEMORY.md`/`USER.md` from before the last write (a night or an Optimize) |
 | `hermes somnia diary` | The Dream Diary |
 | `/somnia …` | The same, from any chat |
 
@@ -151,9 +171,14 @@ plugins:
   entries:
     hermes-somnia:
       settings:
-        destinations: vault              # builtin | vault | both
+        destinations: auto               # auto | builtin | vault | both
         vault_path: ~/notes              # else $OBSIDIAN_VAULT_PATH, else $WIKI_PATH
         protected_paths: [self, journal] # Somnia never writes there
+        vault_note_type: inbox           # frontmatter of the inbox notes, to match your vault's schema
+        vault_note_tags: [somnia]
+        vault_language: en               # en | pt-BR: headings of the inbox notes
+        vault_sync_command: ""           # e.g. git commit + push after each night ({note} {folder} {day})
+        fact_language: auto              # or English, pt-BR, ...: the language remembered facts are written in
         principles: [pareto, lindy, occam, feynman]
         destructive: apply               # apply (like OpenClaw) | stage (approve in /memory pending)
         max_promotions: 3
@@ -163,7 +188,8 @@ plugins:
 
 | `destinations` | Where Deep writes | Good for |
 |---|---|---|
-| `builtin` (default) | `MEMORY.md` / `USER.md`, within their char budget | Everyone |
+| `auto` (default) | The vault when one is configured (`vault_path`, `$OBSIDIAN_VAULT_PATH` or `$WIKI_PATH`), else `builtin` | Everyone |
+| `builtin` | `MEMORY.md` / `USER.md`, within their char budget | Prompt memory only |
 | `vault` | `<vault>/somnia/YYYY-MM-DD.md` (inbox, one checkbox per fact) + a pointer in `MEMORY.md` | People with a second brain |
 | `both` | Both | A second brain plus a self-curating prompt memory |
 
@@ -190,7 +216,8 @@ plugins:
 - **Writes:** `MEMORY.md`/`USER.md` through Hermes' own MemoryStore (or the `/memory pending` queue with
   `destructive: stage`), its own state in `$HERMES_HOME/plugin-data/hermes-somnia/`, a backup before every write,
   one cron job (`hermes somnia setup`) plus its script in `$HERMES_HOME/scripts/`, and, in vault mode, only
-  `<vault>/somnia/`.
+  `<vault>/somnia/`. When you change a **Limit** on the page, `memory.memory_char_limit` /
+  `memory.user_char_limit` in `config.yaml`, through `hermes config set`.
 - **Model calls:** your own Hermes provider (or `auxiliary.somnia`). The prompts contain excerpts of your user turns
   and the agent's final replies, with secrets masked first. No other network calls, no telemetry, no credentials.
 - **Private Hermes modules:** `tools.memory_tool` (atomic, locked memory writes), `tools.write_approval` (the

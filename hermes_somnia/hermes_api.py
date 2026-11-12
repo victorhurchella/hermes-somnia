@@ -366,6 +366,22 @@ def _run_cli(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
     return subprocess.run(hermes_cli_path() + args, capture_output=True, text=True, timeout=timeout, env=env)
 
 
+def set_core_config(key: str, value: str) -> bool:
+    """Set one core config key through the public CLI (``hermes config set``), then read it back."""
+    try:
+        proc = _run_cli(["config", "set", key, value], 60)
+    except Exception as exc:
+        logger.warning("somnia: hermes config set %s failed: %s", key, exc)
+        return False
+    if proc.returncode != 0:
+        logger.warning("somnia: hermes config set %s: %s", key, (proc.stderr or proc.stdout)[-300:])
+        return False
+    node: Any = load_config()
+    for part in key.split("."):
+        node = node.get(part) if isinstance(node, dict) else None
+    return str(node) == value
+
+
 def find_cron_job(name: str) -> Optional[dict]:
     jobs_file = hermes_home() / "cron" / "jobs.json"
     try:
