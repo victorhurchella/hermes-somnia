@@ -474,7 +474,8 @@ const EN = {
     statusNew: n => `${n} new`,
     statusTip: n => `Somnia remembered ${n} ${plural(n, 'thing', 'things')} last night`,
     fed: n => `Fed ${n} ${plural(n, 'memory', 'memories')}`,
-    emptyChat: 'Last night I remembered:',
+    emptyChat: 'Last night I remembered',
+    emptyChatMore: n => `+${n} more`,
     open: 'Open Somnia',
     card: 'Somnia memory',
     reallyForget: 'Really forget?',
@@ -818,7 +819,8 @@ const PT = {
     statusNew: n => `${n} ${plural(n, 'novo', 'novos')}`,
     statusTip: n => `O Somnia lembrou ${n} ${plural(n, 'coisa', 'coisas')} esta noite`,
     fed: n => `Alimentou ${n} ${plural(n, 'memória', 'memórias')}`,
-    emptyChat: 'Esta noite eu lembrei:',
+    emptyChat: 'Esta noite eu lembrei',
+    emptyChatMore: n => `+${n} ${plural(n, 'outra', 'outras')}`,
     open: 'Abrir Somnia',
     card: 'Memória do Somnia',
     reallyForget: 'Esquecer mesmo?',
@@ -2905,15 +2907,18 @@ function ChatEmptyLine() {
   const fresh = !!(ov && ov.last_run && nowS() - ov.last_run.at < 1.5 * DAY_S)
   const q = useChanges(null)
   if (!fresh || !q.data) return null
-  const first = (q.data.changes || []).find(c => ['added', 'merged', 'superseded', 'vault'].includes(c.action))
-  if (!first) return null
+  const kept = (q.data.changes || []).filter(c => !c.forgotten && ['added', 'merged', 'superseded', 'vault'].includes(c.action))
+  if (!kept.length) return null
+  const more = kept.length - 1
   return h(
     'div',
     { className: 'smn-chat-empty' },
-    h('button', { type: 'button', className: 'smn-chat-empty-line', onClick: () => go(ROUTE) },
-      h(Icon, { name: 'sparkle', size: '0.75rem' }),
-      h('span', { className: 'smn-meta' }, t('surfaces.emptyChat')),
-      h('span', { className: 'smn-chat-empty-text' }, first.text))
+    h('button', { type: 'button', className: 'smn-chat-empty-line', title: kept[0].text, onClick: () => go(ROUTE) },
+      h('span', { className: 'smn-chat-empty-head' },
+        h(Icon, { name: 'sparkle', size: '0.75rem' }),
+        h('span', null, t('surfaces.emptyChat')),
+        more > 0 ? h('span', { className: 'smn-chat-empty-more' }, t('surfaces.emptyChatMore', more)) : null),
+      h('span', { className: 'smn-chat-empty-text' }, kept[0].text))
   )
 }
 
@@ -3261,10 +3266,13 @@ textarea.smn-textarea-native{padding:6px 8px;border-radius:4px;border:1px solid 
 .smn-status:hover{background:var(--chrome-action-hover)}
 .smn-fed{display:inline-flex;align-items:center;color:color-mix(in srgb,var(--ui-accent) 80%,transparent);margin:0 2px}
 .smn-chat-empty{display:flex;justify-content:center;padding:12px}
-.smn-chat-empty-line{display:inline-flex;align-items:baseline;gap:6px;max-width:min(560px,90%);border:0;background:transparent;font:inherit;font-size:0.75rem;color:var(--ui-text-secondary);cursor:pointer;padding:4px 8px;border-radius:4px}
-.smn-chat-empty-line:hover{background:var(--chrome-action-hover);color:var(--ui-text-primary)}
-.smn-chat-empty-line>.codicon,.smn-chat-empty-line>i{color:var(--ui-accent);align-self:center}
-.smn-chat-empty-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.smn-chat-empty-line{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:min(560px,90%);border:1px solid var(--ui-stroke-tertiary);background:transparent;font:inherit;text-align:left;cursor:pointer;padding:10px 12px;border-radius:8px}
+.smn-chat-empty-line:hover{background:var(--chrome-action-hover)}
+.smn-chat-empty-head{display:flex;align-items:center;gap:6px;width:100%;font-size:0.6875rem;color:var(--ui-text-tertiary);white-space:nowrap}
+.smn-chat-empty-head>.codicon,.smn-chat-empty-head>i{color:var(--ui-accent)}
+.smn-chat-empty-more{margin-left:auto;padding-left:8px}
+.smn-chat-empty-text{font-size:0.8125rem;line-height:1.45;color:var(--ui-text-secondary);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.smn-chat-empty-line:hover .smn-chat-empty-text{color:var(--ui-text-primary)}
 .smn-card{display:flex;flex-direction:column;gap:10px;max-width:560px;margin:6px 0;padding:12px 14px 8px;border-radius:8px;border:1px solid var(--ui-stroke-tertiary);background:var(--ui-bg-card,transparent);font-size:0.8125rem;color:var(--ui-text-primary);user-select:text}
 .smn-card-muted{flex-direction:row;align-items:center;gap:8px;padding:8px 12px;color:var(--ui-text-tertiary)}
 .smn-card-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
