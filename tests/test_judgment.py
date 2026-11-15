@@ -7,7 +7,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import contextlib
+import io
 import json
+import os
 
 from helpers import FakeMemory, ScriptedLLM, make_sessions_db
 
@@ -594,6 +597,107 @@ class SweepInsights(Base):
         ], sessions={"sub": {"parent_session_id": "s1", "title": "Subagent: implement the fix"}})
         s = self.sweep(judge_llm())
         self.assertEqual((s.judgment.observations, s.judgment.proposed), (1, []))
+
+
+class RpcAndCli(Base):
+    def setUp(self):
+        super().setUp()
+        self.vault = self.tmp / "vault"
+        self.vault.mkdir()
+        home = self.tmp / "home"
+        (home / "memories").mkdir(parents=True)
+        (home / "memories" / "USER.md").write_text("Likes short answers.")
+        (home / "config.yaml").write_text(
+            "plugins:\n  entries:\n    hermes-somnia:\n      settings:\n        destinations: vault\n"
+            f"        vault_path: {self.vault}\n        diary: false\n")
+        db = self.tmp / "sessions.db"
+        make_sessions_db(db, [("s1", "desktop", "user", f"Keep it tiny: {Q1}", NOW - 3 * DAY, None),
+                              ("s2", "tui", "user", f"No. {Q2}", NOW - DAY, None)],
+                         sessions={"s1": {"title": "Billing fix"}})
+        env = {"HERMES_HOME": str(home), "HERMES_SOMNIA_STATE_DIR": str(self.tmp / "state"),
+               "HERMES_SOMNIA_SESSIONS_DB": str(db)}
+        self.old = {k: os.environ.get(k) for k in env}
+        os.environ.update(env)
+        from hermes_somnia import cli, hermes_api, rpc
+        from hermes_somnia.config import load_settings
+
+        self.rpc, self.cli = rpc, cli
+        self.find_cron = hermes_api.find_cron_job
+        hermes_api.find_cron_job = lambda name: None  # the real one shells out to the Hermes CLI
+        self.addCleanup(setattr, hermes_api, "find_cron_job", self.find_cron)
+        self.settings = load_settings()
+        self.assertEqual((self.settings.focus, self.settings.destinations), ("insights", "vault"))
+        run_sweep(self.settings, complete=judge_llm(), backend=hermes_api.HermesMemory(), now=NOW)
+        self.key = J.judgment_key(CRIT)
+
+    def tearDown(self):
+        for k, v in self.old.items():
+            os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
+        super().tearDown()
+
+    def cli_out(self, *argv):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = self.cli.main(list(argv))
+        return code, buf.getvalue()
+
+    def user_md(self):
+        return (self.tmp / "home" / "memories" / "USER.md").read_text()
+
+    def test_read_approve_forget_unforget(self):
+        rpc = self.rpc
+        data = rpc.insights_rpc({})
+        self.assertEqual((data["focus"], [i["key"] for i in data["to_review"]], data["approved"], data["note"]),
+                         ("insights", [self.key], [], None))
+        item = data["to_review"][0]
+        self.assertEqual((item["days"], item["rule"][:5], item["occasions"][1]["title"]), (2, "Offer", "Billing fix"))
+        self.assertEqual(rpc.candidate({"key": self.key})["title"], "Smallest change that works")
+        over = rpc.overview({})
+        self.assertEqual((over["focus"], over["counts"]["insights_to_review"]), ("insights", 1))
+        self.assertIsNone(over["alarm"])
+        for fn in (rpc.pin, rpc.promote):
+            with self.assertRaises(rpc.RpcError):
+                fn({"key": self.key})
+
+        out = rpc.insight_approve({"key": self.key})
+        note = self.vault / "somnia" / "insights.md"
+        self.assertEqual((out["note"], out["warnings"]), (str(note), []))
+        self.assertIn("Judgment criteria of the user:", self.user_md())
+        self.assertEqual(rpc.insights_rpc({})["note"], str(note))
+        self.assertEqual(rpc.insight_approve({"key": self.key})["note"], None)  # idempotent
+
+        inbox = next(p for p in (self.vault / "somnia").glob("20*.md"))
+        self.assertTrue(rpc.forget({"key": self.key})["removed_entry"])
+        self.assertNotIn(self.key, inbox.read_text() + note.read_text())
+        self.assertEqual(rpc.insights_rpc({})["rejected"], 1)
+        self.assertEqual(rpc.unforget({"key": self.key}), {"ok": True, "restored_to_vault": True})
+        self.assertIn(self.key, inbox.read_text())
+        self.assertEqual([i["key"] for i in rpc.insights_rpc({})["to_review"]], [self.key])
+        with self.assertRaises(rpc.RpcError):
+            rpc.insight_approve({"key": "insight:nope"})
+
+    def test_writes_wait_for_a_running_sweep(self):
+        from hermes_somnia.sweep import sweep_lock
+
+        with sweep_lock(self.tmp / "state"):
+            with self.assertRaisesRegex(self.rpc.RpcError, "running a sweep"):
+                self.rpc.insight_approve({"key": self.key})
+
+    def test_cli(self):
+        code, out = self.cli_out("status")
+        self.assertIn("- insights: 1 to review, 0 approved, 0 waiting observation(s)", out)
+        self.assertIn("1 insight(s) proposed, 0 approved", out)
+        self.assertNotIn("promotion policy", out)
+        code, out = self.cli_out("explain", "smallest change")
+        self.assertEqual(code, 0)
+        self.assertIn(f"{self.key}  [proposed]", out)
+        self.assertIn(Q1, out)
+        self.assertEqual(self.cli_out("promote", self.key)[0], 1)
+        code, out = self.cli_out("approve", self.key)
+        self.assertEqual((code, out.startswith("Approved. Living note:")), (0, True))
+        self.assertEqual(self.cli_out("approve", "insight:nope")[0], 1)
+        self.assertIn("Forgotten and removed", self.cli_out("forget", self.key)[1])
+        self.assertIn("Restored.", self.cli_out("unforget", self.key)[1])
 
 
 if __name__ == "__main__":

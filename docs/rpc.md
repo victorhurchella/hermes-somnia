@@ -72,8 +72,30 @@ type Night = {                 // one per sweep (latest per day), oldest → new
   themes: number; truths: number;                            // REM
   promoted: number; merged: number; deferred: number;        // Deep
   llm_calls: number; quiet: boolean;                         // quiet = no new conversation, zero LLM calls
-  noop: boolean;                                             // had material but promoted nothing
+  noop: boolean;                                             // had material but promoted nothing; always false
+                                                             // on an insights-only night (an empty night is normal)
   errors: number;
+  focus: 'insights' | 'facts' | 'both';                      // what that night looked for
+  insights_proposed: number; insights_approved: number;
+}
+type Occasion = { day: string; context: string; quote: string; source_session: string; title: string | null }
+type Insight = {               // a criterion of judgment the user applies (focus: insights)
+  key: string;                 // 'insight:<sha1-12>'
+  title: string;
+  kind: 'principle' | 'value' | 'taste' | 'response';
+  area: 'design' | 'product' | 'analysis' | 'code' | 'communication' | 'responses';
+  name: string | null;         // established name of the principle/framework, when there is one
+  criterion: string;           // the rule, general
+  user_version: string;        // how this user applies it
+  rule: string;                // what the agent should do differently
+  relation: 'new' | 'refines'; // against the user's known notes
+  delta: string | null;        // for refines: what it adds
+  status: 'proposed' | 'approved' | 'rejected';
+  proposed_at: number; decided_at: number | null;
+  occasions: Occasion[];       // newest first; quotes are verbatim from owner turns, ≤160 chars
+  days: number; first_day: string | null; last_day: string | null;
+  inlined: boolean;            // its rule is also an entry in USER.md
+  note: string | null;         // inbox note that holds the proposal
 }
 type Change = {                // one per Deep operation of a night
   run_at: number;
@@ -97,7 +119,8 @@ type Change = {                // one per Deep operation of a night
 | `overview` | `{}` | `Overview` (below). One call paints the page header, gauges, hypnogram and alarm. |
 | `changes` | `{ run?: 'latest' \| number }` | `{ run_at: number \| null, date: string \| null, changes: Change[] }` |
 | `candidates` | `{ filter?: 'near' \| 'all' \| 'promoted' \| 'rejected' \| 'skills', q?: string, limit?: number }` | `{ items: Candidate[], total: number }`. `near` = not promoted, not rejected, sorted by raw desc. |
-| `candidate` | `{ key: string }` | `Candidate` |
+| `candidate` | `{ key: string }` | `Candidate`, or an `Insight` when the key starts with `insight:` |
+| `insights` | `{}` | `{ focus, to_review: Insight[] (newest first), approved: Insight[] (by area), rejected: number, waiting: number (observations still waiting for a second occasion), note: string \| null (path of the living note, once something is approved) }` |
 | `themes` | `{}` | `{ themes: {tag: string, count: number, strength: number, keys: string[]}[], links: {a: string, b: string, weight: number}[] }` (tags co-occurring in the same candidates) |
 | `diary` | `{ limit?: number }` | `{ entries: {date: string, at: number \| null, text: string, fallback: boolean}[], path: string }` newest first; `date` is the display string written in DREAMS.md (e.g. 'November 11, 2026 at 3:00 AM UTC') |
 | `stats` | `{}` | `{ histogram: {bucket: number, count: number}[] (20 buckets of 0.05), min_score: number, by_gate: Record<Gate, number> (how many candidates each gate blocks), promoted_total, rejected_total, candidates_total }` |
@@ -111,6 +134,7 @@ type Change = {                // one per Deep operation of a night
 ```ts
 type Overview = {
   version: string;
+  focus: 'insights' | 'facts' | 'both';   // 'insights': the page hides the fact sections
   destinations: 'builtin' | 'vault' | 'both';
   destructive: 'apply' | 'stage';
   schedule: string; timezone: string;
@@ -126,7 +150,8 @@ type Overview = {
     best: Candidate | null;               // the closest miss, when kind = noop
     action: 'run' | 'settings' | 'review' | null;
   };
-  counts: { candidates: number; near: number; promoted: number; rejected: number; skills: number; stale: number; pending: number };
+  counts: { candidates: number; near: number; promoted: number; rejected: number; skills: number; stale: number; pending: number;
+            insights_to_review: number; insights_approved: number };
   vault: null | { path: string; folder: string; inbox_notes: number; open_items: number };
   pressure: { memory: number; user: number };   // used / limit
   principles: {
@@ -146,9 +171,10 @@ All return `{ ok: true, ... }` or raise. Each one is idempotent where noted.
 
 | Method | Params | Effect |
 |---|---|---|
-| `forget` | `{ key: string, reason?: string, remove_entry?: boolean }` | Rejects the candidate for good (normalized-text hash). Future sweeps drop matching observations; re-asked only if it keeps recurring after 180 days. With `remove_entry` (default true when promoted to builtin), also removes the memory entry it produced. Returns `{ ok, removed_entry: boolean }`. |
-| `unforget` | `{ key }` | Removes it from the reject list. |
-| `pin` | `{ key, pinned: boolean }` | Pinned candidates count as an explicit owner instruction at the next sweep (bypass the recurrence gates, not the trust gate). |
+| `forget` | `{ key: string, reason?: string, remove_entry?: boolean }` | For an insight key: rejects it for good with no timed re-ask, cuts its block from the inbox note and, when it was approved, removes it from the living note and `USER.md` (`removed_entry` = it was approved). Otherwise: rejects the candidate for good (normalized-text hash). Future sweeps drop matching observations; re-asked only if it keeps recurring after 180 days. With `remove_entry` (default true when promoted to builtin), also removes the memory entry it produced. Returns `{ ok, removed_entry: boolean }`. |
+| `unforget` | `{ key }` | Removes it from the reject list. For an insight key: back to `proposed`, and its block returns to the inbox note. |
+| `insight.approve` | `{ key }` | Approves a proposed insight now: regenerates the living note, adds the `USER.md` pointer once, and copies the rule into `USER.md` when its area is `responses` (≤160 chars, at most `insights_inline_max`). Returns `{ ok, key, note, inlined, warnings: string[] }` (a full `USER.md` or a failed vault sync is a warning; the approval stands). Idempotent. `RpcError` when the living note is a file Somnia did not create, or while a sweep runs ("Somnia is running a sweep; try again in a moment"). |
+| `pin` | `{ key, pinned: boolean }` | Fact candidates only (`RpcError` for an insight key, as in `promote`). Pinned candidates count as an explicit owner instruction at the next sweep (bypass the recurrence gates, not the trust gate). |
 | `promote` | `{ key, target?: 'memory' \| 'user' \| 'vault' }` | Starts a background job that writes this one candidate now (same consolidation + validation as the nightly sweep). Returns `{ ok, job: string }`. |
 | `entry.edit` | `{ target: 'memory' \| 'user', index: number, old: string, text: string }` | Replaces one memory entry (refuses if `old` no longer matches). Edited somnia entries stay somnia-owned. |
 | `entry.remove` | `{ target, index, old, reject?: boolean }` | Removes one entry; `reject` also rejects the candidate behind it. |
@@ -162,7 +188,8 @@ All return `{ ok: true, ... }` or raise. Each one is idempotent where noted.
 
 The skill teaches the agent to answer "what do you remember about X / why do you know X" by emitting a
 paragraph that is only `::somnia-memory{key="claim:..."}`. The desktop half claims the directive and renders
-the candidate card (score ring, the six bars, sessions, Forget/Pin buttons) using `candidate`.
+the candidate card (score ring, the six bars, sessions, Forget/Pin buttons) using `candidate`. With
+`key="insight:..."` it renders the insight card (criterion, rule, occasions, Approve/Forget).
 
 ## Used by desktop/plugin.js
 

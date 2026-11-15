@@ -50,6 +50,9 @@ def nights(store: Store, n: int = 30, tz=None) -> list[dict]:
             "merged": int(s.get("merged", 0)), "deferred": int(s.get("deferred", 0)),
             "llm_calls": int(s.get("llm_calls", 0)), "quiet": bool(s.get("quiet")),
             "noop": bool(s.get("noop")), "errors": len(s.get("errors") or []),
+            "focus": s.get("focus") or "facts",
+            "insights_proposed": len((s.get("insights") or {}).get("proposed") or []),
+            "insights_approved": len((s.get("insights") or {}).get("approved") or []),
         }
     return list(by_day.values())[-n:]
 

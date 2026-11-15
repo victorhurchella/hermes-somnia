@@ -105,6 +105,9 @@ def cmd_run(args) -> int:
 
 
 def cmd_promote(args) -> int:
+    if any(str(k).startswith("insight:") for k in args.keys):
+        print("promote is for fact candidates. For an insight: hermes somnia approve <key>")
+        return 1
     settings = load_settings()
     if args.target == "vault":
         settings.destinations = "vault"
@@ -172,11 +175,17 @@ def cmd_status(args) -> int:
         if settings.wants_vault:
             print(f"- vault: {settings.resolved_vault()} / {settings.vault_folder}")
         print(f"- diary: {_diary_path(settings)}")
+        print(f"- focus: {settings.focus}")
+        if settings.wants_insights:
+            print(f"- insights: {len(store.judgments('proposed'))} to review, {len(store.judgments('approved'))} "
+                  f"approved, {len(store.observations(unassigned=True))} waiting observation(s), "
+                  f"cursor at message {store.get('insight_cursor', 0)}")
         print(f"- short-term store: {len(entries)} candidate(s), {promoted} promoted, {len(store.rejected())} forgotten, "
-              f"cursor at message {store.get('cursor', 0)}")
-        print(f"- promotion policy: score>={settings.min_score}, signals>={settings.min_signals}, "
-              f"sessions>={settings.min_sessions}, durability>={settings.min_durability}, "
-              f"max {settings.max_promotions}/night")
+              f"cursor at message {store.get('cursor', 0)}" + ("" if settings.wants_facts else " (fact pipeline off)"))
+        if settings.wants_facts:
+            print(f"- promotion policy: score>={settings.min_score}, signals>={settings.min_signals}, "
+                  f"sessions>={settings.min_sessions}, durability>={settings.min_durability}, "
+                  f"max {settings.max_promotions}/night")
         job = hermes_api.find_cron_job(JOB_NAME)
         print(f"- cron: {job.get('id')} next={job.get('next_run_at')}" if job
               else "- cron: not installed (run `hermes somnia setup`)")
@@ -192,8 +201,11 @@ def cmd_status(args) -> int:
             s = run["summary"] or {}
             when = datetime.fromtimestamp(run["started_at"]).strftime("%Y-%m-%d %H:%M")
             tag = " (dry)" if run["dry_run"] else (" (quiet)" if s.get("quiet") else "")
-            print(f"- run {when}{tag}: {s.get('fragments', 0)} turns, {s.get('staged', 0)} staged, "
-                  f"{s.get('promoted', 0)} remembered, {s.get('merged', 0)} merged, {s.get('llm_calls', 0)} LLM calls"
+            ins = s.get("insights") or {}
+            body = (f"{len(ins.get('proposed') or [])} insight(s) proposed, {len(ins.get('approved') or [])} approved"
+                    if s.get("focus") == "insights" else
+                    f"{s.get('staged', 0)} staged, {s.get('promoted', 0)} remembered, {s.get('merged', 0)} merged")
+            print(f"- run {when}{tag}: {s.get('fragments', 0)} turns, {body}, {s.get('llm_calls', 0)} LLM calls"
                   + (f", errors: {len(s['errors'])}" if s.get("errors") else ""))
     finally:
         store.close()
@@ -205,7 +217,21 @@ def cmd_explain(args) -> int:
     store = Store(state_dir() / "state.db")
     try:
         q = args.query.lower()
+        found = [j for j in store.judgments() if q == j.key or q in j.title.lower() or q in j.criterion.lower()]
+        for j in found[: args.limit]:
+            from .judgment import occasions
+
+            occ = occasions(store, j.key)
+            print(f"{j.key}  [{j.status}]")
+            print(f"  {j.title}: {j.criterion}")
+            print(f"  rule for the agent: {j.rule}")
+            print(f"  kind={j.kind} area={j.area} relation={j.relation} occasions={len(occ)} "
+                  f"days={len({o['day'] for o in occ})} in USER.md={'yes' if j.inline_hash else 'no'}")
+            for o in occ[:4]:
+                print(f"  {o['day']} · {o['context']}: \"{o['quote']}\"")
         matches = [e for e in store.entries() if q in e.text.lower() or q == e.key]
+        if found and not matches:
+            return 0
         if not matches:
             print(f'No candidate matched "{args.query}".')
             return 1
@@ -243,9 +269,29 @@ def cmd_forget(args) -> int:
 
 
 def cmd_unforget(args) -> int:
-    from .rpc import unforget
+    from .rpc import RpcError, unforget
 
-    print("Restored." if unforget({"key": args.key})["ok"] else "It was not on the forget list.")
+    try:
+        ok = unforget({"key": args.key})["ok"]
+    except RpcError as exc:
+        print(str(exc))
+        return 1
+    print("Restored." if ok else "It was not on the forget list.")
+    return 0
+
+
+def cmd_approve(args) -> int:
+    from .rpc import RpcError, insight_approve
+
+    try:
+        out = insight_approve({"key": args.key})
+    except RpcError as exc:
+        print(str(exc))
+        return 1
+    print("Approved." + (f" Living note: {out['note']}" if out.get("note") else "")
+          + (" Also copied to USER.md." if out.get("inlined") else ""))
+    for w in out.get("warnings") or []:
+        print(f"- Note: {w}")
     return 0
 
 
@@ -382,6 +428,16 @@ def cmd_doctor(args) -> int:
             checks.append((True, f"vault inbox: {settings.resolved_vault()}/{settings.vault_folder}"))
         except Exception as exc:
             checks.append((False, f"vault: {exc}"))
+    if settings.wants_insights:
+        try:
+            from .judgment_sinks import _has_marker, living_note_path
+
+            note = living_note_path(settings, state_dir())
+            mine = not note.exists() or _has_marker(note)
+            checks.append((mine, f"insights note: {note}" if mine else
+                           f"insights note {note} was not created by Somnia: point insights_note elsewhere"))
+        except Exception as exc:
+            checks.append((False, f"insights note: {exc}"))
     alarm = _alarm_now(settings)
     checks.append((alarm is None, alarm["message"] if alarm else "no alarms"))
     for ok, label in checks:
@@ -394,7 +450,7 @@ def cmd_doctor(args) -> int:
 def build_parser(parser: Optional[argparse.ArgumentParser] = None) -> argparse.ArgumentParser:
     parser = parser or argparse.ArgumentParser(prog="hermes somnia", description="Somnia: offline memory consolidation.")
     sub = parser.add_subparsers(dest="somnia_cmd")
-    p = sub.add_parser("run", help="run one sweep now (Light -> REM -> Deep -> diary)")
+    p = sub.add_parser("run", help="run one sweep now (insights and/or Light -> REM -> Deep, per `focus`)")
     p.add_argument("--dry-run", action="store_true", help="plan only: nothing is written")
     p.add_argument("--no-llm", action="store_true", help="heuristic extraction, append-only writes")
     p.add_argument("--max-messages", type=int, help="override the per-sweep message cap (backfill)")
@@ -418,12 +474,15 @@ def build_parser(parser: Optional[argparse.ArgumentParser] = None) -> argparse.A
     p.add_argument("query")
     p.add_argument("--limit", type=int, default=5)
     p.set_defaults(somnia_func=cmd_explain)
-    p = sub.add_parser("forget", help="forget a candidate for good (and remove its memory entry)")
+    p = sub.add_parser("forget", help="forget a candidate or an insight for good (and remove what it wrote)")
     p.add_argument("key")
     p.set_defaults(somnia_func=cmd_forget)
     p = sub.add_parser("unforget", help="take a candidate off the forget list")
     p.add_argument("key")
     p.set_defaults(somnia_func=cmd_unforget)
+    p = sub.add_parser("approve", help="approve a proposed insight (living note, pointer, USER.md)")
+    p.add_argument("key")
+    p.set_defaults(somnia_func=cmd_approve)
     p = sub.add_parser("pin", help="promote a candidate at the next sweep regardless of recurrence")
     p.add_argument("key")
     p.add_argument("--off", action="store_true")
