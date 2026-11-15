@@ -607,9 +607,6 @@ class RpcAndCli(Base):
         home = self.tmp / "home"
         (home / "memories").mkdir(parents=True)
         (home / "memories" / "USER.md").write_text("Likes short answers.")
-        (home / "config.yaml").write_text(
-            "plugins:\n  entries:\n    hermes-somnia:\n      settings:\n        destinations: vault\n"
-            f"        vault_path: {self.vault}\n        diary: false\n")
         db = self.tmp / "sessions.db"
         make_sessions_db(db, [("s1", "desktop", "user", f"Keep it tiny: {Q1}", NOW - 3 * DAY, None),
                               ("s2", "tui", "user", f"No. {Q2}", NOW - DAY, None)],
@@ -619,7 +616,14 @@ class RpcAndCli(Base):
         self.old = {k: os.environ.get(k) for k in env}
         os.environ.update(env)
         from hermes_somnia import cli, hermes_api, rpc
+        from hermes_somnia import config as config_mod
         from hermes_somnia.config import load_settings
+
+        # CI has no Hermes to parse config.yaml: hand the settings over at the seam config.py reads from
+        cfg = {"plugins": {"entries": {"hermes-somnia": {"settings": {
+            "destinations": "vault", "vault_path": str(self.vault), "diary": False}}}}}
+        self.addCleanup(setattr, config_mod, "load_config", config_mod.load_config)
+        config_mod.load_config = lambda: cfg
 
         self.rpc, self.cli = rpc, cli
         self.find_cron = hermes_api.find_cron_job
