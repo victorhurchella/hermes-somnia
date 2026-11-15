@@ -155,7 +155,7 @@ class SweepTests(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         self.db = _two_session_db(self.tmp)
-        self.settings = Settings(min_score=0.5, light_lookback_days=7)
+        self.settings = Settings(focus="facts", min_score=0.5, light_lookback_days=7)
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -230,18 +230,18 @@ class SweepTests(unittest.TestCase):
         self.assertFalse(c["undoable"])
 
     def test_auto_destination_follows_the_vault(self):
-        self.assertEqual(Settings().resolved_destinations, "builtin")
+        self.assertEqual(Settings(focus="facts").resolved_destinations, "builtin")
         vault = self.tmp / "vault"
         vault.mkdir()
-        self.assertEqual(Settings(vault_path=str(vault)).resolved_destinations, "vault")
-        self.assertEqual(Settings(vault_path=str(self.tmp / "missing")).resolved_destinations, "builtin")
-        self.assertEqual(Settings(destinations="builtin", vault_path=str(vault)).resolved_destinations, "builtin")
+        self.assertEqual(Settings(focus="facts", vault_path=str(vault)).resolved_destinations, "vault")
+        self.assertEqual(Settings(focus="facts", vault_path=str(self.tmp / "missing")).resolved_destinations, "builtin")
+        self.assertEqual(Settings(focus="facts", destinations="builtin", vault_path=str(vault)).resolved_destinations, "builtin")
 
     def test_vault_note_conventions_and_sync_command(self):
         vault = self.tmp / "vault"
         vault.mkdir()
         marker = self.tmp / "synced.txt"
-        settings = Settings(destinations="vault", vault_path=str(vault), vault_note_type="inbox",
+        settings = Settings(focus="facts", destinations="vault", vault_path=str(vault), vault_note_type="inbox",
                             vault_note_tags=["somnia", "bots"], vault_language="pt-BR", min_score=0.5,
                             vault_sync_command=f"echo {{day}} {{note}} > {marker}")
         s = run_sweep(settings, complete=ScriptedLLM(extract=_extract), backend=FakeMemory(self.tmp), now=NOW,
@@ -257,7 +257,7 @@ class SweepTests(unittest.TestCase):
     def test_failing_sync_is_an_error_and_full_memory_pointer_is_not(self):
         vault = self.tmp / "vault"
         vault.mkdir()
-        settings = Settings(destinations="vault", vault_path=str(vault), min_score=0.5, vault_sync_command="exit 3")
+        settings = Settings(focus="facts", destinations="vault", vault_path=str(vault), min_score=0.5, vault_sync_command="exit 3")
         mem = FakeMemory(self.tmp, memory=["x" * 2190])
         s = run_sweep(settings, complete=ScriptedLLM(extract=_extract), backend=mem, now=NOW,
                       base_dir=self.tmp / "state", sessions_db=self.db)
@@ -272,7 +272,7 @@ class SweepTests(unittest.TestCase):
             seen.append(system)
             return json.dumps({"observations": []})
 
-        s = Settings(fact_language="pt-BR", min_score=0.5)
+        s = Settings(focus="facts", fact_language="pt-BR", min_score=0.5)
         run_sweep(s, complete=extract, backend=FakeMemory(self.tmp), now=NOW, dry_run=True,
                   base_dir=self.tmp / "state", sessions_db=self.db)
         self.assertTrue(any("write every \"text\" in pt-BR" in x for x in seen))
@@ -299,7 +299,7 @@ class SweepTests(unittest.TestCase):
         (vault / "self").mkdir(parents=True)
         (vault / "self" / "foco.md").write_text("mine")
         mem = FakeMemory(self.tmp)
-        settings = Settings(destinations="vault", vault_path=str(vault), protected_paths=["self"], min_score=0.5,
+        settings = Settings(focus="facts", destinations="vault", vault_path=str(vault), protected_paths=["self"], min_score=0.5,
                             light_lookback_days=7)
         s = run_sweep(settings, complete=ScriptedLLM(extract=_extract), backend=mem, now=NOW,
                       base_dir=self.tmp / "state", sessions_db=self.db)
@@ -314,7 +314,7 @@ class SweepTests(unittest.TestCase):
     def test_vault_folder_cannot_overlap_protected(self):
         vault = self.tmp / "brain"
         vault.mkdir()
-        settings = Settings(destinations="vault", vault_path=str(vault), vault_folder="self/dreams",
+        settings = Settings(focus="facts", destinations="vault", vault_path=str(vault), vault_folder="self/dreams",
                             protected_paths=["self"], min_score=0.5, light_lookback_days=7)
         s = run_sweep(settings, complete=ScriptedLLM(extract=_extract), backend=FakeMemory(self.tmp), now=NOW,
                       base_dir=self.tmp / "state", sessions_db=self.db)
@@ -340,7 +340,7 @@ class SweepTests(unittest.TestCase):
         self.assertEqual(s.selected, [])
 
     def test_no_llm_uses_explicit_cues_only(self):
-        s = run_sweep(Settings(llm=False, light_lookback_days=7), complete=None, backend=FakeMemory(self.tmp),
+        s = run_sweep(Settings(focus="facts", llm=False, light_lookback_days=7), complete=None, backend=FakeMemory(self.tmp),
                       now=NOW, base_dir=self.tmp / "state", sessions_db=self.db)
         self.assertEqual(s.light.observations, 0)  # no "remember/always/sempre" cue in the fixture
 

@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 from . import diary as diary_mod
+from . import judgment as J
+from . import judgment_sinks as JS
 from . import principles as P
 from .config import Settings, sessions_db_path, state_dir
 from .hermes_api import mask_secrets
@@ -21,7 +23,8 @@ from .ingest import fit_budget, pack_chunks, read_fragments
 from .llm import Complete
 from .phases import LightResult, RejectFilter, light_block, light_extract, light_stage, rem, rem_block
 from .scoring import rank
-from .sinks import MemoryBackend, ensure_pointer, run_vault_sync, vault_dir, write_builtin, write_vault
+from .sinks import (MemoryBackend, ensure_pointer, run_vault_pull, run_vault_sync, vault_dir, write_builtin,
+                    write_vault)
 from .store import Store
 
 DAY_S = 86_400.0
@@ -80,6 +83,18 @@ class SweepSummary:
     llm_calls: int = 0
     principles: list = field(default_factory=list)
     changes: list = field(default_factory=list)  # dry runs only: what a real night would log (rpc Change shape)
+    focus: str = "facts"
+    judgment: J.JudgmentResult = field(default_factory=J.JudgmentResult)
+    insight_titles: dict = field(default_factory=dict)  # key -> title, for tonight's proposals and approvals
+    waiting: int = 0  # observations still waiting for a second occasion
+
+    @property
+    def facts(self) -> bool:
+        return self.focus in ("facts", "both")
+
+    @property
+    def turns(self) -> int:
+        return max(self.light.fragments, self.judgment.fragments)
 
     def counts(self) -> dict[str, int]:
         c = {"promoted": 0, "merged": 0, "deferred": 0, "evicted": 0, "staged": 0}
@@ -101,14 +116,19 @@ class SweepSummary:
         if self.dry_run:
             return False
         c = self.counts()
-        return bool(c["promoted"] or c["merged"] or c["evicted"] or c["staged"])
+        return bool(c["promoted"] or c["merged"] or c["evicted"] or c["staged"]
+                    or self.judgment.proposed or self.judgment.approved)
 
     def as_dict(self) -> dict[str, Any]:
         c = self.counts()
         return {
-            "dry_run": self.dry_run, "quiet": self.quiet,
-            "fragments": self.light.fragments, "llm_calls": self.llm_calls,
-            "llm_errors": self.light.llm_errors, "observations": self.light.observations,
+            "dry_run": self.dry_run, "quiet": self.quiet, "focus": self.focus,
+            "fragments": self.turns, "llm_calls": self.llm_calls,
+            "llm_errors": self.light.llm_errors + self.judgment.llm_errors, "observations": self.light.observations,
+            "insights": {"observations": self.judgment.observations, "ungrounded": self.judgment.ungrounded,
+                         "proposed": list(self.judgment.proposed), "approved": list(self.judgment.approved),
+                         "attached": self.judgment.attached, "waiting": self.waiting,
+                         "titles": self.insight_titles, "cursor": list(self.judgment.cursor)},
             "new_entries": self.light.new_entries, "reinforced": self.light.reinforced,
             "confirmed": self.light.confirmed, "rejected_hits": self.light.rejected_hits,
             "ungrounded": self.light.ungrounded, "reasked": self.light.reasked,
@@ -116,7 +136,8 @@ class SweepSummary:
             "truths": [list(t) for t in self.truths], "ranked": self.ranked, "selected": self.selected,
             "near_misses": self.near_misses, "skills": self.skills, "changes": self.changes,
             "warnings": self.warnings, **c,
-            "noop": not self.quiet and not self.changed and self.light.fragments > 0,
+            # an empty night is normal when looking for insights: only the fact pipeline can be a no-op
+            "noop": self.facts and not self.quiet and not self.changed and self.light.fragments > 0,
             "sinks": [{"target": s.target, "applied": s.applied, "evicted": s.evicted, "staged_id": s.staged_id,
                        "deferred": s.deferred, "error": s.error, "plan": s.plan_source,
                        "rejected_plan": s.rejected_plan} for s in self.sinks],
@@ -225,8 +246,12 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
             summary.errors.append(f"vault: {exc}")
     recent = diary_mod.recent_entries(diary_path, 4)
     staged, rem_result = [], None
+    summary.focus = settings.focus if only_keys is None else "facts"  # promote-now is a fact command
+    facts, insights = summary.facts, summary.focus in ("insights", "both")
+    if insights:
+        _insights_inbox(store, settings, summary, backend, now, base)
 
-    if only_keys is None:
+    if only_keys is None and facts:
         # --- Light: ingest new turns, extract candidates, stage the fresh ones ---
         cursor = int(store.get("cursor", 0) or 0)
         fragments, new_cursor = read_fragments(
@@ -258,7 +283,7 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
     rank_kw = dict(half_life=settings.recency_half_life_days, min_score=settings.min_score,
                    min_signals=settings.min_signals, min_sessions=settings.min_sessions,
                    min_durability=settings.min_durability, max_age_days=settings.max_age_days, principles=active)
-    pool = store.entries()
+    pool = store.entries() if facts else []
     if only_keys is not None:
         pool = [e for e in pool if e.key in set(only_keys) and e.promoted_at is None]
         for e in pool:  # an explicit request from the owner
@@ -349,6 +374,14 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
             e.promoted_at, e.promoted_to, e.deferred_reason, e.pinned = now, where, None, False
             store.save(e)
 
+    if insights:
+        _insights_night(store, settings, summary, llm, now, base, sessions_db=sessions_db, max_messages=max_messages,
+                        tz=tz, day=day)
+    if not facts:
+        summary.quiet = summary.judgment.quiet
+    elif insights:
+        summary.quiet = summary.quiet and summary.judgment.quiet
+
     summary.llm_calls = llm.calls if llm else 0
     if summary.dry_run:
         return
@@ -360,9 +393,15 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
         diary_mod.replace_block(report, "## REM Sleep", "<!-- hermes-somnia:rem:start -->",
                                 "<!-- hermes-somnia:rem:end -->", rem_block(rem_result))
     diary_mod.replace_block(report, "## Deep Sleep", diary_mod.DEEP_START, diary_mod.DEEP_END, deep_block(summary))
-    if settings.diary and (staged or promoted):  # wake gate: no material, no diary call
+    jr = summary.judgment
+    if insights:
+        diary_mod.replace_block(report, "## Insights", "<!-- hermes-somnia:insights:start -->",
+                                "<!-- hermes-somnia:insights:end -->", insights_block(summary))
+    if settings.diary and (staged or promoted or jr.proposed or jr.approved):  # wake gate: no material, no diary call
         promotions = [e.text for e in (store.entry(k) for k in promoted) if e]
+        promotions += [summary.insight_titles.get(k, k) for k in jr.approved]
         snippets = [e.text for e in staged] or [t for t, _ in summary.truths]
+        snippets += [j.criterion for j in (store.judgment(k) for k in jr.proposed) if j]
         narrative, degraded = diary_mod.narrate(llm, snippets, [t[0] for t in (rem_result.themes if rem_result else [])],
                                                 promotions, day, recent[:diary_mod.CONTEXT_LIMIT],
                                                 settings.diary_language)
@@ -372,7 +411,7 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
         diary_mod.replace_block(diary_path, "## Deep Sleep", diary_mod.DEEP_START, diary_mod.DEEP_END,
                                 deep_block(summary))
     # One sync for the whole night, after the inbox note and the diary (both live in the vault folder).
-    if settings.wants_vault and (summary.vault_note or summary.diary):
+    if settings.wants_vault and (summary.vault_note or summary.diary or jr.approved or jr.touched):
         try:
             err = run_vault_sync(settings, Path(summary.vault_note) if summary.vault_note else diary_path, day)
         except Exception as exc:
@@ -381,6 +420,97 @@ def _phases(store: Store, settings: Settings, summary: SweepSummary, *, complete
             summary.errors.append(err)
     summary.llm_calls = llm.calls if llm else 0
     store.prune()
+
+
+def _insights_inbox(store: Store, settings: Settings, summary: SweepSummary, backend, now: float, base: Path) -> None:
+    """Before anything is read: apply the proposals the user ticked, and retry a pointer that had no room.
+    Runs on quiet nights too. A dry run reads the ticks but applies nothing."""
+    res = summary.judgment
+    if summary.dry_run:
+        return
+    if settings.wants_vault:
+        err = run_vault_pull(settings)
+        if err:
+            summary.errors.append(err)
+    try:
+        ticked = JS.read_ticks(settings, store, res.warnings)
+    except Exception as exc:  # noqa: BLE001
+        summary.errors.append(f"insights: could not read the inbox ({exc})")
+        ticked = []
+    for key in ticked:
+        try:
+            out = JS.approve(store, settings, backend, key, now, base)
+        except Exception as exc:  # noqa: BLE001 - one refused approval never stops the night
+            summary.errors.append(f"insights: could not approve {key}: {exc}")
+            continue
+        res.approved.append(key)
+        res.warnings += out["warnings"]
+        j = store.judgment(key)
+        if j:
+            summary.insight_titles[key] = j.title
+    if not ticked and store.judgments("approved"):
+        try:
+            warning = JS.ensure_pointer(store, settings, backend, JS.living_note_path(settings, base))
+        except Exception as exc:  # noqa: BLE001
+            warning = f"insights pointer: {exc}"
+        if warning:
+            res.warnings.append(warning)
+
+
+def _insights_night(store: Store, settings: Settings, summary: SweepSummary, llm, now: float, base: Path, *,
+                    sessions_db: Path, max_messages: int, tz, day: str) -> None:
+    """Extraction (its own cursor) -> synthesis -> proposals into the inbox note."""
+    res = summary.judgment
+    cursor = int(store.get("insight_cursor", 0) or 0)
+    fragments, new_cursor = read_fragments(
+        sessions_db, after_id=cursor, since_ts=now - settings.ingest_days * DAY_S,
+        sources=settings.interactive_sources, max_messages=max_messages, tz=tz, until_ts=now)
+    fragments = [dataclasses.replace(f, text=f.text[:J.AGENT_CLIP]) if f.role != "user" and len(f.text) > J.AGENT_CLIP
+                 else f for f in fragments]
+    if llm is not None:
+        fragments, new_cursor = fit_budget(fragments, new_cursor,
+                                           int(settings.max_extract_calls * J.CHUNK_CHARS * 0.9))
+    res.quiet = not fragments
+    if settings.mask_secrets:
+        fragments = [dataclasses.replace(f, text=mask_secrets(f.text)) for f in fragments]
+    stored = J.extract(store, fragments, llm, settings, now, res, old_cursor=cursor, new_cursor=new_cursor)
+    store.put("insight_cursor", stored)
+    res.cursor = (cursor, stored)
+    try:
+        known = JS.known_text(settings)
+    except Exception:  # noqa: BLE001
+        known = ""
+    proposals = J.synthesize(store, llm, settings, known, now, res)
+    for j in proposals:
+        summary.insight_titles[j.key] = j.title
+    summary.waiting = len(store.observations(unassigned=True))
+    summary.errors += res.errors
+    summary.warnings += res.warnings
+    try:
+        stamp = datetime.fromtimestamp(now, tz).strftime("%H:%M")
+        note, lines = JS.write_proposals(settings, store, proposals, day, dry_run=summary.dry_run, stamp=stamp,
+                                         sweep_header=not summary.vault_note)
+        if note is not None and not summary.dry_run:
+            summary.vault_note = summary.vault_note or str(note)
+        if summary.dry_run:
+            summary.vault_lines += lines
+        if res.touched and not summary.dry_run:
+            JS.write_living_note(settings, store, base)
+    except Exception as exc:  # noqa: BLE001
+        summary.errors.append(f"insights: {exc}")
+
+
+def insights_block(summary: SweepSummary) -> list[str]:
+    res = summary.judgment
+    lines = [f"- Read {res.fragments} turn(s); {res.observations} new observation(s), "
+             f"{summary.waiting} waiting for a second occasion."]
+    lines += [f"- Proposed: {summary.insight_titles.get(k, k)} (`{k}`)" for k in res.proposed]
+    lines += [f"- Approved from the inbox: {summary.insight_titles.get(k, k)} (`{k}`)" for k in res.approved]
+    if res.attached:
+        lines.append(f"- {res.attached} observation(s) became new occasions of existing insights.")
+    if not res.proposed and not res.approved:
+        lines.append("- Nothing to propose. An empty night is normal.")
+    return lines
 
 
 def morning_report(summary: SweepSummary, alarm: Optional[dict] = None) -> str:
@@ -393,13 +523,22 @@ def morning_report(summary: SweepSummary, alarm: Optional[dict] = None) -> str:
     learned = [a for s in d.sinks for a in s.applied if a[1] in ("added", "merged", "superseded")]
     if d.vault_note and not d.dry_run:
         learned += [(k, "vault", t, []) for k, _, _, t in d.selected]
+    proposed, approved = d.judgment.proposed, d.judgment.approved
     if learned:
         lines.append(f"✦ Somnia remembered {len(learned)} thing{'s' if len(learned) != 1 else ''} last night:")
         lines += [f"  • {a[2]}" for a in learned[:5]]
-    elif d.quiet:
-        lines.append("☾ Somnia: a quiet night, no new conversations.")
-    else:
-        lines.append(f"☾ Somnia read {d.light.fragments} new turns; nothing was ready to remember yet.")
+    if proposed:
+        lines.append(f"✦ Somnia has {len(proposed)} insight{'s' if len(proposed) != 1 else ''} for you to review:")
+        lines += [f"  • {d.insight_titles.get(k, k)}" for k in proposed[:5]]
+    if approved:
+        lines.append(f"  Approved from your inbox: {', '.join(d.insight_titles.get(k, k) for k in approved[:5])}.")
+    if not (learned or proposed or approved):
+        if d.quiet:
+            lines.append("☾ Somnia: a quiet night, no new conversations.")
+        elif d.facts:
+            lines.append(f"☾ Somnia read {d.light.fragments} new turns; nothing was ready to remember yet.")
+        else:
+            lines.append(f"☾ Somnia read {d.turns} new turns; no new insight (that is normal).")
     if c["staged"]:
         lines.append("  Waiting for your approval: /memory pending")
     if c["evicted"]:
@@ -412,16 +551,24 @@ def morning_report(summary: SweepSummary, alarm: Optional[dict] = None) -> str:
         lines.append(f"⚠ {e}")
     if learned or alarm:
         lines.append("  Undo: hermes somnia undo · Details: hermes somnia status")
+    elif proposed:
+        lines.append("  Approve: tick it in the inbox note, the Somnia page, or hermes somnia approve <key>")
     return "\n".join(lines)
 
 
 def render_summary(summary: SweepSummary, verbose: bool = False) -> str:
     d = summary
     head = "Somnia (dry run)" if d.dry_run else "Somnia"
-    lines = [f"{head}: {d.light.fragments} new fragment(s), {d.light.observations} observation(s) "
-             f"({d.light.new_entries} new, {d.light.reinforced} reinforced), {d.staged} staged, "
-             f"{len(d.selected)} promoted of {d.ranked} candidate(s), {d.llm_calls} LLM call(s)."]
-    lines += deep_block(d)[1:] if (d.selected or verbose) else []
+    lines = []
+    if d.facts:
+        lines.append(f"{head}: {d.light.fragments} new fragment(s), {d.light.observations} observation(s) "
+                     f"({d.light.new_entries} new, {d.light.reinforced} reinforced), {d.staged} staged, "
+                     f"{len(d.selected)} promoted of {d.ranked} candidate(s), {d.llm_calls} LLM call(s).")
+        lines += deep_block(d)[1:] if (d.selected or verbose) else []
+    if d.focus in ("insights", "both"):
+        lines.append(f"{head} insights: {d.llm_calls} LLM call(s)." if d.facts else
+                     f"{head}: looking for insights, {d.llm_calls} LLM call(s).")
+        lines += insights_block(d)
     if verbose and d.themes:
         lines.append("- Themes: " + ", ".join(t[0] for t in d.themes))
     if verbose and d.truths:

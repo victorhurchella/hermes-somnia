@@ -18,7 +18,9 @@ from hermes_somnia.sinks import entry_flags, size_of
 
 from hermes_somnia.config import Settings
 from hermes_somnia.ingest import Fragment, read_fragments
+from hermes_somnia.insights import alarm
 from hermes_somnia.store import Judgment, Store
+from hermes_somnia.sweep import morning_report, render_summary, run_sweep
 
 DAY = 86_400.0
 NOW = 1_800_000_000.0
@@ -470,6 +472,128 @@ class Sinks(Base):
         text = S.known_text(self.settings)
         self.assertIn("Occam", text)
         self.assertNotIn("do not read", text)
+
+
+def judge_llm(calls=None):
+    """Quotes whatever the two owner turns said; groups every waiting observation into one insight."""
+    def extract(user):
+        out = [observation(q) for q in (Q1, Q2) if q in user]
+        return {"observations": out}
+
+    def synth(user):
+        ids = [o["id"] for o in json.loads(user.split("OBSERVATIONS (JSON):\n")[1])]
+        return {"insights": [group(ids)] if len(ids) >= 2 else []}
+
+    return ScriptedLLM(judge_extract=extract, judge_synth=synth)
+
+
+class SweepInsights(Base):
+    def setUp(self):
+        super().setUp()
+        self.vault = self.tmp / "vault"
+        self.vault.mkdir()
+        self.state = self.tmp / "state"
+        self.settings = Settings(destinations="vault", vault_path=str(self.vault), diary=False)
+        self.mem = FakeMemory(self.tmp, user=["Likes short answers."])
+        self.db = self.tmp / "sessions.db"
+        make_sessions_db(self.db, [
+            ("s1", "desktop", "user", f"Keep it tiny: {Q1}", NOW - 3 * DAY, None),
+            ("s1", "desktop", "assistant", "Understood, a one-line change it is.", NOW - 3 * DAY + 5, None),
+            ("s2", "tui", "user", f"No. {Q2}", NOW - DAY, None),
+            ("s2", "tui", "assistant", "Right, no new endpoint for that.", NOW - DAY + 5, None),
+        ])
+
+    def sweep(self, llm, now=NOW, **kw):
+        return run_sweep(kw.pop("settings", self.settings), complete=llm, backend=self.mem, now=now,
+                         base_dir=self.state, sessions_db=self.db, **kw)
+
+    def notes(self):
+        return sorted(p.name for p in (self.vault / "somnia").glob("*.md")) if (self.vault / "somnia").exists() else []
+
+    def test_propose_then_tick_then_approve(self):
+        llm = judge_llm()
+        first = self.sweep(llm)
+        key = J.judgment_key(CRIT)
+        d = first.as_dict()
+        self.assertEqual((d["focus"], d["insights"]["proposed"], d["noop"], d["promoted"]), ("insights", [key], False, 0))
+        self.assertEqual([c[0] for c in llm.calls], ["judge_extract", "judge_synth"])
+        self.assertEqual(self.mem.entries("user"), ["Likes short answers."])
+        self.assertEqual(len(self.notes()), 1)
+        note = self.vault / "somnia" / self.notes()[0]
+        self.assertIn(f"- [ ] **Smallest change that works** — {CRIT}", note.read_text())
+        self.assertFalse((self.vault / "somnia" / "insights.md").exists())
+        self.assertIn("Somnia has 1 insight for you to review", morning_report(first))
+        self.assertIn("Proposed: Smallest change that works", render_summary(first))
+
+        note.write_text(note.read_text().replace("- [ ] **Smallest", "- [x] **Smallest"))
+        second = self.sweep(llm, now=NOW + DAY)  # a quiet night still applies the tick
+        self.assertEqual((second.quiet, second.judgment.approved, second.llm_calls), (True, [key], 0))
+        self.assertTrue(second.changed)
+        self.assertIn(CRIT, (self.vault / "somnia" / "insights.md").read_text())
+        self.assertTrue(self.mem.entries("user")[1].startswith("Judgment criteria of the user:"))
+        self.assertIn("Approved from your inbox: Smallest change that works", morning_report(second))
+
+    def test_empty_nights_never_raise_the_noop_alarm(self):
+        llm = ScriptedLLM()
+        db = self.tmp / "nights.db"
+        make_sessions_db(db, [("s", "desktop", "user", f"please rename the file number {n}", NOW + n * DAY - 60, None)
+                              for n in range(4)])
+        for n in range(4):  # each night only sees the turns typed before it
+            s = run_sweep(self.settings, complete=llm, backend=self.mem, now=NOW + n * DAY, base_dir=self.state,
+                          sessions_db=db)
+            self.assertEqual((s.as_dict()["noop"], s.changed), (False, False))
+            self.assertIn("no new insight (that is normal)", morning_report(s))
+        store = Store(self.state / "state.db")
+        try:
+            self.assertIsNone(alarm(store, self.settings, [], None, NOW + 4 * DAY))
+        finally:
+            store.close()
+        self.assertEqual(self.notes(), [])
+
+    def test_facts_focus_makes_no_judgment_call_and_both_keeps_two_cursors(self):
+        llm = judge_llm()
+        s = self.sweep(llm, settings=Settings(focus="facts", destinations="builtin", diary=False))
+        self.assertEqual([c[0] for c in llm.calls], ["extract"])
+        store = Store(self.state / "state.db")
+        self.assertEqual((store.get("cursor"), store.get("insight_cursor")), (4, None))
+        store.close()
+        llm = judge_llm()
+        s = self.sweep(llm, settings=Settings(focus="both", destinations="builtin", diary=False), now=NOW + 60)
+        self.assertEqual(sorted({c[0] for c in llm.calls}), ["judge_extract", "judge_synth"])  # facts: nothing new
+        store = Store(self.state / "state.db")
+        self.assertEqual((store.get("cursor"), store.get("insight_cursor")), (4, 4))
+        store.close()
+        self.assertEqual(s.as_dict()["insights"]["proposed"], [J.judgment_key(CRIT)])
+
+    def test_dry_run_changes_nothing(self):
+        s = self.sweep(judge_llm(), dry_run=True)
+        self.assertEqual(s.judgment.proposed, [J.judgment_key(CRIT)])
+        self.assertTrue(any("Smallest change that works" in line for line in s.vault_lines))
+        self.assertEqual((self.notes(), self.mem.entries("user")), ([], ["Likes short answers."]))
+        store = Store(self.state / "state.db")
+        try:
+            self.assertEqual((store.judgments(), store.observations(), store.get("insight_cursor")), ([], [], None))
+        finally:
+            store.close()
+
+    def test_pull_runs_before_ticks_and_sync_after(self):
+        log = self.tmp / "log.txt"
+        self.settings.vault_pull_command = f"echo pull >> {log}"
+        self.settings.vault_sync_command = f"echo sync >> {log}"
+        self.sweep(judge_llm())
+        self.assertEqual(log.read_text().split(), ["pull", "sync"])
+        self.settings.vault_pull_command = "exit 4"
+        s = self.sweep(ScriptedLLM(), now=NOW + DAY)
+        self.assertIn("vault pull: exit 4", s.errors[0])
+
+    def test_subagent_briefs_are_never_evidence(self):
+        self.db.unlink()
+        make_sessions_db(self.db, [
+            ("s1", "desktop", "user", f"Keep it tiny: {Q1}", NOW - 3 * DAY, None),
+            ("sub", "desktop", "user", f"Implement the fix. {Q2}", NOW - DAY, None),
+        ], sessions={"sub": {"parent_session_id": "s1", "title": "Subagent: implement the fix"}})
+        s = self.sweep(judge_llm())
+        self.assertEqual((s.judgment.observations, s.judgment.proposed), (1, []))
 
 
 if __name__ == "__main__":
