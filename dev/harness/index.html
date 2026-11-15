@@ -6,7 +6,7 @@
 <!--
   Somnia desktop harness. Loads desktop/plugin.js against a faithful SDK shim and
   a mock Python half, inside a fake Hermes Desktop frame. See README.md.
-  Query params: theme=dark|light  fixture=demo|empty|disabled  view=page|chat|newchat
+  Query params: theme=dark|light  fixture=demo|demo-facts|empty|disabled  view=page|chat|newchat
                 lang=en|pt-br  alarm=noop  script=<name>  width=<px of the main pane>
 -->
 <script type="importmap">
@@ -125,8 +125,11 @@
   // ------------------------------------------------------------------ clock
   // Pin the clock to the fixture's "now" so relative times are stable.
   const P = new URLSearchParams(location.search)
-  const fixtureName = P.get('fixture') || 'demo'
-  const fileName = fixtureName === 'empty' ? 'empty' : 'demo'
+  // demo = focus: insights (the default). The flows written for the fact pipeline run on demo-facts
+  // unless a fixture is named, so `script=forget` keeps working as documented.
+  const FACT_FLOWS = ['forget', 'keep', 'edit', 'memory', 'memoryForget', 'preview', 'optimize', 'limit', 'forgetMorning', 'cancel', 'dream', 'undo', 'promote', 'pin', 'expand', 'search', 'tabs', 'ask', 'session', 'night', 'theme', 'principles', 'calibration', 'directive', 'directiveOpen', 'locale']
+  const fixtureName = P.get('fixture') || (FACT_FLOWS.includes(P.get('script')) ? 'demo-facts' : 'demo')
+  const fileName = ['empty', 'demo-facts'].includes(fixtureName) ? fixtureName : 'demo'
   window.__stage = 'fixture'
   const fixture = (await import(`./fixtures/${fileName}.json`, { with: { type: 'json' } })).default
   if (P.get('alarm') === 'noop' && fixture.noop_alarm) fixture.overview.alarm = fixture.noop_alarm
@@ -307,7 +310,7 @@
 
   function App() {
     return h(QueryClientProvider, { client: sdk.queryClient },
-      h('div', { className: 'hx-app' }, h(Sidebar), h('main', { className: 'hx-main' }, h(Main)), h(StatusBar)),
+      h('div', { className: 'hx-app' }, h(Sidebar), h('main', { className: 'hx-main', style: Number(P.get('width')) ? { maxWidth: Number(P.get('width')) } : undefined }, h(Main)), h(StatusBar)),
       h(Toasts), h(ErrorOverlay))
   }
   createRoot(document.getElementById('root')).render(h(App))
@@ -540,6 +543,74 @@
       window.__setLocale('pt-br')
       await sleep(300)
       return { ok: /Esta manhã/.test(document.body.textContent) && /Somnia/.test($('.hx-side').textContent), nav: [...contributions.keys()].filter(k => k.includes('sidebar')) }
+    },
+    async insightApprove() {
+      const cards = await waitFor(() => $$('.smn-insight[data-key]').length === 2 && $$('.smn-insight[data-key]'))
+      const [first, second] = cards.map(c => c.dataset.key)
+      const firstOpen = !!$('.smn-insight-detail', cards[0]) && !$('.smn-insight-detail', cards[1])
+      click(byText('Approve', cards[0]))
+      await waitFor(() => rpcCalls('insight.approve').some(e => e.ok))
+      await waitFor(() => $$('.smn-insight[data-key]').length === 1)
+      click(byText('Approve', $('.smn-insight[data-key]')))
+      await waitFor(() => rpcCalls('insight.approve').filter(e => e.ok).length === 2)
+      await waitFor(() => !$('.smn-insight[data-key]') && $$('.smn-appr').length === 6)
+      await sleep(300)
+      const items = server.db.insights.items
+      const refetched = rpcCalls('insights').length >= 3 && rpcCalls('overview').length >= 3
+      return {
+        ok: firstOpen && items.every(i => i.status === 'approved') && rpcCalls('insight.approve')[0].params.key === first && refetched &&
+          window.__host.toasts.some(t => t.kind === 'warning' && /vault sync failed/.test(t.message)) && /Nothing to review/.test($('#smn-insights').textContent),
+        firstOpen, first, second, toasts: window.__host.toasts.map(t => `${t.kind}: ${t.message}`), rows: $$('.smn-appr').length
+      }
+    },
+    async insightForget() {
+      const card = await waitFor(() => $('.smn-insight[data-key]'))
+      const key = card.dataset.key
+      click(byText('Forget', card))
+      await sleep(100)
+      const armed = byText('Really', card)
+      const notYet = rpcCalls('forget').length === 0
+      click(armed)
+      await waitFor(() => rpcCalls('forget').some(e => e.ok))
+      await waitFor(() => $$('.smn-insight[data-key]').length === 1)
+      // An approved one: forgetting it also takes its rule out of USER.md.
+      const row = $$('.smn-appr').find(r => /USER\.md/.test(r.textContent))
+      const inlinedKey = row.dataset.key
+      const before = server.db.overview.budgets[1].entries.some(e => e.key === inlinedKey)
+      click(byText('Forget', row))
+      await sleep(100)
+      click(byText('Really', row))
+      await waitFor(() => rpcCalls('forget').filter(e => e.ok).length === 2)
+      await waitFor(() => $$('.smn-appr').length === 3)
+      const it = k => server.db.insights.items.find(i => i.key === k)
+      return {
+        ok: !!armed && notYet && it(key).status === 'rejected' && it(inlinedKey).status === 'rejected' && before && !server.db.overview.budgets[1].entries.some(e => e.key === inlinedKey),
+        key, inlinedKey, toasts: window.__host.toasts.map(t => `${t.kind}: ${t.message}`)
+      }
+    },
+    async insightCard() {
+      const cards = await waitFor(() => $$('.smn-card[data-key^="insight:"]').length === 2 && $$('.smn-card[data-key^="insight:"]'))
+      const approvedHasNoApprove = !byText('Approve', cards[1]) && !!byText('Forget', cards[1])
+      click(byText('Approve', cards[0]))
+      await waitFor(() => rpcCalls('insight.approve').some(e => e.ok))
+      await waitFor(() => !byText('Approve', $$('.smn-card[data-key^="insight:"]')[0]))
+      const card = $$('.smn-card[data-key^="insight:"]')[1]
+      click(byText('Forget', card))
+      await sleep(100)
+      click(byText('Really', card))
+      await waitFor(() => rpcCalls('forget').some(e => e.ok))
+      await waitFor(() => $$('.smn-card[data-key^="insight:"]').length === 1)
+      return { ok: approvedHasNoApprove && server.db.insights.items.filter(i => i.status === 'approved').length === 4 && rpcCalls('candidate').length >= 2 }
+    },
+    async insightFocus() {
+      // focus: insights hides the fact sections and keeps the rest.
+      await waitFor(() => $('#smn-insights .smn-insight'))
+      await sleep(300)
+      const present = id => !!document.getElementById(id)
+      const hidden = ['smn-morning', 'smn-near', 'smn-themes', 'smn-thinks', 'smn-calibration'].filter(present)
+      const kept = ['smn-insights', 'smn-space', 'smn-sleep', 'smn-diary'].filter(present)
+      const chip = $('.smn-status')
+      return { ok: hidden.length === 0 && kept.length === 4 && !!chip && /2 insights to review/.test(chip.textContent), hidden, kept, chip: chip && chip.textContent }
     },
     async disabled() {
       await waitFor(() => /not enabled/.test(document.body.textContent))

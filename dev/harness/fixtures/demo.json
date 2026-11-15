@@ -2,6 +2,7 @@
  "now": 1794388320,
  "overview": {
   "version": "0.4.0",
+  "focus": "insights",
   "destinations": "both",
   "destructive": "apply",
   "schedule": "0 3 * * *",
@@ -20,7 +21,7 @@
   "last_run": {
    "at": 1794366000,
    "dry_run": false,
-   "summary": "2 added, 1 merged, 1 deferred (memory full)"
+   "summary": "2 insights to review"
   },
   "budgets": [
    {
@@ -124,7 +125,7 @@
       "key": "claim:bd4033052cc1",
       "created_at": 1790823456,
       "last_confirmed_at": 1792846080,
-      "stale": true,
+      "stale": false,
       "pointer": false,
       "index": 8
      },
@@ -187,7 +188,7 @@
    },
    {
     "target": "user",
-    "used": 1064,
+    "used": 1288,
     "limit": 1375,
     "goal": 1238,
     "entries": [
@@ -242,7 +243,7 @@
       "key": "claim:7ecaee833778",
       "created_at": 1792465056,
       "last_confirmed_at": 1793157120,
-      "stale": true,
+      "stale": false,
       "pointer": false,
       "index": 4
      },
@@ -278,6 +279,28 @@
       "stale": false,
       "pointer": false,
       "index": 7
+     },
+     {
+      "text": "Judgment criteria of the user: ~/notes/dreams/insights.md. Read the matching section before design, product, analysis, code or writing work.",
+      "chars": 140,
+      "owner": "somnia",
+      "key": null,
+      "created_at": 1794137760,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 8
+     },
+     {
+      "text": "Open with the answer or the decision in one sentence, then give the reasoning.",
+      "chars": 78,
+      "owner": "somnia",
+      "key": "insight:acd340c04b9c",
+      "created_at": 1794137760,
+      "last_confirmed_at": null,
+      "stale": false,
+      "pointer": false,
+      "index": 9
      }
     ]
    }
@@ -298,7 +321,10 @@
     "llm_calls": 5,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-14",
@@ -315,7 +341,10 @@
     "llm_calls": 0,
     "quiet": true,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-15",
@@ -332,7 +361,10 @@
     "llm_calls": 7,
     "quiet": false,
     "noop": true,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-16",
@@ -349,7 +381,10 @@
     "llm_calls": 9,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-17",
@@ -366,7 +401,10 @@
     "llm_calls": 0,
     "quiet": true,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-18",
@@ -383,7 +421,10 @@
     "llm_calls": 0,
     "quiet": true,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-19",
@@ -400,7 +441,10 @@
     "llm_calls": 6,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-20",
@@ -417,7 +461,10 @@
     "llm_calls": 9,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-21",
@@ -434,7 +481,10 @@
     "llm_calls": 11,
     "quiet": false,
     "noop": true,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-22",
@@ -451,7 +501,10 @@
     "llm_calls": 6,
     "quiet": false,
     "noop": true,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-23",
@@ -468,7 +521,10 @@
     "llm_calls": 0,
     "quiet": true,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-24",
@@ -485,7 +541,10 @@
     "llm_calls": 9,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-25",
@@ -502,7 +561,10 @@
     "llm_calls": 0,
     "quiet": true,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-26",
@@ -519,7 +581,10 @@
     "llm_calls": 8,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-27",
@@ -536,7 +601,10 @@
     "llm_calls": 0,
     "quiet": true,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-28",
@@ -553,7 +621,10 @@
     "llm_calls": 7,
     "quiet": false,
     "noop": true,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-29",
@@ -570,7 +641,10 @@
     "llm_calls": 8,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-30",
@@ -587,7 +661,10 @@
     "llm_calls": 9,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-10-31",
@@ -604,7 +681,10 @@
     "llm_calls": 0,
     "quiet": true,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-11-01",
@@ -621,7 +701,10 @@
     "llm_calls": 0,
     "quiet": true,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "facts",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-11-02",
@@ -629,16 +712,19 @@
     "dry_run": false,
     "fragments": 50,
     "observations": 21,
-    "staged": 13,
-    "themes": 3,
-    "truths": 2,
-    "promoted": 2,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
     "merged": 0,
     "deferred": 0,
-    "llm_calls": 9,
+    "llm_calls": 6,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "insights",
+    "insights_proposed": 1,
+    "insights_approved": 0
    },
    {
     "date": "2026-11-03",
@@ -646,16 +732,19 @@
     "dry_run": false,
     "fragments": 53,
     "observations": 19,
-    "staged": 11,
-    "themes": 3,
-    "truths": 1,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
     "promoted": 0,
     "merged": 0,
     "deferred": 0,
-    "llm_calls": 10,
+    "llm_calls": 6,
     "quiet": false,
-    "noop": true,
-    "errors": 0
+    "noop": false,
+    "errors": 0,
+    "focus": "insights",
+    "insights_proposed": 0,
+    "insights_approved": 1
    },
    {
     "date": "2026-11-04",
@@ -663,16 +752,19 @@
     "dry_run": false,
     "fragments": 38,
     "observations": 19,
-    "staged": 11,
-    "themes": 5,
+    "staged": 0,
+    "themes": 0,
     "truths": 0,
-    "promoted": 2,
+    "promoted": 0,
     "merged": 0,
     "deferred": 0,
-    "llm_calls": 8,
+    "llm_calls": 5,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "insights",
+    "insights_proposed": 1,
+    "insights_approved": 0
    },
    {
     "date": "2026-11-05",
@@ -689,7 +781,10 @@
     "llm_calls": 0,
     "quiet": true,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "insights",
+    "insights_proposed": 0,
+    "insights_approved": 1
    },
    {
     "date": "2026-11-06",
@@ -706,7 +801,10 @@
     "llm_calls": 0,
     "quiet": true,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "insights",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-11-07",
@@ -714,16 +812,19 @@
     "dry_run": false,
     "fragments": 38,
     "observations": 13,
-    "staged": 8,
-    "themes": 1,
-    "truths": 3,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
     "promoted": 0,
     "merged": 0,
     "deferred": 0,
-    "llm_calls": 8,
+    "llm_calls": 5,
     "quiet": false,
-    "noop": true,
-    "errors": 0
+    "noop": false,
+    "errors": 0,
+    "focus": "insights",
+    "insights_proposed": 0,
+    "insights_approved": 1
    },
    {
     "date": "2026-11-08",
@@ -731,16 +832,19 @@
     "dry_run": false,
     "fragments": 50,
     "observations": 17,
-    "staged": 10,
-    "themes": 3,
-    "truths": 2,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
     "promoted": 0,
     "merged": 0,
     "deferred": 0,
-    "llm_calls": 9,
+    "llm_calls": 6,
     "quiet": false,
-    "noop": true,
-    "errors": 0
+    "noop": false,
+    "errors": 0,
+    "focus": "insights",
+    "insights_proposed": 1,
+    "insights_approved": 0
    },
    {
     "date": "2026-11-09",
@@ -748,16 +852,19 @@
     "dry_run": false,
     "fragments": 64,
     "observations": 33,
-    "staged": 20,
-    "themes": 5,
-    "truths": 3,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
     "promoted": 0,
     "merged": 0,
-    "deferred": 1,
-    "llm_calls": 11,
+    "deferred": 0,
+    "llm_calls": 7,
     "quiet": false,
-    "noop": true,
-    "errors": 0
+    "noop": false,
+    "errors": 0,
+    "focus": "insights",
+    "insights_proposed": 0,
+    "insights_approved": 1
    },
    {
     "date": "2026-11-10",
@@ -765,16 +872,19 @@
     "dry_run": false,
     "fragments": 56,
     "observations": 21,
-    "staged": 13,
-    "themes": 1,
-    "truths": 1,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
     "promoted": 0,
     "merged": 0,
     "deferred": 0,
-    "llm_calls": 10,
+    "llm_calls": 7,
     "quiet": false,
-    "noop": true,
-    "errors": 2
+    "noop": false,
+    "errors": 0,
+    "focus": "insights",
+    "insights_proposed": 0,
+    "insights_approved": 0
    },
    {
     "date": "2026-11-11",
@@ -782,16 +892,19 @@
     "dry_run": false,
     "fragments": 22,
     "observations": 7,
-    "staged": 4,
-    "themes": 3,
-    "truths": 1,
-    "promoted": 3,
-    "merged": 2,
-    "deferred": 1,
-    "llm_calls": 6,
+    "staged": 0,
+    "themes": 0,
+    "truths": 0,
+    "promoted": 0,
+    "merged": 0,
+    "deferred": 0,
+    "llm_calls": 4,
     "quiet": false,
     "noop": false,
-    "errors": 0
+    "errors": 0,
+    "focus": "insights",
+    "insights_proposed": 2,
+    "insights_approved": 0
    }
   ],
   "alarm": null,
@@ -801,8 +914,10 @@
    "promoted": 10,
    "rejected": 3,
    "skills": 3,
-   "stale": 2,
-   "pending": 0
+   "stale": 0,
+   "pending": 0,
+   "insights_to_review": 2,
+   "insights_approved": 4
   },
   "vault": {
    "path": "~/notes",
@@ -812,7 +927,7 @@
   },
   "pressure": {
    "memory": 0.911,
-   "user": 0.774
+   "user": 0.937
   },
   "principles": {
    "active": [
@@ -858,6 +973,257 @@
     "feynman"
    ]
   }
+ },
+ "insights": {
+  "items": [
+   {
+    "key": "insight:db51b5e35ff3",
+    "title": "Smallest change that works",
+    "kind": "principle",
+    "area": "code",
+    "name": "YAGNI",
+    "criterion": "Solve the problem in front of you with the smallest change. Structure is added when a second case asks for it, not before.",
+    "user_version": "Maya cuts a proposal back to what the bug or the feature needs today, and asks for an abstraction to be removed when it has a single caller.",
+    "rule": "Propose the smallest diff that fixes the issue. Do not add helpers, options or layers that nothing uses yet.",
+    "relation": "new",
+    "delta": null,
+    "status": "proposed",
+    "proposed_at": 1794365856,
+    "decided_at": null,
+    "occasions": [
+     {
+      "day": "2026-11-10",
+      "context": "webhook retry helper",
+      "quote": "drop the retry helper, exactly one place calls it. inline it and move on",
+      "source_session": "s-lg-stripe",
+      "title": "Ledgerly: Stripe webhook retries"
+     },
+     {
+      "day": "2026-11-06",
+      "context": "invoice PDF fix",
+      "quote": "this is a one line fix, please do not wrap it in a new renderer class",
+      "source_session": "s-lg-pdf",
+      "title": "Invoice PDF rendering bug"
+     },
+     {
+      "day": "2026-11-05",
+      "context": "save format",
+      "quote": "no plugin system for saves. we have one format, write the one format",
+      "source_session": "s-lf-save",
+      "title": "Save system: JSON vs Resource"
+     }
+    ],
+    "days": 3,
+    "first_day": "2026-11-05",
+    "last_day": "2026-11-10",
+    "inlined": false,
+    "note": "dreams/2026-11-11.md"
+   },
+   {
+    "key": "insight:67eb39822d76",
+    "title": "Measure before optimizing",
+    "kind": "principle",
+    "area": "analysis",
+    "name": null,
+    "criterion": "A performance change starts from a measurement on the real target and ends with the same measurement repeated.",
+    "user_version": "Maya profiles on the Steam Deck before touching a shader, and turns down an optimization that comes without a before and after number.",
+    "rule": "Before suggesting an optimization, ask for or take a measurement on the target device, and state the expected gain as a number.",
+    "relation": "refines",
+    "delta": "Adds a concrete bar to your note on performance: the number comes from the target device, not from the dev machine.",
+    "status": "proposed",
+    "proposed_at": 1794365856,
+    "decided_at": null,
+    "occasions": [
+     {
+      "day": "2026-11-10",
+      "context": "lantern shader",
+      "quote": "did you profile it on the deck first? on my desktop everything is fast",
+      "source_session": "s-lf-shader",
+      "title": "Lanternfall: lantern falloff shader"
+     },
+     {
+      "day": "2026-11-09",
+      "context": "lantern radius tuning",
+      "quote": "show me the frame time before and after, otherwise we are guessing",
+      "source_session": "s-lf-oil",
+      "title": "Oil meter + lantern radius tuning"
+     }
+    ],
+    "days": 2,
+    "first_day": "2026-11-09",
+    "last_day": "2026-11-10",
+    "inlined": false,
+    "note": "dreams/2026-11-11.md"
+   },
+   {
+    "key": "insight:acd340c04b9c",
+    "title": "Lead with the answer, then the reasoning",
+    "kind": "response",
+    "area": "responses",
+    "name": null,
+    "criterion": "An answer opens with the conclusion. The reasoning follows for whoever wants to check it.",
+    "user_version": "Maya reads the first line and decides whether to keep reading; she asks for the verdict again when it is buried under context.",
+    "rule": "Open with the answer or the decision in one sentence, then give the reasoning.",
+    "relation": "new",
+    "delta": null,
+    "status": "approved",
+    "proposed_at": 1794106656,
+    "decided_at": 1794137760,
+    "occasions": [
+     {
+      "day": "2026-11-08",
+      "context": "code review",
+      "quote": "verdict first. is it safe to merge or not, then tell me why",
+      "source_session": "s-me-review",
+      "title": "Code review tone"
+     },
+     {
+      "day": "2026-11-07",
+      "context": "preview deploys",
+      "quote": "you gave me four paragraphs before the answer. the answer was no",
+      "source_session": "s-lg-neon",
+      "title": "Neon branch per preview deploy"
+     },
+     {
+      "day": "2026-11-02",
+      "context": "weekly planning",
+      "quote": "start with what you would pick, then the rest",
+      "source_session": "s-me-coffee",
+      "title": "Morning planning"
+     }
+    ],
+    "days": 3,
+    "first_day": "2026-11-02",
+    "last_day": "2026-11-08",
+    "inlined": true,
+    "note": "dreams/2026-11-08.md"
+   },
+   {
+    "key": "insight:51011b342370",
+    "title": "No tutorial: the screen explains itself",
+    "kind": "taste",
+    "area": "design",
+    "name": null,
+    "criterion": "A screen that needs a tutorial is not finished. The first action is visible and safe to try.",
+    "user_version": "Maya removes onboarding text and coach marks, and reworks the screen until the next step is obvious without them.",
+    "rule": "When a screen seems to need an explanation, change the screen: make the first action visible, and do not propose a tour, a tooltip sequence or a help modal.",
+    "relation": "new",
+    "delta": null,
+    "status": "approved",
+    "proposed_at": 1793933856,
+    "decided_at": 1793964960,
+    "occasions": [
+     {
+      "day": "2026-11-09",
+      "context": "oil meter",
+      "quote": "people should get the meter by watching it drain once, not by reading",
+      "source_session": "s-lf-oil",
+      "title": "Oil meter + lantern radius tuning"
+     },
+     {
+      "day": "2026-11-06",
+      "context": "first-run screen",
+      "quote": "no tutorial popup. if the lantern needs a manual the lantern is wrong",
+      "source_session": "s-lf-onboard",
+      "title": "Lanternfall: first-run screen"
+     },
+     {
+      "day": "2026-11-04",
+      "context": "empty invoice list",
+      "quote": "kill the tour. the empty list should just have the new invoice button in it",
+      "source_session": "s-lg-empty",
+      "title": "Ledgerly: empty invoice list"
+     }
+    ],
+    "days": 3,
+    "first_day": "2026-11-04",
+    "last_day": "2026-11-09",
+    "inlined": false,
+    "note": "dreams/2026-11-06.md"
+   },
+   {
+    "key": "insight:8230b63e38f5",
+    "title": "A feature that breaks a pillar is cut",
+    "kind": "principle",
+    "area": "product",
+    "name": null,
+    "criterion": "The product has a short list of pillars. A feature is judged against them first, and how good it sounds on its own does not count.",
+    "user_version": "Maya names the pillar a feature would break and drops the feature in the same message, even when she likes it.",
+    "rule": "Before proposing a feature, check it against the project pillars and say which one it serves. If it breaks one, say so and do not propose it.",
+    "relation": "refines",
+    "delta": "Your pillars note lists them; this adds that the check comes before the idea is discussed.",
+    "status": "approved",
+    "proposed_at": 1793761056,
+    "decided_at": 1793792160,
+    "occasions": [
+     {
+      "day": "2026-11-05",
+      "context": "permadeath option",
+      "quote": "that breaks the under 25 minutes pillar. cut it, do not make it optional",
+      "source_session": "s-lf-save",
+      "title": "Save system: JSON vs Resource"
+     },
+     {
+      "day": "2026-10-29",
+      "context": "crafting system",
+      "quote": "crafting is fun but it makes the run grindy. cozy not grindy, so it is out",
+      "source_session": "s-lf-crafting",
+      "title": "Crafting system: yes or no"
+     }
+    ],
+    "days": 2,
+    "first_day": "2026-10-29",
+    "last_day": "2026-11-05",
+    "inlined": false,
+    "note": "dreams/2026-11-04.md"
+   },
+   {
+    "key": "insight:e18ab2b462ac",
+    "title": "Explain it so a newcomer follows",
+    "kind": "value",
+    "area": "communication",
+    "name": null,
+    "criterion": "Writing is for the reader who was not in the room: every term is defined or avoided, and no step is skipped.",
+    "user_version": "Maya rewrites docs and release notes until someone who has never opened the project could act on them.",
+    "rule": "In docs, release notes and commit bodies, define each project term at first use and do not assume earlier conversations.",
+    "relation": "new",
+    "delta": null,
+    "status": "approved",
+    "proposed_at": 1793588256,
+    "decided_at": 1793619360,
+    "occasions": [
+     {
+      "day": "2026-11-10",
+      "context": "release notes",
+      "quote": "a new player does not know what oil is. say what it does first",
+      "source_session": "s-lf-itch",
+      "title": "Friday build notes for itch.io"
+     },
+     {
+      "day": "2026-11-01",
+      "context": "contributor README",
+      "quote": "write it for someone who cloned the repo five minutes ago",
+      "source_session": "s-lg-docs",
+      "title": "Ledgerly README for contributors"
+     },
+     {
+      "day": "2026-10-30",
+      "context": "commit bodies",
+      "quote": "the body should make sense to me in a year, when I forgot all of this",
+      "source_session": "s-me-commit",
+      "title": "Commit message style"
+     }
+    ],
+    "days": 3,
+    "first_day": "2026-10-30",
+    "last_day": "2026-11-10",
+    "inlined": false,
+    "note": "dreams/2026-11-02.md"
+   }
+  ],
+  "rejected": 1,
+  "waiting": 5,
+  "note": "~/notes/dreams/insights.md"
  },
  "runs": {
   "1791860400": [
@@ -4557,230 +4923,15 @@
   "dry_run": true,
   "quiet": false,
   "fragments": 142,
-  "llm_calls": 3,
-  "promoted": 1,
-  "merged": 1,
-  "deferred": 1,
+  "llm_calls": 2,
+  "promoted": 0,
+  "merged": 0,
+  "deferred": 0,
   "staged": 0,
   "evicted": 0,
-  "changes": [
-   {
-    "run_at": 1794388320,
-    "key": "claim:55fff2fd259f",
-    "action": "added",
-    "target": "memory",
-    "text": "Lanternfall targets 60 fps on a Steam Deck; profile with the Deck before every Friday build.",
-    "replaced": [],
-    "score": 0.67,
-    "components": {
-     "frequency": 0.4,
-     "relevance": 0.82,
-     "diversity": 0.4,
-     "recency": 0.92,
-     "consolidation": 0.2,
-     "conceptual": 0.5,
-     "phase_boost": 0.04
-    },
-    "sessions": [
-     {
-      "id": "s-lf-shader",
-      "title": "Lanternfall: lantern falloff shader",
-      "source": "desktop",
-      "day": "2026-11-10"
-     },
-     {
-      "id": "s-lf-itch",
-      "title": "Friday build notes for itch.io",
-      "source": "desktop",
-      "day": "2026-11-10"
-     }
-    ],
-    "reason": null,
-    "undoable": false
-   },
-   {
-    "run_at": 1794388320,
-    "key": "claim:7ecaee833778",
-    "action": "superseded",
-    "target": "user",
-    "text": "Maya works in Lisbon time (WET/WEST); mornings are for deep work.",
-    "replaced": [
-     "Maya works in Lisbon time (WET/WEST)."
-    ],
-    "score": 0.508,
-    "components": {
-     "frequency": 0.46,
-     "relevance": 0.72,
-     "diversity": 0.4,
-     "recency": 0.3,
-     "consolidation": 0.66,
-     "conceptual": 0.17,
-     "phase_boost": 0
-    },
-    "sessions": [
-     {
-      "id": "s-me-coffee",
-      "title": "Morning planning",
-      "source": "desktop",
-      "day": "2026-11-02"
-     },
-     {
-      "id": "s-me-pt",
-      "title": "Bate-papo: planejamento da semana",
-      "source": "telegram",
-      "day": "2026-11-10"
-     }
-    ],
-    "reason": null,
-    "undoable": false
-   },
-   {
-    "run_at": 1794388320,
-    "key": "claim:30de78651561",
-    "action": "deferred",
-    "target": "memory",
-    "text": "Preview deploys of Ledgerly each get their own Neon branch, deleted on merge.",
-    "replaced": [],
-    "score": 0.601,
-    "components": {
-     "frequency": 0.46,
-     "relevance": 0.74,
-     "diversity": 0.4,
-     "recency": 0.74,
-     "consolidation": 0.38,
-     "conceptual": 0.5,
-     "phase_boost": 0.03
-    },
-    "sessions": [
-     {
-      "id": "s-lg-neon",
-      "title": "Neon branch per preview deploy",
-      "source": "cli",
-      "day": "2026-11-07"
-     },
-     {
-      "id": "s-lg-drizzle",
-      "title": "Drizzle migration for invoice_items",
-      "source": "desktop",
-      "day": "2026-11-09"
-     }
-    ],
-    "reason": "memory budget",
-    "undoable": false
-   },
-   {
-    "run_at": 1794388320,
-    "key": "claim:cdb3602859fe",
-    "action": "skipped",
-    "target": "memory",
-    "text": "Pixel art in Lanternfall is drawn at 16×16 and scaled 4× with nearest-neighbour filtering.",
-    "replaced": [],
-    "score": 0.555,
-    "components": {
-     "frequency": 0.4,
-     "relevance": 0.7,
-     "diversity": 0.4,
-     "recency": 0.77,
-     "consolidation": 0.34,
-     "conceptual": 0.33,
-     "phase_boost": 0.02
-    },
-    "sessions": [
-     {
-      "id": "s-lf-tiles",
-      "title": "TileMapLayer migration (Godot 4.4)",
-      "source": "desktop",
-      "day": "2026-11-08"
-     },
-     {
-      "id": "s-lf-shader",
-      "title": "Lanternfall: lantern falloff shader",
-      "source": "desktop",
-      "day": "2026-11-10"
-     }
-    ],
-    "reason": "feynman: the entry refers to something it does not name",
-    "undoable": false
-   }
-  ]
+  "changes": []
  },
- "noop_alarm": {
-  "kind": "noop",
-  "nights": 5,
-  "message": "5 nights in a row with new conversations but nothing remembered. Closest: 0.68 — blocked.",
-  "best": {
-   "key": "claim:c8e1242c57e2",
-   "text": "Lanternfall's lantern radius scales with remaining oil (0–100), easing out below 20.",
-   "target": "memory",
-   "kind": "fact",
-   "origin": "owner",
-   "explicit": false,
-   "pinned": false,
-   "score": 0.677,
-   "raw": 0.677,
-   "min_score": 0.65,
-   "components": {
-    "frequency": 0.48,
-    "relevance": 0.78,
-    "diversity": 0.4,
-    "recency": 0.97,
-    "consolidation": 0.42,
-    "conceptual": 0.5,
-    "phase_boost": 0.05
-   },
-   "passes": {
-    "origin": true,
-    "placement": true,
-    "signals": true,
-    "sessions": true,
-    "durability": true,
-    "age": true,
-    "score": true,
-    "not_promoted": true,
-    "not_rejected": true
-   },
-   "missing": [],
-   "signal_count": 2,
-   "sessions": [
-    {
-     "id": "s-lf-oil",
-     "title": "Oil meter + lantern radius tuning",
-     "source": "desktop",
-     "day": "2026-11-09"
-    },
-    {
-     "id": "s-lf-shader",
-     "title": "Lanternfall: lantern falloff shader",
-     "source": "desktop",
-     "day": "2026-11-10"
-    }
-   ],
-   "days": [
-    "2026-11-10",
-    "2026-11-09"
-   ],
-   "tags": [
-    "lanternfall",
-    "lantern",
-    "gameplay"
-   ],
-   "evidence": [
-    {
-     "source_session": "s-lf-oil",
-     "day": "2026-11-09",
-     "quote": "radius should ease out hard below 20 oil, it feels like the dark closing in"
-    }
-   ],
-   "first_seen_at": 1793623680,
-   "last_seen_at": 1794314880,
-   "status": "candidate",
-   "promoted_to": null,
-   "promoted_at": null,
-   "deferred_reason": "occam: the merge does not compress its parts",
-   "reask": false
-  },
-  "action": "settings"
- },
+ "noop_alarm": null,
  "sessions": [
   {
    "id": "s-lf-shader",
@@ -4851,28 +5002,48 @@
    "id": "s-me-commit",
    "title": "Commit message style",
    "source": "cli"
+  },
+  {
+   "id": "s-lf-onboard",
+   "title": "Lanternfall: first-run screen",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lg-empty",
+   "title": "Ledgerly: empty invoice list",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lg-docs",
+   "title": "Ledgerly README for contributors",
+   "source": "desktop"
+  },
+  {
+   "id": "s-lf-crafting",
+   "title": "Crafting system: yes or no",
+   "source": "desktop"
   }
  ],
  "transcript": [
   {
    "role": "user",
-   "text": "what do you remember about how I ship Lanternfall?"
+   "text": "why did you send such a small diff for the webhook fix?"
   },
   {
    "role": "assistant",
-   "text": "You ship every Friday to itch.io and like short release notes in your own voice. I picked that up across three of our chats this month — here is the memory and why it was kept:"
+   "text": "Because of how you judge code changes. Somnia noticed the same criterion on three different days and proposed it as an insight. It is still waiting for your review:"
   },
   {
    "role": "assistant",
-   "text": "::somnia-memory{key=\"claim:764823a833bf\"}"
+   "text": "::somnia-memory{key=\"insight:db51b5e35ff3\"}"
   },
   {
    "role": "assistant",
-   "text": "There is also a near miss about the Steam Deck frame target that I have not kept yet:"
+   "text": "This one you already approved, so I follow it in every answer:"
   },
   {
    "role": "assistant",
-   "text": "::somnia-memory{key=\"claim:55fff2fd259f\"}"
+   "text": "::somnia-memory{key=\"insight:acd340c04b9c\"}"
   }
  ],
  "undo_backup": {
@@ -5202,5 +5373,10 @@
    "llm_calls": 2,
    "error": null
   }
+ },
+ "approve_warnings": {
+  "insight:67eb39822d76": [
+   "vault sync failed (git push: exit 1); the approval stands"
+  ]
  }
 }
