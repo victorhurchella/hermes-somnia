@@ -28,7 +28,8 @@ _OOB_RE = re.compile(r"^\[OUT-OF-BAND USER MESSAGE[^\]]*\]\s*(.*?)\s*(?:\[/OUT-O
 # Dreaming's own fingerprints (contamination guard, OpenClaw isContaminatedDreamingSnippet).
 _CONTAMINATION = ("hermes-somnia:", "Write a dream diary entry from these memory fragments",
                   "You are keeping a dream diary", "extract candidate long-term memories",
-                  "## Light Sleep", "## REM Sleep", "## Deep Sleep")
+                  "## Light Sleep", "## REM Sleep", "## Deep Sleep",
+                  "reveals HOW THEY THINK OR JUDGE", "You receive judgment observations")
 
 USER_CHARS = 1500
 REPLY_CHARS = 800

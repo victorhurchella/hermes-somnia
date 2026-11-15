@@ -19,6 +19,42 @@ provides_hooks: []
 requires_env: []
 
 config_schema:
+  focus:
+    type: str
+    choices: [insights, facts, both]
+    default: insights
+    label: Focus
+    description: "insights = look for your criteria of judgment (principles, values, taste, what you want from answers) and propose them for approval; an empty night is normal. facts = the Light -> REM -> Deep fact pipeline (the behaviour before 0.4.0). both = run both, at twice the extraction calls"
+  insights_note:
+    type: str
+    default: ""
+    label: Insights note
+    description: "Vault-relative path of the living note with your approved insights. Empty = <vault inbox folder>/insights.md. Somnia owns this file and regenerates it; it refuses a file it did not create"
+  insights_known_notes:
+    type: list
+    default: []
+    label: Known notes
+    description: "Vault-relative notes that already record your principles; read (never written) so an insight is marked new, refines or known"
+  insights_pointer:
+    type: bool
+    default: true
+    label: Pointer in USER.md
+    description: "Keep one USER.md entry telling the agent to read the insights note before design, product, analysis, code or writing work"
+  insights_inline_max:
+    type: int
+    default: 3
+    label: Insights in USER.md
+    description: "Most approved insights about the agent's answers copied into USER.md as one-line rules"
+  max_insights:
+    type: int
+    default: 3
+    label: Insights per night
+    description: "Most new insight proposals per night. There is no minimum"
+  vault_pull_command:
+    type: str
+    default: ""
+    label: Vault pull command
+    description: "Run from the vault root before ticked proposals are read (e.g. a git pull), for vaults edited on another device"
   destinations:
     type: str
     choices: [auto, builtin, vault, both]

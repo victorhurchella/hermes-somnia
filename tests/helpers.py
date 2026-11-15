@@ -89,14 +89,21 @@ class FakeMemory:
 class ScriptedLLM:
     """Routes by system prompt: extraction, consolidation or diary."""
 
-    def __init__(self, extract=None, consolidate=None, diary="Soft rain on the build logs."):
+    def __init__(self, extract=None, consolidate=None, diary="Soft rain on the build logs.", judge_extract=None,
+                 judge_synth=None):
+        self.judge_extract = judge_extract or (lambda user: {"observations": []})
+        self.judge_synth = judge_synth or (lambda user: {"insights": []})
         self.extract = extract or (lambda user: {"observations": []})
         self.consolidate = consolidate
         self.diary = diary
         self.calls: list = []
 
     def __call__(self, system, user, max_tokens):
-        if system.startswith("You read fragments"):
+        if "Agent replies are truncated" in system:
+            kind, out = "judge_extract", self.judge_extract(user)
+        elif system.startswith("You receive judgment observations"):
+            kind, out = "judge_synth", self.judge_synth(user)
+        elif system.startswith("You read fragments"):
             kind, out = "extract", self.extract(user)
         elif system.startswith("Choose how to incorporate"):
             kind = "consolidate"
