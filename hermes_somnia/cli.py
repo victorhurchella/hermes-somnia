@@ -170,7 +170,9 @@ def cmd_status(args) -> int:
         entries = store.entries()
         promoted = sum(1 for e in entries if e.promoted_at)
         print(f"Somnia {__version__}")
-        print(f"- destinations: {settings.resolved_destinations}{" (auto)" if settings.destinations == "auto" else ""} | schedule: {settings.schedule} | writes: {settings.destructive}")
+        auto = " (auto)" if settings.destinations == "auto" else ""
+        print(f"- destinations: {settings.resolved_destinations}{auto} | schedule: {settings.schedule} "
+              f"| writes: {settings.destructive}")
         print(f"- principles: {', '.join(p for p in P.ALL if p in P.enabled(settings.principles)) or 'none'}")
         if settings.wants_vault:
             print(f"- vault: {settings.resolved_vault()} / {settings.vault_folder}")
