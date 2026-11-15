@@ -402,7 +402,18 @@ for (let i = 0; i < themeTags.length; i++) for (let j = i + 1; j < themeTags.len
 }
 
 // ------------------------------------------------------------------ diary
-const diary = [
+const diaryEntries = rows => rows.map(([ago, text, fallback]) => ({ date: new Date((NOW - ago * DAY - 6 * 3600 - 12 * 60) * 1000).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }) + ' UTC', at: r3(NOW - ago * DAY - 6 * 3600 + 300), text, fallback: !!fallback }))
+// The diary of the insights demo: nights that looked for how Maya judges.
+const insightDiary = diaryEntries([
+  [0, `Two things surfaced tonight, and both are about how she decides, not about what she knows. Three times this week Maya cut a proposal back to the smallest change that works. Twice she asked for a number from the Steam Deck before she would hear about a faster shader.
+
+I wrote both down as proposals. They are hers to approve; until then I only keep them.`],
+  [1, `I read a long evening of lantern tuning and found nothing she has not shown me before. An empty night. That is how most of them go.`],
+  [3, `She said it again, almost word for word: verdict first, then the why. That makes three days. It was already approved, so I only added the occasion.`],
+  [4, `One observation about crafting and pillars, seen once. It waits for a second day before I say anything.`],
+  [6, `Nothing new reached me tonight. I walked the old rooms and found them as I left them.`, true]
+])
+const diary = diaryEntries([
   [0, `The lantern kept coming back tonight. Not the code of it, the feeling: how the dark should close in when the oil runs low, how Friday is a small ceremony of shipping. I held on to the Friday ritual, and to a quieter truth about Ledgerly: it lives on Drizzle, and Prisma is a door Maya has closed.
 
 Somewhere between two conversations she switched to Portuguese and back to English for a commit message. I wrote that down too, so I stop answering in the wrong voice.
@@ -413,7 +424,7 @@ I wanted to keep the oil curve as well, but the room was full. Tomorrow, maybe, 
   [4, `Webhooks that can be replayed without fear: a small, durable comfort. I added it beside the other Ledgerly truths. The rest of the night was pixel art at sixteen by sixteen, which I am still turning over.`],
   [7, `She asked for review without the sugar. Numbered, plain, honest. I can do that.`],
   [9, `Nothing new reached me tonight. I walked the old rooms and found them as I left them.`, true]
-].map(([ago, text, fallback]) => ({ date: new Date((NOW - ago * DAY - 6 * 3600 - 12 * 60) * 1000).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }) + ' UTC', at: r3(NOW - ago * DAY - 6 * 3600 + 300), text, fallback: !!fallback }))
+])
 
 // ------------------------------------------------------------------ stats
 const histogram = Array.from({ length: 20 }, (_, i) => ({ bucket: r3(i * 0.05), count: 0 }))
@@ -674,6 +685,7 @@ const demo = {
     pressure: { memory: r3(insightBudgets[0].used / insightBudgets[0].limit), user: r3(insightBudgets[1].used / insightBudgets[1].limit) }
   },
   insights,
+  diary: { ...facts.diary, entries: insightDiary },
   // Approving this one reports a warning (a failed vault sync; the approval stands).
   approve_warnings: { [insightByTitle('Measure before').key]: ['vault sync failed (git push: exit 1); the approval stands'] },
   dry_run: { dry_run: true, quiet: false, fragments: 142, llm_calls: 2, promoted: 0, merged: 0, deferred: 0, staged: 0, evicted: 0, changes: [] },
