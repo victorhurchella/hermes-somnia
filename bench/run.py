@@ -265,7 +265,7 @@ def run_config(name: str, principles: list[str], seed: int, llm=None) -> dict:
         said = build_sessions(tmp / "sessions.db", rng)
         model = llm or Oracle(said, random.Random(seed + 1))
         mem = Memory()
-        settings = Settings(principles=principles, min_score=0.6, diary=False, light_lookback_days=7,
+        settings = Settings(focus="facts", principles=principles, min_score=0.6, diary=False, light_lookback_days=7,
                             max_age_days=60, ingest_days=DAYS + 5, max_extract_calls=4)
         skills = set()
         for day in range(1, DAYS + 1):
