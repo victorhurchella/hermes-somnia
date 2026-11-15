@@ -318,7 +318,12 @@ def cmd_optimize(args) -> int:
         print(msg)
         return 1
     try:
-        prop = opt.propose(args.target, backend.entries(args.target), backend.limit(args.target), complete)
+        store = Store(state_dir() / "state.db")
+        try:
+            locked = frozenset(r["text"] for r in store.owned(args.target).values() if r.get("class"))
+        finally:
+            store.close()
+        prop = opt.propose(args.target, backend.entries(args.target), backend.limit(args.target), complete, locked)
     except Exception as exc:
         _finish_job(args, ok=False, error=f"{type(exc).__name__}: {exc}")
         raise

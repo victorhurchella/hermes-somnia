@@ -12,6 +12,9 @@ import json
 from helpers import FakeMemory, ScriptedLLM, make_sessions_db
 
 from hermes_somnia import judgment as J
+from hermes_somnia import judgment_sinks as S
+from hermes_somnia import optimize as opt
+from hermes_somnia.sinks import entry_flags, size_of
 
 from hermes_somnia.config import Settings
 from hermes_somnia.ingest import Fragment, read_fragments
@@ -308,6 +311,165 @@ class Synthesis(Base):
         self.assertIn(Q1, payload)
         self.assertNotIn("far too old", payload)
         self.assertEqual(len(self.store.observations()), 2)
+
+
+class Sinks(Base):
+    def setUp(self):
+        super().setUp()
+        self.vault = self.tmp / "vault"
+        (self.vault / "self").mkdir(parents=True)
+        self.base = self.tmp / "state"
+        self.store = Store(self.base / "state.db")
+        self.addCleanup(self.store.close)
+        self.settings = Settings(destinations="vault", vault_path=str(self.vault), protected_paths=["self"])
+        self.mem = FakeMemory(self.tmp, user=["Likes short answers."])
+
+    def proposal(self, crit=CRIT, **kw):
+        key = J.judgment_key(crit)
+        a = obs(self.store, Q1 if crit == CRIT else f"first quote about {crit}", criterion=crit)
+        b = obs(self.store, Q2 if crit == CRIT else f"second quote about {crit}", session="s2", day="2027-01-12",
+                at=NOW + 2 * DAY, criterion=crit)
+        j = judgment(key=key, criterion=crit, **kw)
+        self.store.save_judgment(j)
+        self.store.assign_observations([a, b], key)
+        return j
+
+    def approve(self, key):
+        return S.approve(self.store, self.settings, self.mem, key, NOW + 3 * DAY, self.base)
+
+    def test_proposal_block_and_tick_with_edited_text(self):
+        j = self.proposal()
+        note, lines = S.write_proposals(self.settings, self.store, [j], "2027-01-13", dry_run=False, stamp="03:00")
+        text = note.read_text()
+        self.assertIn("> Ticking the checkbox of an insight approves it", text)
+        self.assertIn(f"- [ ] **Smallest change that works** — {CRIT}", text)
+        self.assertIn(f"  - occasions: 2 on 2 days · area: code · new · key: `{j.key}`", text)
+        self.assertIn(f'  - 2027-01-10 · billing fix: "{Q1}"', text)
+        self.assertEqual(S.read_ticks(self.settings, self.store), [])
+        note.write_text(text.replace("- [ ] **Smallest change that works**", "- [x] my own words for it")
+                        + "- [x] stray\n  - key: `insight:0000beef`\n")
+        warnings = []
+        self.assertEqual(S.read_ticks(self.settings, self.store, warnings), [j.key])
+        self.assertIn("insight:0000beef", warnings[0])
+        self.approve(j.key)
+        self.assertIn(f"### Smallest change that works\n{CRIT}", S.living_note_path(self.settings, self.base).read_text())
+        self.assertEqual(S.read_ticks(self.settings, self.store), [])  # approved: the note is no longer read
+
+    def test_dry_run_writes_nothing(self):
+        j = self.proposal()
+        note, lines = S.write_proposals(self.settings, self.store, [j], "2027-01-13", dry_run=True)
+        self.assertTrue(lines and not note.exists() and self.store.judgment(j.key).note is None)
+
+    def test_living_note_layout_and_stability(self):
+        a = self.proposal(area="design")
+        b = self.proposal("Explain things so a newcomer follows.", title="Explain it simply", area="communication",
+                          rule="Define every term on first use.")
+        self.proposal("Prefer boring tools.", title="Not approved")
+        self.approve(b.key)
+        self.approve(a.key)
+        path = S.living_note_path(self.settings, self.base)
+        self.assertEqual(path, self.vault / "somnia" / "insights.md")
+        text = path.read_text()
+        head = text.split("---")[1]
+        self.assertIn("somnia: insights", head)
+        self.assertIn("type: inbox", head)
+        self.assertNotIn("status:", head)
+        self.assertLess(text.index("## Design"), text.index("## Communication"))
+        self.assertIn("**Rule for the agent:** Define every term on first use.", text)
+        self.assertIn(f"2 occasions, 2027-01-10 to 2027-01-12 · key: `{a.key}`", text)
+        self.assertNotIn("Not approved", text)
+        S.write_living_note(self.settings, self.store, self.base)
+        self.assertEqual(path.read_text(), text)
+
+    def test_refuses_a_file_it_did_not_create(self):
+        j = self.proposal()
+        self.settings.insights_note = "self/judgment.md"
+        mine = self.vault / "self" / "judgment.md"
+        mine.write_text("---\ntitle: my own notes\n---\nhands off\n")
+        with self.assertRaises(RuntimeError):
+            self.approve(j.key)
+        self.assertEqual((self.store.judgment(j.key).status, mine.read_text().endswith("hands off\n")), ("proposed", True))
+        self.assertEqual(self.mem.entries("user"), ["Likes short answers."])
+        mine.unlink()  # a protected folder is fine when the user names the file and Somnia creates it
+        self.assertEqual(self.approve(j.key)["note"], str(mine))
+        self.settings.insights_note = "../outside.md"
+        with self.assertRaises(RuntimeError):
+            S.living_note_path(self.settings, self.base)
+
+    def test_pointer_added_once_and_follows_the_note(self):
+        a, b = self.proposal(), self.proposal("Prefer boring tools.", title="Boring tools")
+        self.assertEqual(self.approve(a.key)["warnings"], [])
+        self.approve(b.key)
+        pointers = [e for e in self.mem.entries("user") if e.startswith("Judgment criteria of the user:")]
+        self.assertEqual(len(pointers), 1)
+        self.assertIn(str(self.vault / "somnia" / "insights.md"), pointers[0])
+        self.assertEqual([r["class"] for r in self.store.owned("user").values()], ["pointer"])
+        self.settings.insights_note = "self/judgment.md"
+        S.ensure_pointer(self.store, self.settings, self.mem, S.living_note_path(self.settings, self.base))
+        pointers = [e for e in self.mem.entries("user") if e.startswith("Judgment criteria of the user:")]
+        self.assertEqual((len(pointers), "self/judgment.md" in pointers[0]), (1, True))
+
+    def test_full_user_md_or_excluded_target_only_warns(self):
+        j = self.proposal()
+        self.mem = FakeMemory(self.tmp, user=["x" * 1300], limits=(2200, 1375))
+        out = self.approve(j.key)
+        self.assertTrue(out["ok"] and "no room" in out["warnings"][0])
+        self.assertEqual(self.mem.entries("user"), ["x" * 1300])
+        self.assertEqual(self.store.judgment(j.key).status, "approved")
+        self.settings.targets = ["memory"]
+        k = self.proposal("Prefer boring tools.", title="Boring tools")
+        self.assertIn("targets excludes user", self.approve(k.key)["warnings"][0])
+
+    def test_inline_rules_first_come_and_slot_freed_by_forget(self):
+        self.settings.insights_pointer = False
+        made = [self.proposal(f"Answer rule number {n} about depth.", title=f"Rule {n}", area="responses",
+                              rule=f"Lead with the answer, variant {n}.") for n in range(4)]
+        long = self.proposal("Answers must be long.", title="Long", area="responses", rule="x" * 161)
+        code = self.proposal()
+        got = [self.approve(j.key)["inlined"] for j in made + [long, code]]
+        self.assertEqual(got, [True, True, True, False, False, False])
+        self.assertEqual(self.mem.entries("user")[1:], [f"Lead with the answer, variant {n}." for n in range(3)])
+        S.forget(self.store, self.settings, self.mem, made[0].key, NOW, self.base)
+        self.assertNotIn("Lead with the answer, variant 0.", self.mem.entries("user"))
+        fourth = self.store.judgment(made[3].key)
+        self.assertEqual(S.sync_inline(self.store, self.settings, self.mem, fourth), (True, None))
+
+    def test_forget_and_unforget(self):
+        j = self.proposal()
+        note, _ = S.write_proposals(self.settings, self.store, [j], "2027-01-13", dry_run=False)
+        self.approve(j.key)
+        out = S.forget(self.store, self.settings, self.mem, j.key, NOW, self.base)
+        self.assertTrue(out["was_approved"] and out["block"].startswith("- [ ] **Smallest change"))
+        self.assertNotIn(j.key, note.read_text())
+        self.assertNotIn(j.key, S.living_note_path(self.settings, self.base).read_text())
+        self.assertEqual(self.store.judgment(j.key).status, "rejected")
+        self.assertTrue(S.unforget(self.store, j.key))
+        self.assertEqual(self.store.judgment(j.key).status, "proposed")
+        self.assertFalse(S.unforget(self.store, j.key))
+
+    def test_fact_pipeline_and_optimize_leave_insight_entries_alone(self):
+        j = self.proposal()
+        self.approve(j.key)
+        entries = self.mem.entries("user")
+        flags = entry_flags(entries, self.store.owned("user"), NOW, size_of(entries), 1375, set())
+        self.assertEqual((flags.evictable, flags.locked), (set(), {1}))
+        llm = lambda system, user, n: json.dumps({"entries": [{"from": [1], "text": "Read the note."}]})  # noqa: E731
+        prop = opt.propose("user", entries, 1375, llm, frozenset(r["text"] for r in self.store.owned("user").values()))
+        self.assertEqual(prop.items, [])
+
+    def test_builtin_mode_keeps_the_note_in_the_state_dir(self):
+        self.settings = Settings(destinations="builtin")
+        j = self.proposal()
+        self.assertEqual(S.write_proposals(self.settings, self.store, [j], "2027-01-13", dry_run=False), (None, []))
+        self.assertEqual(self.approve(j.key)["note"], str(self.base / "insights.md"))
+
+    def test_known_notes_are_read_only_inside_the_vault(self):
+        (self.vault / "self" / "heuristics.md").write_text("- Occam: the simplest solution wins.")
+        self.settings.insights_known_notes = ["self/heuristics.md", "../secret.md", "missing.md"]
+        (self.tmp / "secret.md").write_text("do not read")
+        text = S.known_text(self.settings)
+        self.assertIn("Occam", text)
+        self.assertNotIn("do not read", text)
 
 
 if __name__ == "__main__":

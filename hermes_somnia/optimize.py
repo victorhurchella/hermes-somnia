@@ -136,7 +136,9 @@ def _json(text: str) -> dict:
     return json.loads(text[start:end + 1])
 
 
-def propose(target: str, entries: list[str], limit: int, complete: Complete) -> Proposal:
+def propose(target: str, entries: list[str], limit: int, complete: Complete,
+            locked: frozenset = frozenset()) -> Proposal:
+    """``locked``: entry texts Optimize must leave alone (the insight pointer and inline insight rules)."""
     prop = Proposal(target, limit, list(entries))
     if not entries:
         return prop
@@ -161,6 +163,9 @@ def propose(target: str, entries: list[str], limit: int, complete: Complete) -> 
         if any(i < 0 or i >= len(entries) or i in used for i in src):
             continue  # unknown or already-claimed index: leave those originals alone
         befores = [entries[i] for i in src]
+        if any(b in locked for b in befores):
+            used.update(src)
+            continue
         if len(src) == 1 and (text == befores[0] or 0 <= len(befores[0]) - len(text) < MIN_SAVING):
             used.update(src)
             continue  # unchanged
