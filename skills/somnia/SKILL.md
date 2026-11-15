@@ -5,7 +5,15 @@ description: Use when asked about Somnia, dreaming, the Dream Diary or why somet
 
 # Somnia (hermes-somnia plugin)
 
-Somnia consolidates memory offline. A nightly job (`hermes-somnia`) runs as a script with no agent turn, in three phases:
+Somnia consolidates memory offline. A nightly job (`hermes-somnia`) runs as a script with no agent turn. The
+`focus` setting picks what it looks for: `insights` (default), `facts` or `both`.
+
+**Insights** are criteria of judgment the user applies (principles, values, taste, what they want from answers).
+Somnia proposes one only after two quoted occasions on different days, and nothing counts until the user approves
+it. Approved insights live in a generated living note, grouped by area; a `USER.md` entry points at it. Read the
+matching section of that note before design, product, analysis, code or writing work.
+
+**Facts** mode runs three phases:
 
 1. **Light** reads new user turns and final replies from interactive sessions. It never reads tool output,
    delegation results, cron runs or secrets, which are masked. It extracts short candidate facts, each backed by a
@@ -27,7 +35,13 @@ Principles (switchable): **pareto** (under pressure, keep the vital few), **lind
 - Revert the last write: `hermes somnia undo`. Preview a night: `hermes somnia run --dry-run -v`.
 - Check the setup: `hermes somnia doctor`.
 
+- Insights to review, or approved: `hermes somnia status`, `hermes somnia explain "<words>"`, or the page. In the
+  desktop app, `::somnia-memory{key="insight:<hash>"}` shows the insight card.
+- Approve an insight: `hermes somnia approve <key>` (or the user ticks its checkbox in the inbox note). Only on the
+  user's word. Take one back: `hermes somnia forget <key>`.
+
 ## Rules
+- Never edit the living insights note; it is regenerated. Never approve an insight the user did not confirm.
 - Never hand-edit MEMORY.md entries to "help" Somnia. It tracks its own entries by hash. Use the page or the CLI.
 - The Dream Diary (DREAMS.md) is narrative for humans. It is never a source of facts.
 - In vault mode, treat inbox notes as unreviewed. Move a fact into a curated note only when the user confirms.

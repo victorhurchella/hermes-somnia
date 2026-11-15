@@ -83,6 +83,36 @@ sources.
 Dropped: OpenClaw's grounded REM backfill over historical notes (`rem-evidence.ts`, whose regexes are tuned to
 one author's notes), multi-workspace fan-out, and QMD/LanceDB integrations.
 
+## 2c. Judgment insights (`focus: insights`, the default since 0.4.0)
+
+The fact pipeline above answers "what keeps coming back". On a setup that already has skills, repo docs and a
+vault, those facts already have a home, and promoting them reads as filler. What has no home is how the user
+judges. `focus` selects what a night looks for: `insights`, `facts` (sections 1 to 2b, unchanged) or `both`.
+
+An insight is a criterion the user applies: a principle they reason with (named or not), a value they weigh above
+another, a taste that makes them accept or reject work, or what they want from an answer. The pipeline
+(`judgment.py`, `judgment_sinks.py`) is two model calls with the decisions made in code:
+
+| Step | Model | Code |
+|---|---|---|
+| Extraction, one call per ~40k chars of new turns (own cursor `insight_cursor`, same call budget) | Returns up to 6 observations per chunk: criterion, kind, how it was applied, context, verbatim quote | Keeps an observation only when its quote is found in an owner **user** fragment (agent replies are context, clipped to 220 chars, and never evidence). Session and day come from the fragment that holds the quote. Observations matching a rejected insight are dropped |
+| Synthesis, at most one call per night, only when there is something new to group | Groups observations by criterion; for a new group writes title, criterion, area, how the user applies it, and the rule for the agent | A new insight needs ≥2 observations from ≥2 sessions and ≥2 days with ≥2 different quotes. Invalid area/kind, an empty rule or a dangling opening are refused. At most `max_insights` proposals per night, no minimum; the rest wait up to `insight_window_days` |
+
+What happens next is the user's call:
+
+- **Proposed**: a block under `### Insights` in the night's inbox note (one checkbox), the desktop page, and one
+  line in the morning report. Nothing else changes.
+- **Approved** (ticked checkbox read at the next sweep, the page, or `hermes somnia approve <key>`): the insight
+  enters the **living note**, a file Somnia generates from its store, grouped by area. One `USER.md` entry points
+  the agent at it, and up to `insights_inline_max` insights of area `responses` are also copied into `USER.md` as
+  one-line rules. These entries are additions only; the fact pipeline and Optimize never touch them.
+- **Rejected** (`forget`): never proposed again, with no timed re-ask. `unforget` returns it to proposed.
+
+Other rules: an empty night is never a no-op for the alarm; a chunk whose call fails holds the cursor and is
+retried, then skipped after 3 failed nights; `vault_pull_command` runs before ticks are read; ticks and the
+pointer retry run even on a night with no new conversation; `undo` does not cover insights.
+`insights_known_notes` are read so synthesis can mark an insight `new`, `refines` or `known` (not proposed).
+
 ## 3. The second-brain mode (`destinations: vault`, or `auto` with a vault configured)
 
 With a markdown vault, the size problem goes away: promoted facts become notes, and `MEMORY.md` keeps a single
@@ -91,7 +121,11 @@ The default `destinations: auto` picks this mode whenever `vault_path`, `$OBSIDI
 names an existing folder. The rules that keep the vault clean:
 
 - Somnia writes **only** inside `vault_folder` (default `somnia/`): one note per night
-  (`YYYY-MM-DD.md`, `status: inbox`, each fact as a `- [ ]` checkbox with its evidence) plus `DREAMS.md`.
+  (`YYYY-MM-DD.md`, `status: inbox`, each fact or insight proposal as a `- [ ]` checkbox with its evidence) plus
+  `DREAMS.md` and the living note of approved insights (`insights.md`).
+- The one exception: `insights_note` may name another file inside the vault, even under a protected folder,
+  because the user chose it. Somnia creates that file with a `somnia: insights` frontmatter marker and refuses to
+  write to an existing file that lacks it.
 - It never edits notes it did not create. `protected_paths` lists folders the inbox may not overlap.
 - Moving a fact from the inbox into a curated note is a human decision, or an agent decision that the human
   confirms.
@@ -108,6 +142,8 @@ names an existing folder. The rules that keep the vault clean:
 | Path | What |
 |---|---|
 | `$HERMES_HOME/plugin-data/hermes-somnia/state.db` | Short-term store (candidates, evidence, phase hits), session cursor, owned-entry hashes, reject list, per-night change log, run log |
+| same `state.db` | Insights: `observations` (quoted occasions) and `judgments` (proposed, approved, rejected), `insight_cursor` |
+| `<vault>/<vault_folder>/insights.md` (or `insights_note`; `…/insights.md` without a vault) | The living note of approved insights, regenerated on every change |
 | `…/jobs/` | Background jobs started from the desktop page (run, preview, promote) |
 | `…/reports/YYYY-MM-DD.md` | `## Light Sleep`, `## REM Sleep`, `## Deep Sleep` blocks for the night |
 | `…/DREAMS.md` (or `<vault>/<vault_folder>/DREAMS.md`) | Dream Diary and the latest Deep Sleep summary |
@@ -118,7 +154,9 @@ names an existing folder. The rules that keep the vault clean:
 
 The plugin reads `state.db` read-only and keeps only:
 - sessions whose `source` is interactive (desktop, cli, tui and messaging platforms). Cron, subagent and
-  one-shot sessions are excluded;
+  one-shot sessions are excluded. A delegated subagent can inherit its parent's interactive source, so a session
+  with a `parent_session_id` that is a delegated run (`created_source = subagent`, a `Subagent:` title, or an
+  `agent_close`/`startup_orphan_reap` end) is skipped too: its "user" turns are briefs the agent wrote;
 - user turns, minus runtime-injected rows: delegation results, process notices, compaction notices and
   `[IMPORTANT…]` system notes. Mid-turn steering messages are kept, with their wrapper stripped;
 - the agent's final text reply of each turn (tool calls and tool output never enter);

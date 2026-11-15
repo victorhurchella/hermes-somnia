@@ -13,13 +13,28 @@
 **Your Hermes agent sleeps on what you told it, and wakes up remembering what matters.**
 
 Somnia is OpenClaw's *Dreaming* rebuilt for [Hermes Agent](https://github.com/NousResearch/hermes-agent). Every
-night it rereads your recent conversations, works out which facts keep coming back, and consolidates them into
-long-term memory: `MEMORY.md`/`USER.md`, or your own second brain. You don't have to review anything, but you can
-see everything, change anything and undo any write.
+night it rereads your recent conversations and looks for **how you judge**: the principles you reason with, what
+you weigh above what, what makes you accept or reject work, and what you want from an answer. When the same
+criterion shows up on two separate occasions, it proposes an **insight**, with your own words as evidence. The ones
+you approve go into a note your agent reads before it works, and the few about its answers go into `USER.md`.
+
+It can also do what OpenClaw does and remember the **facts** that keep coming back (`focus: facts`, or `both`).
+
+> **Upgrading from 0.3?** The default changed from facts to insights. Nothing was deleted: set `focus: facts` (or
+> `both`) in *Settings → Plugins → Somnia* to get the previous behaviour back.
 
 ![The Somnia page in the Hermes desktop app](docs/screenshots/en/page.png)
 
 ```
+ focus: insights (default)
+
+   new turns ──► observations ──► same criterion on 2+ days, ──► proposal ──► you approve ──► living note
+   (your words)  (quote checked)   in 2+ sessions? (code)        (inbox)      (tick, page,     + USER.md
+                                                                               or CLI)
+   An empty night is the normal result. Nothing is written to memory without your approval.
+
+ focus: facts
+
               nightly job (script only, no agent turn)
                                │
    ┌───────────────────────────┼────────────────────────────┐
@@ -35,12 +50,26 @@ see everything, change anything and undo any write.
 
 ## Why
 
-Hermes already saves memory during a conversation. What it doesn't do is step back and look **across sessions**:
-it won't notice you said the same thing three times this week, merge duplicates, replace a fact that changed, or
-leave a trail you can check. Somnia does that offline, every night, inside Hermes' small memory budget.
+Hermes already saves memory during a conversation. What it doesn't do is step back and look **across sessions**.
+It won't notice that you rejected three designs this month for the same reason, or that you asked for "the smallest
+change" in two unrelated projects. Facts about a project already have a home (the repo, a skill, your notes). The
+way you judge has none, and it is what makes an agent answer the way you would.
+
+Somnia looks for that offline, every night. In facts mode it also notices that you said the same thing three times
+this week, merges duplicates, replaces a fact that changed, and leaves a trail you can check, inside Hermes' small
+memory budget.
 
 ## What makes it different
 
+- **Insights, not filler.** An insight is a criterion you apply, how you apply it, the rule it implies for the
+  agent, and the quotes behind it. It needs two occasions on different days in different sessions, with different
+  sentences, and code checks that, not the model. There is no nightly quota: most nights propose nothing, and that
+  is not an error.
+- **Only your own words count.** A quote is evidence only when it is found verbatim in something you typed. Agent
+  replies, and the briefs an agent writes for its subagents, are never evidence.
+- **You approve, then it is used.** Tick the proposal in your vault, click Approve on the page, or run
+  `hermes somnia approve <key>`. Approved insights live in one generated note, grouped by kind of work, and one
+  line in `USER.md` tells the agent to read it. Forget one and it is never proposed again.
 - **Principles you can switch on and off, and that are measured.** Pareto (under pressure, keep the vital few),
   Lindy (what lasted, lasts), Occam (the shortest true phrasing) and Feynman (every entry stands alone) are on by
   default. Inversion (mistakes first) is opt-in because [the benchmark](docs/bench.md) showed no gain for it. Each
@@ -61,6 +90,14 @@ leave a trail you can check. Somnia does that offline, every night, inside Herme
   Diary is written in the language of your conversations, or one you choose.
 
 ## The desktop page
+
+**Insights.** What Somnia noticed about how you judge, waiting for your call: the criterion, the rule for the
+agent, and each occasion with your quote and the chat it came from. Below, the insights you approved, by area.
+
+![Insights](docs/screenshots/en/insights.png)
+
+The sections below belong to facts mode (`focus: facts` or `both`); memory, the sleep chart and the diary are
+always there.
 
 **This morning.** What changed in memory last night, and why: the six signals, the principle that applied, the
 conversations each fact came from (one click opens the chat), and a before/after diff for merges.
@@ -103,6 +140,7 @@ something, and a **settings page** under *Settings → Plugins → Somnia*.
 | | |
 |---|---|
 | ![Preview](docs/screenshots/en/preview.png) | ![Chat card](docs/screenshots/en/chat-card.png) |
+| ![Insight card](docs/screenshots/en/chat-insight.png) | |
 | ![Settings](docs/screenshots/en/settings.png) | ![No-op alarm](docs/screenshots/en/alarm.png) |
 
 Light theme: [screenshot](docs/screenshots/en/page-light.png). The whole page: [screenshot](docs/screenshots/en/page-full.png).
@@ -137,9 +175,11 @@ The sidebar page appears under **Capabilities** once the plugin is on. Its setti
 *Settings → Plugins → Somnia*. If Hermes runs on another machine, install from the desktop app with the Desktop
 component checked, so the page is copied to your computer.
 
-Cost: the night job has no agent turn. Somnia's own LLM calls go through your Hermes provider: one extraction call
-per ~20k chars of new conversation (at most 12 a night), one consolidation call per memory file that changes,
-and one diary entry. A night with no new conversation makes **zero** calls. To use a cheaper model:
+Cost: the night job has no agent turn. Somnia's own LLM calls go through your Hermes provider. With `focus:
+insights`: one extraction call per ~40k chars of new conversation (at most 12 a night), one synthesis call on nights
+that found something, and a diary entry only when an insight was proposed or approved. With `focus: facts`: one
+extraction call per ~20k chars (at most 12), one consolidation call per memory file that changes, and one diary
+entry. `both` adds the two. A night with no new conversation makes **zero** calls. To use a cheaper model:
 
 ```yaml
 # ~/.hermes/config.yaml
@@ -155,7 +195,8 @@ auxiliary:
 | `hermes somnia run [--dry-run] [-v] [--max-messages N]` | Run one night now (or preview it) |
 | `hermes somnia status` · `doctor` | Settings, last nights, alarms · wiring checks |
 | `hermes somnia explain "<words>"` | Why something was or wasn't remembered: signals, gates, evidence quotes |
-| `hermes somnia forget <key>` · `unforget <key>` | Forget for good (removes the entry; never learned again) · undo that |
+| `hermes somnia approve <key>` | Approve a proposed insight now (living note, pointer, `USER.md`) |
+| `hermes somnia forget <key>` · `unforget <key>` | Forget a fact or an insight for good (removes what it wrote; never proposed again) · undo that |
 | `hermes somnia pin <key>` · `promote <key>` | Remember at the next night regardless of recurrence · right now |
 | `hermes somnia optimize [--target user] [--apply]` | Propose a shorter `MEMORY.md`/`USER.md` that keeps every instruction (2 model calls; `--apply` writes the checked rewrites) |
 | `hermes somnia undo` | Restore `MEMORY.md`/`USER.md` from before the last write (a night or an Optimize) |
@@ -171,6 +212,13 @@ plugins:
   entries:
     hermes-somnia:
       settings:
+        focus: insights                  # insights | facts | both
+        insights_note: ""                # vault-relative path of the living note; empty = <vault_folder>/insights.md
+        insights_known_notes: []         # notes where your principles are already written (read only)
+        insights_pointer: true           # one USER.md entry pointing at the living note
+        insights_inline_max: 3           # most insights about the agent's answers copied into USER.md
+        max_insights: 3                  # most new proposals per night (no minimum)
+        vault_pull_command: ""           # e.g. git pull, run before ticked proposals are read
         destinations: auto               # auto | builtin | vault | both
         vault_path: ~/notes              # else $OBSIDIAN_VAULT_PATH, else $WIKI_PATH
         protected_paths: [self, journal] # Somnia never writes there
@@ -193,13 +241,30 @@ plugins:
 | `vault` | `<vault>/somnia/YYYY-MM-DD.md` (inbox, one checkbox per fact) + a pointer in `MEMORY.md` | People with a second brain |
 | `both` | Both | A second brain plus a self-curating prompt memory |
 
+### Where insights go
+
+- **Proposals** are appended to the night's inbox note (`<vault>/somnia/YYYY-MM-DD.md`) under `### Insights`, one
+  checkbox each. Ticking the box approves it at the next sweep (set `vault_pull_command` if you tick on another
+  device). Without a vault, proposals live on the desktop page and in the morning report.
+- **The living note** (`insights_note`) holds the approved ones, grouped by area (design, product, analysis, code,
+  communication, responses). Somnia generates this file and rewrites it on every change, so don't edit it. You may
+  point it anywhere in your vault, even at a protected folder; Somnia refuses a file it did not create.
+- **`USER.md`** gets one pointer entry, plus up to three approved insights about the agent's answers as one-line
+  rules. These are additions only: if `USER.md` is full, the approval still stands and you get a warning.
+- **`insights_known_notes`** lists notes where you already wrote your principles. Somnia reads them so it can say
+  whether an insight is new, refines one of yours, or is already recorded (then it is not proposed).
+
 ## Safety
 
 - **Reads only what you said.** Only user turns and the agent's final replies from interactive sessions are read.
-  Tool output, delegation results, cron and subagent sessions and system notices never get in. Group chats are
+  Tool output, delegation results, cron and subagent sessions (including subagents that inherit an interactive
+  source) and system notices never get in. Group chats are
   untrusted and never promoted. Secrets are masked before anything reaches the model.
 - **Evidence, not vibes.** Every candidate carries a verbatim quote from your conversation. A quote that isn't
   really there lowers the candidate's score.
+- **Insights need two occasions and your approval.** Two sessions, two days, two different sentences, each quote
+  found in your own turns. Nothing reaches the living note or `USER.md` before you approve it. `hermes somnia undo`
+  does not cover insights: take one back with `forget`.
 - **Recurrence, not one-offs.** A fact needs at least 2 observations in at least 2 sessions, durability ≥ 0.5 and
   a score ≥ 0.65. The exceptions are an explicit "remember this" from you, or a pin.
 - **The model plans, the code checks.** A consolidation plan is rejected if it touches unknown entries, replaces
@@ -212,11 +277,13 @@ plugins:
 ## What it touches (disclosure)
 
 - **Reads:** Hermes' session store (`state.db`, read-only), `MEMORY.md`/`USER.md`, `config.yaml`, `cron/jobs.json`
-  (to find its own job), and, in vault mode, the vault folder you point it to.
+  (to find its own job), and, in vault mode, the vault folder you point it to and the notes listed in
+  `insights_known_notes`.
 - **Writes:** `MEMORY.md`/`USER.md` through Hermes' own MemoryStore (or the `/memory pending` queue with
   `destructive: stage`), its own state in `$HERMES_HOME/plugin-data/hermes-somnia/`, a backup before every write,
   one cron job (`hermes somnia setup`) plus its script in `$HERMES_HOME/scripts/`, and, in vault mode, only
-  `<vault>/somnia/`. When you change a **Limit** on the page, `memory.memory_char_limit` /
+  `<vault>/somnia/` plus the one `insights_note` file if you moved it elsewhere in the vault. It runs
+  `vault_pull_command` and `vault_sync_command` from the vault root when you set them. When you change a **Limit** on the page, `memory.memory_char_limit` /
   `memory.user_char_limit` in `config.yaml`, through `hermes config set`.
 - **Model calls:** your own Hermes provider (or `auxiliary.somnia`). The prompts contain excerpts of your user turns
   and the agent's final replies, with secrets masked first. No other network calls, no telemetry, no credentials.

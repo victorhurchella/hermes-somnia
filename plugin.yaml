@@ -1,8 +1,8 @@
 name: hermes-somnia
 label: Somnia
-version: 0.3.2
+version: 0.4.0
 requires_hermes: ">=0.23.1"
-description: "Somnia: OpenClaw-style memory dreaming for Hermes. A nightly Light -> REM -> Deep sweep reads your recent sessions, scores what keeps coming back (with switchable thinking principles: Pareto, Lindy, Inversion, Occam, Feynman) and consolidates it into MEMORY.md/USER.md or your markdown second brain. Includes a desktop page, a Dream Diary, forget/pin/undo, and Optimize to shrink a full MEMORY.md/USER.md without losing behaviour."
+description: "Somnia: OpenClaw-style memory dreaming for Hermes. Every night it rereads your recent sessions and looks for how you judge (principles, values, taste, what you want from answers), proposing insights backed by your own quotes for you to approve; approved ones go to a living note the agent reads and to USER.md. With focus: facts (or both), a Light -> REM -> Deep sweep scores what keeps coming back (with switchable thinking principles: Pareto, Lindy, Inversion, Occam, Feynman) and consolidates it into MEMORY.md/USER.md or your markdown second brain. Includes a desktop page, a Dream Diary, forget/pin/undo, and Optimize to shrink a full MEMORY.md/USER.md without losing behaviour."
 author: victorhurchella
 license: MIT
 homepage: https://github.com/victorhurchella/hermes-somnia
@@ -91,7 +91,7 @@ config_schema:
     type: str
     default: somnia
     label: Vault inbox folder
-    description: Somnia-owned folder inside the vault; Somnia never writes anywhere else in the vault
+    description: Somnia-owned folder inside the vault; Somnia never writes anywhere else in the vault, except the insights note when you move it
   protected_paths:
     type: list
     default: []
