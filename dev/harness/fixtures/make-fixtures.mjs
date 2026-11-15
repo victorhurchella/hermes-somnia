@@ -557,7 +557,7 @@ const insightNights = nights.map((n, i) => {
 
 const nextRun = new Date((NOW + (17 * 3600 + 48 * 60)) * 1000).toISOString() // tonight 03:00 UTC
 const overview = {
-  version: '0.4.0',
+  version: '1.0.0',
   focus: 'facts',
   destinations: 'both',
   destructive: 'apply',
@@ -631,7 +631,7 @@ const emptyNow = NOW
 const empty = {
   now: emptyNow,
   overview: {
-    version: '0.4.0', focus: 'insights', destinations: 'builtin', destructive: 'apply', schedule: '0 3 * * *', timezone: 'Europe/Lisbon',
+    version: '1.0.0', focus: 'insights', destinations: 'builtin', destructive: 'apply', schedule: '0 3 * * *', timezone: 'Europe/Lisbon',
     cron: { installed: true, id: 'cron_somnia_9f2c', next_run_at: nextRun, state: 'scheduled' },
     llm: { provider: 'openrouter', model: 'google/gemini-2.5-flash', task: 'auxiliary.somnia' },
     last_run: null,

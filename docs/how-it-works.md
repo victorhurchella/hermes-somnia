@@ -83,7 +83,7 @@ sources.
 Dropped: OpenClaw's grounded REM backfill over historical notes (`rem-evidence.ts`, whose regexes are tuned to
 one author's notes), multi-workspace fan-out, and QMD/LanceDB integrations.
 
-## 2c. Judgment insights (`focus: insights`, the default since 0.4.0)
+## 2c. Judgment insights (`focus: insights`, the default since 1.0.0)
 
 The fact pipeline above answers "what keeps coming back". On a setup that already has skills, repo docs and a
 vault, those facts already have a home, and promoting them reads as filler. What has no home is how the user
