@@ -7,13 +7,15 @@ Tailwind v4 from the browser build, codicons 0.0.45 from jsDelivr, so it needs i
 
 - `theme.css` — the app's `:root` / `:root.dark` variable blocks + the Nous skin seeds. Regenerate:
   `node dev/harness/build-theme.mjs [/path/to/apps/desktop/src/styles.css]`.
-- `fixtures/demo.json`, `fixtures/empty.json` — fictional data (Maya, an indie dev) matching `docs/rpc.md`.
-  Regenerate: `node dev/harness/fixtures/make-fixtures.mjs`.
+- `fixtures/demo.json` (`focus: insights`: two insights to review, four approved), `fixtures/demo-facts.json`
+  (`focus: facts`: the fact pipeline), `fixtures/empty.json` (a fresh install) — fictional data (Maya, an indie dev)
+  matching `docs/rpc.md`. Regenerate: `node dev/harness/fixtures/make-fixtures.mjs` (do not edit the JSON by hand).
 - `mock-host.js` — the Python half in memory: serves every read RPC, mutates the fixture on writes, runs jobs
   (~2.6 s), `fixture=disabled` answers `-32601`. Calls are logged in `window.__rpcLog`.
 
-Query params: `theme=dark|light`, `fixture=demo|empty|disabled`, `view=page|chat|newchat`, `lang=en|pt-br`,
-`alarm=noop`, `script=<flow>`, `realtime=1` (otherwise the clock is pinned to the fixture's `now`).
+Query params: `theme=dark|light`, `fixture=demo|demo-facts|empty|disabled`, `view=page|chat|newchat`,
+`lang=en|pt-br`, `alarm=noop` (demo-facts), `script=<flow>`, `width=<px>` (caps the main pane, e.g. `390` for a
+narrow check), `realtime=1` (otherwise the clock is pinned to the fixture's `now`).
 Errors (console.error, uncaught, unhandled rejections, boundary catches) go to `window.__errors` and a red overlay.
 
 Capture (headless Chromium over CDP; waits for the page instead of a fixed time budget):
@@ -26,7 +28,8 @@ node dev/harness/capture.mjs --qs "theme=dark&view=chat" --out card.png --clip "
 
 Exit code is non-zero when the page logged errors or the flow failed. Flows: forget keep edit memory memoryForget
 preview dream undo promote pin expand search tabs ask session night theme principles calibration locale disabled
-(fixture=disabled) directive directiveOpen (view=chat). Opening `index.html` in a desktop browser also works when
+(fixture=disabled) directive directiveOpen (view=chat); these fact flows load `demo-facts` unless a fixture is
+named. Insight flows, on `demo`: insightFocus insightApprove insightForget, and insightCard (view=chat). Opening `index.html` in a desktop browser also works when
 launched with file access allowed for modules (e.g. serve the repo with `python3 -m http.server` and open
 `/dev/harness/index.html`).
 

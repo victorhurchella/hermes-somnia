@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Builds dev/harness/fixtures/{demo,empty}.json — a FICTIONAL dataset that
+// Builds dev/harness/fixtures/{demo,demo-facts,empty}.json — a FICTIONAL dataset that
 // follows docs/rpc.md field for field. Deterministic: same output every run.
 //
 //   node dev/harness/fixtures/make-fixtures.mjs
@@ -7,6 +7,10 @@
 // Persona: Maya Okafor, an indie developer building "Lanternfall" (a cozy
 // Godot roguelike) and "Ledgerly" (invoicing SaaS for freelancers).
 // The harness pins the clock to `now` so relative times are stable.
+//
+// demo.json       focus: insights (the default): judgment insights to review and approved.
+// demo-facts.json focus: facts: the fact pipeline (this morning, almost there, themes, gates).
+// empty.json      a fresh install, focus: insights.
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -43,7 +47,11 @@ const SESSIONS = [
   ['s-me-pt', 'Bate-papo: planejamento da semana', 'telegram', 1],
   ['s-me-review', 'Code review tone', 'desktop', 3],
   ['s-me-coffee', 'Morning planning', 'desktop', 9],
-  ['s-me-commit', 'Commit message style', 'cli', 12]
+  ['s-me-commit', 'Commit message style', 'cli', 12],
+  ['s-lf-onboard', 'Lanternfall: first-run screen', 'desktop', 5],
+  ['s-lg-empty', 'Ledgerly: empty invoice list', 'desktop', 7],
+  ['s-lg-docs', 'Ledgerly README for contributors', 'desktop', 10],
+  ['s-lf-crafting', 'Crafting system: yes or no', 'desktop', 13]
 ].map(([id, title, source, ago]) => ({ id, title, source, day: dayOf(NOW - ago * DAY + 3600) }))
 const S = Object.fromEntries(SESSIONS.map(s => [s.id, s]))
 const ref = id => ({ id, title: S[id].title, source: S[id].source, day: S[id].day })
@@ -317,7 +325,8 @@ PATTERN.forEach((p, i) => {
     fragments: frag, observations: obs, staged, themes, truths,
     promoted, merged, deferred,
     llm_calls: quiet ? 0 : Math.min(13, 3 + Math.round(frag / 8)),
-    quiet, noop: p === 'n' || p === 'e', errors: p === 'e' ? 2 : 0
+    quiet, noop: p === 'n' || p === 'e', errors: p === 'e' ? 2 : 0,
+    focus: 'facts', insights_proposed: 0, insights_approved: 0
   })
 })
 // Each latest-per-day night gets its changes.
@@ -393,7 +402,18 @@ for (let i = 0; i < themeTags.length; i++) for (let j = i + 1; j < themeTags.len
 }
 
 // ------------------------------------------------------------------ diary
-const diary = [
+const diaryEntries = rows => rows.map(([ago, text, fallback]) => ({ date: new Date((NOW - ago * DAY - 6 * 3600 - 12 * 60) * 1000).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }) + ' UTC', at: r3(NOW - ago * DAY - 6 * 3600 + 300), text, fallback: !!fallback }))
+// The diary of the insights demo: nights that looked for how Maya judges.
+const insightDiary = diaryEntries([
+  [0, `Two things surfaced tonight, and both are about how she decides, not about what she knows. Three times this week Maya cut a proposal back to the smallest change that works. Twice she asked for a number from the Steam Deck before she would hear about a faster shader.
+
+I wrote both down as proposals. They are hers to approve; until then I only keep them.`],
+  [1, `I read a long evening of lantern tuning and found nothing she has not shown me before. An empty night. That is how most of them go.`],
+  [3, `She said it again, almost word for word: verdict first, then the why. That makes three days. It was already approved, so I only added the occasion.`],
+  [4, `One observation about crafting and pillars, seen once. It waits for a second day before I say anything.`],
+  [6, `Nothing new reached me tonight. I walked the old rooms and found them as I left them.`, true]
+])
+const diary = diaryEntries([
   [0, `The lantern kept coming back tonight. Not the code of it, the feeling: how the dark should close in when the oil runs low, how Friday is a small ceremony of shipping. I held on to the Friday ritual, and to a quieter truth about Ledgerly: it lives on Drizzle, and Prisma is a door Maya has closed.
 
 Somewhere between two conversations she switched to Portuguese and back to English for a commit message. I wrote that down too, so I stop answering in the wrong voice.
@@ -404,7 +424,7 @@ I wanted to keep the oil curve as well, but the room was full. Tomorrow, maybe, 
   [4, `Webhooks that can be replayed without fear: a small, durable comfort. I added it beside the other Ledgerly truths. The rest of the night was pixel art at sixteen by sixteen, which I am still turning over.`],
   [7, `She asked for review without the sugar. Numbered, plain, honest. I can do that.`],
   [9, `Nothing new reached me tonight. I walked the old rooms and found them as I left them.`, true]
-].map(([ago, text, fallback]) => ({ date: new Date((NOW - ago * DAY - 6 * 3600 - 12 * 60) * 1000).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }) + ' UTC', at: r3(NOW - ago * DAY - 6 * 3600 + 300), text, fallback: !!fallback }))
+])
 
 // ------------------------------------------------------------------ stats
 const histogram = Array.from({ length: 20 }, (_, i) => ({ bucket: r3(i * 0.05), count: 0 }))
@@ -427,7 +447,9 @@ const counts = {
   rejected: candidates.filter(c => c.status === 'rejected').length,
   skills: candidates.filter(c => c.kind === 'procedure' && c.status === 'skill').length,
   stale: [...memEntries, ...userEntries].filter(e => e.stale).length,
-  pending: 0
+  pending: 0,
+  insights_to_review: 0,
+  insights_approved: 0
 }
 function PRINCIPLES(active) {
   return {
@@ -446,9 +468,97 @@ function PRINCIPLES(active) {
     }
   }
 }
+// --------------------------------------------------------------- insights
+// Judgment insights (docs/rpc.md `Insight`): a criterion Maya applied on at least two different days.
+// [title, kind, area, name, criterion, user_version, rule, relation, delta, status, proposedAgo, decidedAgo, inlined, occasions]
+// occasion: [session, context, quote]; its day is the session's day.
+const INSIGHT_NOTE = '~/notes/dreams/insights.md'
+const RAW_INSIGHTS = [
+  ['Smallest change that works', 'principle', 'code', 'YAGNI',
+    'Solve the problem in front of you with the smallest change. Structure is added when a second case asks for it, not before.',
+    'Maya cuts a proposal back to what the bug or the feature needs today, and asks for an abstraction to be removed when it has a single caller.',
+    'Propose the smallest diff that fixes the issue. Do not add helpers, options or layers that nothing uses yet.',
+    'new', null, 'proposed', 0.26, null, false,
+    [['s-lg-stripe', 'webhook retry helper', 'drop the retry helper, exactly one place calls it. inline it and move on'],
+      ['s-lg-pdf', 'invoice PDF fix', 'this is a one line fix, please do not wrap it in a new renderer class'],
+      ['s-lf-save', 'save format', 'no plugin system for saves. we have one format, write the one format']]],
+  ['Measure before optimizing', 'principle', 'analysis', null,
+    'A performance change starts from a measurement on the real target and ends with the same measurement repeated.',
+    'Maya profiles on the Steam Deck before touching a shader, and turns down an optimization that comes without a before and after number.',
+    'Before suggesting an optimization, ask for or take a measurement on the target device, and state the expected gain as a number.',
+    'refines', 'Adds a concrete bar to your note on performance: the number comes from the target device, not from the dev machine.',
+    'proposed', 0.26, null, false,
+    [['s-lf-shader', 'lantern shader', 'did you profile it on the deck first? on my desktop everything is fast'],
+      ['s-lf-oil', 'lantern radius tuning', 'show me the frame time before and after, otherwise we are guessing']]],
+  ['Lead with the answer, then the reasoning', 'response', 'responses', null,
+    'An answer opens with the conclusion. The reasoning follows for whoever wants to check it.',
+    'Maya reads the first line and decides whether to keep reading; she asks for the verdict again when it is buried under context.',
+    'Open with the answer or the decision in one sentence, then give the reasoning.',
+    'new', null, 'approved', 3.26, 2.9, true,
+    [['s-me-review', 'code review', 'verdict first. is it safe to merge or not, then tell me why'],
+      ['s-lg-neon', 'preview deploys', 'you gave me four paragraphs before the answer. the answer was no'],
+      ['s-me-coffee', 'weekly planning', 'start with what you would pick, then the rest']]],
+  ['No tutorial: the screen explains itself', 'taste', 'design', null,
+    'A screen that needs a tutorial is not finished. The first action is visible and safe to try.',
+    'Maya removes onboarding text and coach marks, and reworks the screen until the next step is obvious without them.',
+    'When a screen seems to need an explanation, change the screen: make the first action visible, and do not propose a tour, a tooltip sequence or a help modal.',
+    'new', null, 'approved', 5.26, 4.9, false,
+    [['s-lf-onboard', 'first-run screen', 'no tutorial popup. if the lantern needs a manual the lantern is wrong'],
+      ['s-lg-empty', 'empty invoice list', 'kill the tour. the empty list should just have the new invoice button in it'],
+      ['s-lf-oil', 'oil meter', 'people should get the meter by watching it drain once, not by reading']]],
+  ['A feature that breaks a pillar is cut', 'principle', 'product', null,
+    'The product has a short list of pillars. A feature is judged against them first, and how good it sounds on its own does not count.',
+    'Maya names the pillar a feature would break and drops the feature in the same message, even when she likes it.',
+    'Before proposing a feature, check it against the project pillars and say which one it serves. If it breaks one, say so and do not propose it.',
+    'refines', 'Your pillars note lists them; this adds that the check comes before the idea is discussed.',
+    'approved', 7.26, 6.9, false,
+    [['s-lf-crafting', 'crafting system', 'crafting is fun but it makes the run grindy. cozy not grindy, so it is out'],
+      ['s-lf-save', 'permadeath option', 'that breaks the under 25 minutes pillar. cut it, do not make it optional']]],
+  ['Explain it so a newcomer follows', 'value', 'communication', null,
+    'Writing is for the reader who was not in the room: every term is defined or avoided, and no step is skipped.',
+    'Maya rewrites docs and release notes until someone who has never opened the project could act on them.',
+    'In docs, release notes and commit bodies, define each project term at first use and do not assume earlier conversations.',
+    'new', null, 'approved', 9.26, 8.9, false,
+    [['s-lg-docs', 'contributor README', 'write it for someone who cloned the repo five minutes ago'],
+      ['s-lf-itch', 'release notes', 'a new player does not know what oil is. say what it does first'],
+      ['s-me-commit', 'commit bodies', 'the body should make sense to me in a year, when I forgot all of this']]]
+]
+const insightItems = RAW_INSIGHTS.map(([title, kind, area, name, criterion, user_version, rule, relation, delta, status, proposedAgo, decidedAgo, inlined, occ]) => {
+  const occasions = occ
+    .map(([sid, context, quote]) => ({ day: S[sid].day, context, quote, source_session: sid, title: S[sid].title }))
+    .sort((a, b) => (a.day < b.day ? 1 : -1))
+  const days = [...new Set(occasions.map(o => o.day))].sort()
+  const proposedAt = r3(NOW - proposedAgo * DAY)
+  return {
+    key: 'insight:' + sha(title), title, kind, area, name, criterion, user_version, rule, relation, delta, status,
+    proposed_at: proposedAt, decided_at: decidedAgo != null ? r3(NOW - decidedAgo * DAY) : null,
+    occasions, days: days.length, first_day: days[0], last_day: days[days.length - 1],
+    inlined, note: `dreams/${dayOf(proposedAt)}.md`
+  }
+})
+const insightByTitle = s => insightItems.find(i => i.title.startsWith(s))
+// `rejected` and `waiting` are counters of things the page never lists.
+const insights = { items: insightItems, rejected: 1, waiting: 5, note: INSIGHT_NOTE }
+const noInsights = { items: [], rejected: 0, waiting: 0, note: INSIGHT_NOTE }
+
+// Nights of the insights demo: the fact pipeline ran until nine nights ago, then `focus: insights`.
+// An insights night never counts as a no-op; most of them propose nothing.
+const INSIGHT_NIGHTS = { 9: [1, 0], 8: [0, 1], 7: [1, 0], 6: [0, 1], 5: [1, 0], 4: [0, 1], 3: [1, 0], 2: [0, 1], 0: [2, 0] }
+const insightNights = nights.map((n, i) => {
+  const daysAgo = nights.length - 1 - i
+  if (daysAgo > 9) return n
+  const [proposed, approved] = INSIGHT_NIGHTS[daysAgo] || [0, 0]
+  return {
+    ...n, focus: 'insights', staged: 0, themes: 0, truths: 0, promoted: 0, merged: 0, deferred: 0, noop: false, errors: 0,
+    llm_calls: n.quiet ? 0 : Math.min(8, 2 + Math.round(n.fragments / 12)),
+    insights_proposed: n.quiet ? 0 : proposed, insights_approved: approved
+  }
+})
+
 const nextRun = new Date((NOW + (17 * 3600 + 48 * 60)) * 1000).toISOString() // tonight 03:00 UTC
 const overview = {
   version: '0.4.0',
+  focus: 'facts',
   destinations: 'both',
   destructive: 'apply',
   schedule: '0 3 * * *',
@@ -498,9 +608,9 @@ const transcript = [
   { role: 'assistant', text: `::somnia-memory{key="${byStart('Lanternfall targets').key}"}` }
 ]
 
-const demo = {
+const facts = {
   now: NOW,
-  overview, runs, latest_run: last.started_at,
+  overview, insights: noInsights, runs, latest_run: last.started_at,
   candidates, themes: { themes, links },
   diary: { entries: diary, path: '~/notes/dreams/DREAMS.md' },
   stats: { histogram, min_score: MIN_SCORE, by_gate, promoted_total: counts.promoted, rejected_total: counts.rejected, candidates_total: counts.candidates },
@@ -521,7 +631,7 @@ const emptyNow = NOW
 const empty = {
   now: emptyNow,
   overview: {
-    version: '0.4.0', destinations: 'builtin', destructive: 'apply', schedule: '0 3 * * *', timezone: 'Europe/Lisbon',
+    version: '0.4.0', focus: 'insights', destinations: 'builtin', destructive: 'apply', schedule: '0 3 * * *', timezone: 'Europe/Lisbon',
     cron: { installed: true, id: 'cron_somnia_9f2c', next_run_at: nextRun, state: 'scheduled' },
     llm: { provider: 'openrouter', model: 'google/gemini-2.5-flash', task: 'auxiliary.somnia' },
     last_run: null,
@@ -530,11 +640,12 @@ const empty = {
       budget('user', 1375, [])
     ],
     nights: [], alarm: null,
-    counts: { candidates: 0, near: 0, promoted: 0, rejected: 0, skills: 0, stale: 0, pending: 0 },
+    counts: { candidates: 0, near: 0, promoted: 0, rejected: 0, skills: 0, stale: 0, pending: 0, insights_to_review: 0, insights_approved: 0 },
     vault: null, pressure: { memory: 0.04, user: 0 },
     principles: PRINCIPLES(['pareto', 'lindy', 'occam', 'feynman']),
     settings: { destructive: 'apply', max_promotions: 3, min_score: MIN_SCORE, min_sessions: 2, diary: true, diary_language: 'auto', notify: 'changes', principles: ['pareto', 'lindy', 'occam', 'feynman'] }
   },
+  insights: { ...noInsights, note: '~/.hermes/plugin-data/hermes-somnia/insights.md' },
   runs: {}, latest_run: null, candidates: [], themes: { themes: [], links: [] },
   diary: { entries: [], path: '~/.hermes/plugin-data/hermes-somnia/DREAMS.md' },
   stats: { histogram: histogram.map(h => ({ ...h, count: 0 })), min_score: MIN_SCORE, by_gate: Object.fromEntries(Object.keys(by_gate).map(k => [k, 0])), promoted_total: 0, rejected_total: 0, candidates_total: 0 },
@@ -547,7 +658,49 @@ const empty = {
 }
 
 // A hand-written Optimize proposal for the demo memory (what the model + checks would return).
-demo.optimize = JSON.parse(readFileSync(join(here, 'demo-optimize.json'), 'utf8'))
+facts.optimize = JSON.parse(readFileSync(join(here, 'demo-optimize.json'), 'utf8'))
+
+// The insights demo: same person, same memory, but the nights look for judgment instead of facts.
+// The two USER.md entries Somnia owns for insights (§3.5 of the design): the pointer and one inlined rule.
+const leadRule = insightByTitle('Lead with')
+const insightUserEntries = [
+  ...userEntries,
+  { ...entry(`Judgment criteria of the user: ${INSIGHT_NOTE}. Read the matching section before design, product, analysis, code or writing work.`, 'somnia', null, { created_at: leadRule.decided_at }), pointer: false },
+  { ...entry(leadRule.rule, 'somnia', null, { created_at: leadRule.decided_at }), key: leadRule.key }
+].map((e, i) => ({ ...e, index: i }))
+// Owned fact entries are not flagged stale while the fact pipeline is off.
+const fresh = entries => entries.map(e => ({ ...e, stale: false }))
+const insightBudgets = [budget('memory', 2200, fresh(memEntries)), budget('user', 1375, fresh(insightUserEntries))]
+const proposedNow = insightItems.filter(i => i.status === 'proposed').length
+const approvedNow = insightItems.filter(i => i.status === 'approved').length
+const demo = {
+  ...facts,
+  overview: {
+    ...overview,
+    focus: 'insights',
+    last_run: { at: last.started_at, dry_run: false, summary: `${proposedNow} insights to review` },
+    budgets: insightBudgets,
+    nights: insightNights,
+    counts: { ...counts, stale: 0, insights_to_review: proposedNow, insights_approved: approvedNow },
+    pressure: { memory: r3(insightBudgets[0].used / insightBudgets[0].limit), user: r3(insightBudgets[1].used / insightBudgets[1].limit) }
+  },
+  insights,
+  diary: { ...facts.diary, entries: insightDiary },
+  // Approving this one reports a warning (a failed vault sync; the approval stands).
+  approve_warnings: { [insightByTitle('Measure before').key]: ['vault sync failed (git push: exit 1); the approval stands'] },
+  dry_run: { dry_run: true, quiet: false, fragments: 142, llm_calls: 2, promoted: 0, merged: 0, deferred: 0, staged: 0, evicted: 0, changes: [] },
+  noop_alarm: null,
+  transcript: [
+    { role: 'user', text: 'why did you send such a small diff for the webhook fix?' },
+    { role: 'assistant', text: 'Because of how you judge code changes. Somnia noticed the same criterion on three different days and proposed it as an insight. It is still waiting for your review:' },
+    { role: 'assistant', text: `::somnia-memory{key="${insightByTitle('Smallest change').key}"}` },
+    { role: 'assistant', text: 'This one you already approved, so I follow it in every answer:' },
+    { role: 'assistant', text: `::somnia-memory{key="${leadRule.key}"}` }
+  ]
+}
+
 writeFileSync(join(here, 'demo.json'), JSON.stringify(demo, null, 1))
+writeFileSync(join(here, 'demo-facts.json'), JSON.stringify(facts, null, 1))
 writeFileSync(join(here, 'empty.json'), JSON.stringify(empty, null, 1))
-console.log('demo:', candidates.length, 'candidates,', nights.length, 'nights,', themes.length, 'themes; memory', budgets[0].used, '/', budgets[0].limit, 'user', budgets[1].used, '/', budgets[1].limit)
+console.log('facts:', candidates.length, 'candidates,', nights.length, 'nights,', themes.length, 'themes; memory', budgets[0].used, '/', budgets[0].limit, 'user', budgets[1].used, '/', budgets[1].limit)
+console.log('insights:', proposedNow, 'to review,', approvedNow, 'approved in', new Set(insightItems.filter(i => i.status === 'approved').map(i => i.area)).size, 'areas; user', insightBudgets[1].used, '/', insightBudgets[1].limit)

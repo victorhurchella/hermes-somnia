@@ -76,6 +76,7 @@ class EntryFlags:
     evictable: set = field(default_factory=set)  # Somnia-owned (only these may be evicted)
     lindy: set = field(default_factory=set)  # long-confirmed: protected from supersession
     tail: set = field(default_factory=set)  # pareto tail: first to go when room is needed
+    locked: set = field(default_factory=set)  # insight entries (pointer, inline rules): never touched here
     pareto_active: bool = False
 
 
@@ -86,6 +87,9 @@ def entry_flags(entries: list[str], owned: dict[str, dict], now: float, used: in
     for i, text in enumerate(entries):
         row = owned.get(sha1_12(text))
         if row is None:
+            continue
+        if row.get("class"):
+            flags.locked.add(i)
             continue
         flags.evictable.add(i)
         age = max(0.0, (now - float(row.get("first_seen_at") or row.get("created_at") or now)) / DAY_S)
@@ -163,6 +167,8 @@ def validate_plan(plan: Plan, entries: list[str], flags: EntryFlags | set, cands
         for p in op.prior:
             if not 0 <= p < len(entries) or p in used:
                 raise ValueError(f"bad or repeated entry id {p}")
+            if p in flags.locked:
+                raise ValueError(f"entry {p} belongs to an approved insight")
             used.add(p)
         if op.action != "skipped":
             if not op.text or len(op.text) > max_chars:
@@ -369,13 +375,15 @@ VAULT_TEXT = {
     "en": {"intro": "> Written by hermes-somnia. Review, then move what matters into the right note.",
            "sweep": "Sweep", "promoted": "Promoted", "themes": "Recurring themes", "across": "across {n} memories",
            "target": "target", "kind": "kind", "score": "score", "sessions": "sessions", "days": "days",
-           "evidence": "evidence", "source": "conversations consolidated by hermes-somnia"},
+           "evidence": "evidence", "source": "conversations consolidated by hermes-somnia",
+           "intro_insights": "> Ticking the checkbox of an insight approves it at the next sweep."},
     "pt-BR": {"intro": "> Escrito pelo hermes-somnia. Revise e mova o que importa para a nota certa; "
                        "o que estiver errado: `hermes somnia forget <key>`.",
               "sweep": "Noite", "promoted": "Promovidos", "themes": "Temas recorrentes",
               "across": "em {n} memórias", "target": "destino", "kind": "tipo", "score": "nota",
               "sessions": "sessões", "days": "dias", "evidence": "evidência",
-              "source": "conversas consolidadas pelo hermes-somnia"},
+              "source": "conversas consolidadas pelo hermes-somnia",
+              "intro_insights": "> Marcar a caixinha de um achado aprova esse achado na próxima rodada."},
 }
 
 
@@ -389,7 +397,8 @@ def vault_note_header(day: str, settings=None) -> list[str]:
     tags = [str(t).strip() for t in (getattr(settings, "vault_note_tags", None) or ["somnia"]) if str(t).strip()]
     return ["---", f"title: Somnia {day}", f"created: {day}", f"updated: {day}", f"type: {note_type}",
             "status: inbox", f"tags: [{', '.join(tags)}]", f"source: {_vt(settings, 'source')} ({day})", "---",
-            f"# Somnia {day}", "", _vt(settings, "intro"), ""]
+            f"# Somnia {day}", "", _vt(settings, "intro"),
+            *([_vt(settings, "intro_insights")] if getattr(settings, "wants_insights", False) else []), ""]
 
 
 def write_vault(settings, selected: list[Scored], rem_result, day: str, *, dry_run: bool) -> tuple[Optional[Path], list[str]]:
@@ -496,24 +505,35 @@ def ensure_pointer(backend: MemoryBackend, folder: Path) -> Optional[str]:
     return None if out.get("success") else str(out.get("error") or out)[:200]
 
 
+def _run_vault_command(settings, command: str, label: str) -> Optional[str]:
+    import subprocess
+
+    vault = settings.resolved_vault()
+    try:
+        proc = subprocess.run(command, shell=True, cwd=str(vault) if vault else None, capture_output=True,
+                              text=True, timeout=180)
+    except subprocess.TimeoutExpired:
+        return f"{label}: timed out after 180 s"
+    if proc.returncode != 0:
+        tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-1:] or [""]
+        return f"{label}: exit {proc.returncode}: {tail[0][:200]}"
+    return None
+
+
 def run_vault_sync(settings, note: Path, day: str) -> Optional[str]:
     """``vault_sync_command`` after a vault write (e.g. commit + push of a git-synced vault). Returns an
     error line, or None. Runs from the vault root; ``{note}``, ``{folder}`` and ``{day}`` are substituted."""
     import shlex
-    import subprocess
 
     cmd = (getattr(settings, "vault_sync_command", "") or "").strip()
     if not cmd:
         return None
-    vault = settings.resolved_vault()
     filled = cmd.replace("{note}", shlex.quote(str(note))).replace("{folder}", shlex.quote(str(note.parent))) \
         .replace("{day}", shlex.quote(day))
-    try:
-        proc = subprocess.run(filled, shell=True, cwd=str(vault) if vault else None, capture_output=True,
-                              text=True, timeout=180)
-    except subprocess.TimeoutExpired:
-        return "vault sync: timed out after 180 s"
-    if proc.returncode != 0:
-        tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-1:] or [""]
-        return f"vault sync: exit {proc.returncode}: {tail[0][:200]}"
-    return None
+    return _run_vault_command(settings, filled, "vault sync")
+
+
+def run_vault_pull(settings) -> Optional[str]:
+    """``vault_pull_command`` before ticked proposals are read, for a vault edited on another device."""
+    cmd = (getattr(settings, "vault_pull_command", "") or "").strip()
+    return _run_vault_command(settings, cmd, "vault pull") if cmd else None

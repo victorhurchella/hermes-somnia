@@ -77,6 +77,142 @@ def _rejected_keys(store: Store) -> set[str]:
     return {r["key"] for r in store.rejected() if r.get("key")}
 
 
+# --- insights ---
+
+def _is_insight(key: Any) -> bool:
+    return isinstance(key, str) and key.startswith("insight:")
+
+
+def insight_view(store: Store, j, titles: Optional[dict] = None) -> dict:
+    from .judgment import occasions
+
+    occ = occasions(store, j.key)
+    days = sorted({o["day"] for o in occ})
+    for o in occ:
+        o["title"] = ((titles or {}).get(o["source_session"]) or {}).get("title")
+    return {"key": j.key, "title": j.title, "kind": j.kind, "area": j.area, "name": j.name,
+            "criterion": j.criterion, "user_version": j.user_version, "rule": j.rule, "relation": j.relation,
+            "delta": j.delta, "status": j.status, "proposed_at": j.proposed_at, "decided_at": j.decided_at,
+            "occasions": occ, "days": len(days), "first_day": days[0] if days else None,
+            "last_day": days[-1] if days else None, "inlined": bool(j.inline_hash), "note": j.note}
+
+
+def _insight_views(store: Store, items: list) -> list[dict]:
+    ids = {o["session_id"] for j in items for o in store.observations(key=j.key)}
+    titles = session_titles(sessions_db_path(), ids)
+    return [insight_view(store, j, titles) for j in items]
+
+
+def insights_rpc(params: dict, **_) -> dict:
+    s = load_settings()
+    store = _store()
+    try:
+        note = None
+        if store.judgments("approved"):
+            try:
+                from .judgment_sinks import living_note_path
+
+                note = str(living_note_path(s, state_dir()))
+            except Exception:
+                note = None
+        review = sorted(store.judgments("proposed"), key=lambda j: -j.proposed_at)
+        approved = sorted(store.judgments("approved"), key=lambda j: (j.area, -(j.decided_at or 0)))
+        return r3({"focus": s.focus, "to_review": _insight_views(store, review),
+                   "approved": _insight_views(store, approved), "rejected": len(store.judgments("rejected")),
+                   "waiting": len(store.observations(unassigned=True)), "note": note})
+    finally:
+        store.close()
+
+
+def _locked_write(fn: Callable[[Store, Settings], dict]) -> dict:
+    """Insight writes change the store, the vault and USER.md together: never while a sweep runs."""
+    from .sweep import AlreadyRunning, sweep_lock
+
+    s = load_settings()
+    try:
+        with sweep_lock(state_dir()):
+            store = _store()
+            try:
+                out = fn(store, s)
+                store.commit()
+                return out
+            except Exception:
+                store.rollback()
+                raise
+            finally:
+                store.close()
+    except AlreadyRunning as exc:
+        raise RpcError("Somnia is running a sweep; try again in a moment") from exc
+
+
+def _sync_after(s: Settings, path: Optional[str]) -> Optional[str]:
+    from .sinks import run_vault_sync
+
+    if not s.wants_vault or not path:
+        return None
+    try:
+        return run_vault_sync(s, Path(path), datetime.now().strftime("%Y-%m-%d"))
+    except Exception as exc:
+        return f"vault sync: {exc}"
+
+
+def insight_approve(params: dict, **_) -> dict:
+    from . import judgment_sinks as JS
+
+    key = _str(params, "key", max_len=80)
+
+    def work(store: Store, s: Settings) -> dict:
+        j = store.judgment(key)
+        if j is None:
+            raise RpcError(f"unknown insight {key}")
+        if j.status == "approved":
+            return {"ok": True, "key": key, "note": None, "inlined": bool(j.inline_hash), "warnings": []}
+        try:
+            return JS.approve(store, s, _backend(), key, time.time(), state_dir())
+        except RuntimeError as exc:
+            raise RpcError(str(exc)) from exc
+
+    out = _locked_write(work)
+    warning = _sync_after(load_settings(), out.get("note"))
+    if warning:
+        out["warnings"] = list(out.get("warnings") or []) + [warning]
+    return out
+
+
+def _forget_insight(key: str) -> dict:
+    from . import judgment_sinks as JS
+
+    def work(store: Store, s: Settings) -> dict:
+        if store.judgment(key) is None:
+            raise RpcError(f"unknown insight {key}")
+        return JS.forget(store, s, _backend(), key, time.time(), state_dir())
+
+    out = _locked_write(work)
+    if out.get("block") and out.get("note"):
+        f = _forgotten_file(key)
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps({"key": key, "note": out["note"], "block": out["block"]}, ensure_ascii=False),
+                     encoding="utf-8")
+    warning = _sync_after(load_settings(), out.get("note"))
+    return {"ok": True, "removed_entry": bool(out.get("was_approved")), "warning": warning}
+
+
+def _unforget_insight(key: str) -> dict:
+    from . import judgment_sinks as JS
+    from .sinks import restore_to_vault
+
+    ok = _locked_write(lambda store, s: {"ok": JS.unforget(store, key)})["ok"]
+    f = _forgotten_file(key)
+    restored = False
+    if ok and f.exists():
+        d = json.loads(f.read_text(encoding="utf-8"))
+        restore_to_vault(Path(d["note"]), d["block"])
+        f.unlink()
+        restored = True
+        _sync_after(load_settings(), d["note"])
+    return {"ok": ok, "restored_to_vault": restored}
+
+
 # --- read ---
 
 def overview(params: dict, **_) -> dict:
@@ -111,7 +247,8 @@ def overview(params: dict, **_) -> dict:
                          "open_items": 0, "error": str(exc)}
         pending = len(backend.pending()) if backend is not None and hasattr(backend, "pending") else 0
         result = {
-            "version": __version__, "destinations": s.resolved_destinations, "destructive": s.destructive,
+            "version": __version__, "focus": s.focus, "destinations": s.resolved_destinations,
+            "destructive": s.destructive,
             "schedule": s.schedule, "timezone": s.timezone, "cron": cron, "llm": hermes_api.describe_llm(),
             "last_run": last, "budgets": b, "nights": nights(store, 30),
             "alarm": alarm(store, s, b, cron, now, near),
@@ -123,6 +260,8 @@ def overview(params: dict, **_) -> dict:
                 "skills": sum(1 for e in entries if e.kind == "procedure" and not e.promoted_at),
                 "stale": sum(1 for x in b for e in x["entries"] if e["stale"]),
                 "pending": pending,
+                "insights_to_review": len(store.judgments("proposed")),
+                "insights_approved": len(store.judgments("approved")),
             },
             "vault": vault,
             "pressure": {x["target"]: round(x["used"] / x["limit"], 3) if x["limit"] else 0 for x in b},
@@ -230,6 +369,11 @@ def candidate(params: dict, **_) -> dict:
     s = load_settings()
     store = _store()
     try:
+        if _is_insight(key):
+            j = store.judgment(key)
+            if j is None:
+                raise RpcError(f"unknown insight {key}")
+            return r3(_insight_views(store, [j])[0])
         e = store.entry(key)
         if e is None:
             raise RpcError(f"unknown candidate {key}")
@@ -463,6 +607,8 @@ def run(params: dict, **_) -> dict:
 
 def promote(params: dict, **_) -> dict:
     key = _str(params, "key", max_len=80)
+    if _is_insight(key):
+        raise RpcError("promote is for fact candidates; approve an insight instead")
     target = params.get("target")
     args = ["promote", key]
     if target in ("memory", "user", "vault"):
@@ -483,6 +629,8 @@ def _find_entry(backend, target: str, index: int, old: str) -> str:
 
 def forget(params: dict, **_) -> dict:
     key = _str(params, "key", max_len=80)
+    if _is_insight(key):
+        return _forget_insight(key)
     reason = (params.get("reason") or "forgotten from the desktop page")[:200]
     store = _store()
     backend = _backend()
@@ -539,6 +687,8 @@ def _forget_in_vault(key: str, note: Path) -> tuple[bool, Optional[str]]:
 
 def unforget(params: dict, **_) -> dict:
     key = _str(params, "key", max_len=80)
+    if _is_insight(key):
+        return _unforget_insight(key)
     store = _store()
     try:
         ok = store.unreject(key)
@@ -564,6 +714,8 @@ def unforget(params: dict, **_) -> dict:
 
 def pin(params: dict, **_) -> dict:
     key = _str(params, "key", max_len=80)
+    if _is_insight(key):
+        raise RpcError("pin is for fact candidates; approve an insight instead")
     store = _store()
     try:
         e = store.entry(key)
@@ -702,6 +854,7 @@ HANDLERS: dict[str, Callable[..., Any]] = {
     "entry.remove": entry_remove, "entry.to_vault": entry_to_vault, "undo": undo, "run": run,
     "skill.dismiss": skill_dismiss, "settings.set": settings_set, "job.cancel": job_cancel,
     "optimize": optimize_start, "optimize.apply": optimize_apply, "memory.limit.set": memory_limit_set,
+    "insights": insights_rpc, "insight.approve": insight_approve,
 }
 
 

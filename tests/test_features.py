@@ -49,7 +49,7 @@ class Base(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         self.state = self.tmp / "state"
-        self.settings = Settings(min_score=0.5, light_lookback_days=7)
+        self.settings = Settings(focus="facts", min_score=0.5, light_lookback_days=7)
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -273,7 +273,7 @@ class RpcTests(Base):
         backend = hermes_api.HermesMemory()
         llm = ScriptedLLM(extract=extract_fact(), consolidate=lambda p: {"operations": [
             {"candidateKey": p["candidates"][0]["key"], "action": "added", "priorEntries": [], "text": FACT}]})
-        run_sweep(Settings(min_score=0.5, light_lookback_days=7), complete=llm, backend=backend, now=NOW,
+        run_sweep(Settings(focus="facts", min_score=0.5, light_lookback_days=7), complete=llm, backend=backend, now=NOW,
                   base_dir=self.state, sessions_db=Path(os.environ["HERMES_SOMNIA_SESSIONS_DB"]))
         self.assertIn(FACT, (self.tmp / "home" / "memories" / "MEMORY.md").read_text())
 
@@ -321,10 +321,10 @@ class BudgetAlarmTests(Base):
         full = [{"target": "user", "used": 1370, "limit": 1375, "entries": [{"owner": "human"}]}]
         store = Store(self.tmp / "alarm.db")
         try:
-            self.assertEqual(alarm(store, Settings(destinations="builtin"), full, None, NOW)["kind"], "budget_full")
+            self.assertEqual(alarm(store, Settings(focus="facts", destinations="builtin"), full, None, NOW)["kind"], "budget_full")
             vault = self.tmp / "vault"
             vault.mkdir()
-            self.assertIsNone(alarm(store, Settings(destinations="vault", vault_path=str(vault)), full, None, NOW))
+            self.assertIsNone(alarm(store, Settings(focus="facts", destinations="vault", vault_path=str(vault)), full, None, NOW))
         finally:
             store.close()
 

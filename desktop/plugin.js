@@ -67,6 +67,8 @@ const SIGNALS = [
 ]
 // Additive bonuses that may ride on `components`.
 const BONUSES = ['phase_boost', 'lindy', 'inversion']
+// Insight areas, in the order the Approved list shows them (docs/rpc.md `Insight`).
+const INSIGHT_AREAS = ['design', 'product', 'analysis', 'code', 'communication', 'responses']
 const PRINCIPLES = ['pareto', 'lindy', 'inversion', 'occam', 'feynman']
 // Off unless the user turns them on (contract: default active = pareto, lindy, occam, feynman).
 const OPT_IN_PRINCIPLES = ['inversion']
@@ -252,6 +254,52 @@ const EN = {
     pin: 'Pin',
     unpin: 'Unpin',
     pinHint: 'Count it as something you asked to remember: skips the recurrence gates next night.'
+  },
+  insights: {
+    title: 'Insights',
+    hint: 'How you judge, written as rules your agent can follow. Nothing is used until you approve it.',
+    toReview: 'To review',
+    approved: 'Approved',
+    rule: 'Rule for the agent',
+    apply: 'How you apply it',
+    criterion: 'Criterion',
+    occasions: n => `${n} ${plural(n, 'occasion', 'occasions')}`,
+    days: n => `${n} ${plural(n, 'day', 'days')}`,
+    span: (a, b) => (a === b ? a : `${a} to ${b}`),
+    details: n => `How you apply it · ${n} ${plural(n, 'occasion', 'occasions')}`,
+    hide: 'Hide details',
+    approve: 'Approve',
+    approveHint: 'Adds it to your insights note, where the agent reads it before this kind of work.',
+    forget: 'Forget',
+    forgetHint: 'It is never proposed again.',
+    forgetApprovedHint: 'Removes it from the insights note and from USER.md. It is never proposed again.',
+    reallyForget: 'Really forget?',
+    inUser: 'in USER.md',
+    inUserHint: 'Its rule is also an entry in USER.md, so every chat starts with it.',
+    knownAs: name => `Known as ${name}`,
+    refines: 'Refines a note of yours',
+    note: 'Living note',
+    noteHint: 'Somnia writes this file from the approved insights. The agent reads it.',
+    nothing: 'Nothing to review. An empty night is normal.',
+    emptyTitle: 'Somnia is looking for how you judge',
+    emptyBody: 'An insight is a criterion you applied on two occasions, on different days. Most nights find none: an empty night is normal.',
+    emptyNever: when => `The first night is ${when}.`,
+    waiting: n => `${n} ${plural(n, 'observation', 'observations')} waiting for a second occasion`,
+    area: { design: 'Design', product: 'Product', analysis: 'Analysis', code: 'Code', communication: 'Communication', responses: 'Responses' },
+    kind: { principle: 'principle', value: 'value', taste: 'taste', response: 'response' },
+    status: { proposed: 'To review', approved: 'Approved' },
+    toast: {
+      approved: 'Approved. It is in your insights note.',
+      approvedInline: 'Approved. Its rule is in USER.md too.',
+      forgotten: 'Forgotten. It will not be proposed again.'
+    },
+    card: 'Somnia insight',
+    gone: 'Forgotten. It will not be proposed again.',
+    missing: 'This insight no longer exists.',
+    toReviewCount: n => `${n} ${plural(n, 'insight', 'insights')} to review`,
+    statusTip: n => `Somnia has ${n} ${plural(n, 'insight', 'insights')} for you to review`,
+    tip: (p, a) => `${p} ${plural(p, 'insight', 'insights')} proposed · ${a} approved`,
+    summary: (approved, quiet) => `${approved} approved · ${quiet} quiet`
   },
   signals: {
     title: 'Why it scored',
@@ -591,6 +639,52 @@ const PT = {
     pin: 'Fixar',
     unpin: 'Desafixar',
     pinHint: 'Conta como algo que você pediu para lembrar: pula os portões de recorrência na próxima noite.'
+  },
+  insights: {
+    title: 'Achados',
+    hint: 'Como você julga, em regras que o seu agente consegue seguir. Nada é usado até você aprovar.',
+    toReview: 'Para revisar',
+    approved: 'Aprovados',
+    rule: 'Regra para o agente',
+    apply: 'Como você aplica',
+    criterion: 'Critério',
+    occasions: n => `${n} ${plural(n, 'ocasião', 'ocasiões')}`,
+    days: n => `${n} ${plural(n, 'dia', 'dias')}`,
+    span: (a, b) => (a === b ? a : `${a} a ${b}`),
+    details: n => `Como você aplica · ${n} ${plural(n, 'ocasião', 'ocasiões')}`,
+    hide: 'Ocultar detalhes',
+    approve: 'Aprovar',
+    approveHint: 'Entra na sua nota de achados, que o agente lê antes desse tipo de trabalho.',
+    forget: 'Esquecer',
+    forgetHint: 'Nunca mais é proposto.',
+    forgetApprovedHint: 'Sai da nota de achados e do USER.md. Nunca mais é proposto.',
+    reallyForget: 'Esquecer mesmo?',
+    inUser: 'no USER.md',
+    inUserHint: 'A regra também é uma entrada do USER.md, então toda conversa começa com ela.',
+    knownAs: name => `Conhecido como ${name}`,
+    refines: 'Refina uma nota sua',
+    note: 'Nota viva',
+    noteHint: 'O Somnia escreve este arquivo a partir dos achados aprovados. O agente lê.',
+    nothing: 'Nada para revisar. Uma noite vazia é normal.',
+    emptyTitle: 'O Somnia está procurando como você julga',
+    emptyBody: 'Um achado é um critério que você aplicou em duas ocasiões, em dias diferentes. A maioria das noites não encontra nenhum: uma noite vazia é normal.',
+    emptyNever: when => `A primeira noite é ${when}.`,
+    waiting: n => `${n} ${plural(n, 'observação esperando', 'observações esperando')} uma segunda ocasião`,
+    area: { design: 'Design', product: 'Produto', analysis: 'Análise', code: 'Código', communication: 'Comunicação', responses: 'Respostas' },
+    kind: { principle: 'princípio', value: 'valor', taste: 'gosto', response: 'resposta' },
+    status: { proposed: 'Para revisar', approved: 'Aprovado' },
+    toast: {
+      approved: 'Aprovado. Está na sua nota de achados.',
+      approvedInline: 'Aprovado. A regra também está no USER.md.',
+      forgotten: 'Esquecido. Não será proposto de novo.'
+    },
+    card: 'Achado do Somnia',
+    gone: 'Esquecido. Não será proposto de novo.',
+    missing: 'Este achado não existe mais.',
+    toReviewCount: n => `${n} ${plural(n, 'achado', 'achados')} para revisar`,
+    statusTip: n => `O Somnia tem ${n} ${plural(n, 'achado', 'achados')} para você revisar`,
+    tip: (p, a) => `${p} ${plural(p, 'achado proposto', 'achados propostos')} · ${a} ${plural(a, 'aprovado', 'aprovados')}`,
+    summary: (approved, quiet) => `${approved} ${plural(approved, 'aprovado', 'aprovados')} · ${quiet} quietas`
   },
   signals: {
     title: 'Por que pontuou',
@@ -1026,6 +1120,7 @@ const useCandidates = (filter, q) =>
   useSomniaQuery(['candidates', filter, q || ''], 'candidates', { filter, q: q || undefined, limit: 100 })
 const useCandidate = (key, enabled = true) =>
   useSomniaQuery(['candidate', key], 'candidate', { key }, { enabled: !!key && enabled })
+const useInsights = (enabled = true) => useSomniaQuery(['insights'], 'insights', {}, { enabled })
 const useThemes = () => useSomniaQuery(['themes'], 'themes', {}, { staleTime: 60000 })
 const useDiary = () => useSomniaQuery(['diary'], 'diary', { limit: 12 }, { staleTime: 60000 })
 const useStats = () => useSomniaQuery(['stats'], 'stats', {}, { staleTime: 60000 })
@@ -1815,6 +1910,230 @@ function AlarmBanner({ alarm, onReview }) {
   )
 }
 
+// ==== insights ==============================================================
+// Judgment insights (docs/rpc.md `Insight`): criteria the user applied on at least two different days.
+// Shown when `overview.focus` is 'insights' or 'both'; under 'insights' the fact sections are hidden.
+
+const focusOf = ov => (ov && ov.focus) || 'facts' // a backend older than insights only knows facts
+const nightFocus = n => (n && n.focus) || 'facts'
+const isInsightKey = key => typeof key === 'string' && key.startsWith('insight:')
+
+/** Approve / Forget for an insight. useWrite refreshes every Somnia query, `insights` and `overview` included. */
+function useInsightActions() {
+  const t = useTr()
+  const { write, pending } = useWrite()
+  const approve = key =>
+    write('insight.approve', { key }).then(
+      res => {
+        toast('success', t(res && res.inlined ? 'insights.toast.approvedInline' : 'insights.toast.approved'))
+        ;((res && res.warnings) || []).forEach(w => toast('warning', serverText(w)))
+        return res
+      },
+      () => null // the error toast was already shown by useWrite
+    )
+  const forget = key => write('forget', { key }, t('insights.toast.forgotten')).then(res => res, () => null)
+  return { approve, forget, pending }
+}
+
+function insightSpan(t, it) {
+  const n = (it.occasions || []).length
+  const parts = [t('insights.occasions', n)]
+  if (it.first_day && it.last_day) parts.push(t('insights.span', shortDate(it.first_day), shortDate(it.last_day)))
+  return parts.join(' · ')
+}
+
+function InsightLabel({ it }) {
+  const t = useTr()
+  const area = t(`insights.area.${it.area}`)
+  const kind = t(`insights.kind.${it.kind}`)
+  return h(
+    'span',
+    { className: 'smn-insight-label' },
+    h('span', { className: 'smn-meta' }, `${area === `insights.area.${it.area}` ? it.area : area} · ${kind === `insights.kind.${it.kind}` ? it.kind : kind}`),
+    it.name ? h(Pill, { color: 'var(--ui-purple)', tip: t('insights.knownAs', it.name) }, it.name) : null
+  )
+}
+
+function InsightRule({ rule }) {
+  const t = useTr()
+  return h(
+    'div',
+    { className: 'smn-rule' },
+    h('span', { className: 'smn-rule-label' }, h(Icon, { name: 'law', size: '0.6875rem' }), t('insights.rule')),
+    h('p', { className: 'smn-rule-text smn-selectable' }, rule)
+  )
+}
+
+function InsightOccasions({ occasions, max }) {
+  const list = max ? (occasions || []).slice(0, max) : occasions || []
+  if (!list.length) return null
+  return h(
+    'div',
+    { className: 'smn-occs' },
+    list.map((o, i) =>
+      h(
+        'div',
+        { key: `${o.source_session}${i}`, className: 'smn-occ' },
+        h(
+          'div',
+          { className: 'smn-occ-head' },
+          h('span', { className: 'smn-meta' }, [o.day ? shortDate(o.day) : null, o.context].filter(Boolean).join(' · ')),
+          o.source_session ? h(SessionChips, { sessions: [{ id: o.source_session, title: o.title, day: o.day }] }) : null
+        ),
+        h('blockquote', { className: 'smn-quote smn-selectable' }, `“${o.quote}”`)
+      )
+    )
+  )
+}
+
+/** What sits behind the expand control: how the user applies it, and every occasion. */
+function InsightDetail({ it, withCriterion }) {
+  const t = useTr()
+  return h(
+    'div',
+    { className: 'smn-insight-detail' },
+    withCriterion ? h('div', { className: 'smn-insight-block' }, h('span', { className: 'smn-label' }, t('insights.criterion')), h('p', { className: 'smn-fact smn-selectable' }, it.criterion)) : null,
+    it.user_version ? h('div', { className: 'smn-insight-block' }, h('span', { className: 'smn-label' }, t('insights.apply')), h('p', { className: 'smn-body smn-selectable' }, it.user_version)) : null,
+    h('div', { className: 'smn-insight-block' },
+      h('span', { className: 'smn-label' }, [t('insights.occasions', (it.occasions || []).length), it.days ? t('insights.days', it.days) : null].filter(Boolean).join(' · ')),
+      h(InsightOccasions, { occasions: it.occasions }))
+  )
+}
+
+function InsightRefines({ it }) {
+  const t = useTr()
+  if (it.relation !== 'refines') return null
+  return h('p', { className: 'smn-refines' }, h(Pill, { color: 'var(--ui-cyan)', icon: 'git-compare' }, t('insights.refines')), it.delta ? h('span', null, it.delta) : null)
+}
+
+function InsightCard({ it, defaultOpen, reveal }) {
+  const t = useTr()
+  const { approve, forget, pending } = useInsightActions()
+  const [open, setOpen] = useState(!!defaultOpen)
+  useEffect(() => {
+    if (reveal) setOpen(true)
+  }, [reveal])
+  return h(
+    'article',
+    { className: 'smn-insight', 'data-key': it.key },
+    h('div', { className: 'smn-insight-head' }, h('h4', { className: 'smn-insight-title' }, it.title), h(InsightLabel, { it })),
+    h('p', { className: 'smn-fact smn-selectable' }, it.criterion),
+    h(InsightRule, { rule: it.rule }),
+    h(InsightRefines, { it }),
+    h(
+      'button',
+      { type: 'button', className: 'smn-insight-more', 'aria-expanded': open, onClick: () => setOpen(!open) },
+      h(Icon, { name: open ? 'chevron-down' : 'chevron-right', size: '0.75rem' }),
+      open ? t('insights.hide') : t('insights.details', (it.occasions || []).length)
+    ),
+    open ? h(InsightDetail, { it }) : null,
+    h(
+      'div',
+      { className: 'smn-insight-actions' },
+      h(Btn, { variant: 'default', icon: 'check', disabled: pending, tip: t('insights.approveHint'), onClick: () => approve(it.key) }, t('insights.approve')),
+      h(ArmedButton, { icon: 'trash', disabled: pending, label: t('insights.forget'), armedLabel: t('insights.reallyForget'), onConfirm: () => forget(it.key) })
+    )
+  )
+}
+
+function ApprovedInsight({ it, open, onToggle }) {
+  const t = useTr()
+  const { forget, pending } = useInsightActions()
+  return h(
+    'div',
+    { className: `smn-appr${open ? ' is-open' : ''}`, 'data-key': it.key },
+    h(
+      'button',
+      { type: 'button', className: 'smn-appr-main', 'aria-expanded': open, onClick: onToggle },
+      h(
+        'span',
+        { className: 'smn-appr-top' },
+        h('span', { className: 'smn-appr-title' }, it.title),
+        it.inlined ? h(Pill, { color: 'var(--ui-green)', icon: 'pass', tip: t('insights.inUserHint') }, t('insights.inUser')) : null,
+        h(Icon, { name: open ? 'chevron-down' : 'chevron-right', size: '0.75rem', className: 'smn-caret' })
+      ),
+      h('span', { className: 'smn-appr-rule' }, it.rule)
+    ),
+    open ? h('div', { className: 'smn-appr-detail' }, h(InsightRefines, { it }), h(InsightDetail, { it, withCriterion: true })) : null,
+    h(
+      'div',
+      { className: 'smn-appr-foot' },
+      h('span', { className: 'smn-meta' }, insightSpan(t, it)),
+      h('span', { className: 'smn-grow' }),
+      h(ArmedButton, { icon: 'trash', disabled: pending, label: t('insights.forget'), armedLabel: t('insights.reallyForget'), onConfirm: () => forget(it.key) })
+    )
+  )
+}
+
+function InsightsSection({ ov }) {
+  const t = useTr()
+  const q = useInsights()
+  const focusKey = useStore($focusKey)
+  const [openRow, setOpenRow] = useState(null)
+  const [reveal, setReveal] = useState(null)
+  const data = q.data
+  const review = (data && data.to_review) || []
+  const approved = (data && data.approved) || []
+  // A chat card asked to reveal an insight: expand it and bring it into view.
+  useEffect(() => {
+    if (!isInsightKey(focusKey) || !data) return
+    const hit = [...review, ...approved].find(i => i.key === focusKey)
+    $focusKey.set(null)
+    if (!hit) return
+    if (hit.status === 'approved') setOpenRow(hit.key)
+    else setReveal(hit.key)
+    requestAnimationFrame(() => {
+      const el = document.querySelector(`#smn-insights [data-key="${CSS.escape(hit.key)}"]`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }, [focusKey, data])
+  const groups = useMemo(() => {
+    const areas = [...INSIGHT_AREAS, ...approved.map(i => i.area).filter(a => !INSIGHT_AREAS.includes(a))].filter((a, i, all) => all.indexOf(a) === i)
+    return areas.map(area => ({ area, items: approved.filter(i => i.area === area) })).filter(g => g.items.length)
+  }, [data])
+  const waiting = data && data.waiting > 0 ? h('p', { className: 'smn-insight-waiting' }, h(Icon, { name: 'history', size: '0.75rem' }), t('insights.waiting', data.waiting)) : null
+
+  let body
+  if (q.isLoading || (!data && !q.error)) body = h('div', { className: 'smn-insights' }, h('div', { className: 'smn-insight' }, h(Skel, { height: 14, width: '45%' }), h(Skel, { height: 13 }), h(Skel, { height: 44 })))
+  else if (q.error) body = h(Empty, { icon: 'error', title: tr('error.load') }, errorText(q.error))
+  else if (!review.length && !approved.length) {
+    const when = ov && !ov.last_run && ov.cron && ov.cron.installed && ov.cron.next_run_at ? whenNext(ov.cron.next_run_at) : null
+    body = h(Empty, { icon: 'telescope', title: t('insights.emptyTitle') }, h('p', null, t('insights.emptyBody')), when ? h('p', null, t('insights.emptyNever', when)) : null, waiting)
+  } else
+    body = h(
+      'div',
+      { className: 'smn-insights' },
+      h(
+        'div',
+        { className: 'smn-insight-group', id: 'smn-insights-review' },
+        h('h3', { className: 'smn-h3' }, t('insights.toReview'), review.length ? h('span', { className: 'smn-meta' }, review.length) : null),
+        review.length
+          ? review.map((it, i) => h(InsightCard, { key: it.key, it, defaultOpen: i === 0, reveal: reveal === it.key }))
+          : h('p', { className: 'smn-insight-none' }, t('insights.nothing')),
+        waiting
+      ),
+      approved.length
+        ? h(
+            'div',
+            { className: 'smn-insight-group', id: 'smn-insights-approved' },
+            h('h3', { className: 'smn-h3' }, t('insights.approved'), h('span', { className: 'smn-meta' }, approved.length)),
+            data.note
+              ? h(Tooltip, { label: t('insights.noteHint') }, h('p', { className: 'smn-insight-note' }, h(Icon, { name: 'file', size: '0.75rem' }), h('span', null, t('insights.note')), h('span', { className: 'smn-mono smn-selectable' }, data.note)))
+              : null,
+            groups.map(g =>
+              h(
+                'div',
+                { key: g.area, className: 'smn-area', 'data-area': g.area },
+                h('h4', { className: 'smn-area-title' }, t(`insights.area.${g.area}`) === `insights.area.${g.area}` ? g.area : t(`insights.area.${g.area}`)),
+                h('div', { className: 'smn-list' }, g.items.map(it => h(ApprovedInsight, { key: it.key, it, open: openRow === it.key, onToggle: () => setOpenRow(openRow === it.key ? null : it.key) })))
+              )
+            )
+          )
+        : null
+    )
+  return h(Section, { id: 'smn-insights', title: t('insights.title'), hint: t('insights.hint') }, body)
+}
+
 // ==== this morning ==========================================================
 
 function MorningSection({ ov, run, onBack, confirm }) {
@@ -2301,10 +2620,15 @@ function CandidateRow({ c, tab, open, onToggle, confirm, vault }) {
 // every fact kept.
 const BAND = { top: 16, light: 42, rem: 66, deep: 76, keptStep: 6.5 }
 
+// What a night kept: facts written, plus insights approved on a night that looked for them.
+const nightKept = n => n.promoted + n.merged + (nightFocus(n) !== 'facts' ? n.insights_approved || 0 : 0)
+// Only a night of the fact pipeline can be a no-op: an insights night that proposes nothing is normal.
+const nightNoop = n => !!n.noop && nightFocus(n) === 'facts'
+
 function nightLevel(n) {
   if (n.quiet) return 'awake'
-  if (n.promoted + n.merged > 0) return 'deep'
-  if (n.themes + n.truths > 0) return 'rem'
+  if (nightKept(n) > 0) return 'deep'
+  if (n.themes + n.truths + (nightFocus(n) !== 'facts' ? n.insights_proposed || 0 : 0) > 0) return 'rem'
   return 'light'
 }
 
@@ -2322,9 +2646,10 @@ function SleepChart({ nights, selectedRun, onSelect }) {
   const x = i => left + (i + offset) * step + step / 2
   const bw = Math.max(3, step * 0.6)
   const maxFrag = Math.max(1, ...list.map(n => n.fragments))
-  const kept = list.reduce((a, n) => a + n.promoted + n.merged, 0)
+  const kept = list.reduce((a, n) => a + nightKept(n), 0)
   const quiet = list.filter(n => n.quiet).length
-  const noop = list.filter(n => n.noop).length
+  const noop = list.filter(nightNoop).length
+  const anyFacts = list.some(n => nightFocus(n) === 'facts')
   const hovered = hover != null ? list[hover] : null
   const axisY = H - 4
   const column = (n, i) => {
@@ -2338,13 +2663,14 @@ function SleepChart({ nights, selectedRun, onSelect }) {
       // Light: opacity follows how much was read that night.
       parts.push(h('rect', { key: 'l', x: x0, y: BAND.top, width: bw, height: BAND.light - BAND.top, rx: 1.5, fill: 'var(--ui-text-primary)', opacity: 0.1 + 0.18 * (n.fragments / maxFrag) }))
       if (level === 'rem' || level === 'deep')
-        parts.push(h('rect', { key: 'r', x: x0, y: BAND.light + 1, width: bw, height: BAND.rem - BAND.light - 1, rx: 1.5, fill: 'var(--ui-purple)', opacity: 0.3 + 0.12 * Math.min(4, n.themes) }))
+        parts.push(h('rect', { key: 'r', x: x0, y: BAND.light + 1, width: bw, height: BAND.rem - BAND.light - 1, rx: 1.5, fill: 'var(--ui-purple)', opacity: 0.3 + 0.12 * Math.min(4, n.themes + (nightFocus(n) !== 'facts' ? n.insights_proposed || 0 : 0)) }))
       if (level === 'deep') {
-        const k = Math.min(6, n.promoted + n.merged)
+        const k = Math.min(6, nightKept(n))
+        const solid = nightKept(n) - n.merged
         for (let j = 0; j < k; j++)
-          parts.push(h('rect', { key: `d${j}`, x: x0, y: BAND.rem + 2 + j * BAND.keptStep, width: bw, height: BAND.keptStep - 1.5, rx: 1.5, fill: 'var(--ui-accent)', opacity: j < n.promoted ? 1 : 0.6 }))
+          parts.push(h('rect', { key: `d${j}`, x: x0, y: BAND.rem + 2 + j * BAND.keptStep, width: bw, height: BAND.keptStep - 1.5, rx: 1.5, fill: 'var(--ui-accent)', opacity: j < solid ? 1 : 0.6 }))
       }
-      if (n.noop && !n.errors) parts.push(h('circle', { key: 'n', cx, cy: BAND.rem + 6, r: 2.4, fill: 'none', stroke: 'var(--ui-orange)', strokeWidth: 1.2 }))
+      if (nightNoop(n) && !n.errors) parts.push(h('circle', { key: 'n', cx, cy: BAND.rem + 6, r: 2.4, fill: 'none', stroke: 'var(--ui-orange)', strokeWidth: 1.2 }))
     }
     if (n.errors) parts.push(h('path', { key: 'e', d: `M${cx - 2.4},${BAND.top - 11} l4.8,4.8 m0,-4.8 l-4.8,4.8`, stroke: 'var(--ui-red)', strokeWidth: 1.3, strokeLinecap: 'round' }))
     return h('g', { key: `c${i}`, opacity: hover != null && hover !== i ? 0.55 : 1 }, parts)
@@ -2378,43 +2704,49 @@ function SleepChart({ nights, selectedRun, onSelect }) {
           width: step,
           height: axisY - 10,
           fill: 'transparent',
-          className: 'smn-chart-hit',
+          className: `smn-chart-hit${onSelect ? '' : ' is-static'}`,
           tabIndex: 0,
-          role: 'button',
+          role: onSelect ? 'button' : 'img',
           'aria-label': `${n.date}: ${nightLevel(n)}`,
           onMouseEnter: () => setHover(i),
           onFocus: () => setHover(i),
           onBlur: () => setHover(null),
-          onClick: () => onSelect(n.started_at),
-          onKeyDown: e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(n.started_at) } }
+          onClick: () => onSelect && onSelect(n.started_at),
+          onKeyDown: e => { if (onSelect && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(n.started_at) } }
         }))
       ),
-      hovered ? h(NightTip, { n: hovered, leftPct: (x(hover) / W) * 100 }) : null
+      hovered ? h(NightTip, { n: hovered, leftPct: (x(hover) / W) * 100, clickable: !!onSelect }) : null
     ),
     list.length
       ? h('div', { className: 'smn-chart-foot' },
           h('span', { className: 'smn-legend-item' }, h('span', { className: 'smn-swatch', style: { background: 'var(--ui-accent)' } }), t('chart.stages.deep')),
           h('span', { className: 'smn-legend-item' }, h('span', { className: 'smn-swatch', style: { background: 'color-mix(in srgb, var(--ui-purple) 60%, transparent)' } }), t('chart.stages.rem')),
-          h('span', { className: 'smn-legend-item' }, h('span', { className: 'smn-ring-swatch' }), t('chart.tip.noop')),
+          anyFacts ? h('span', { className: 'smn-legend-item' }, h('span', { className: 'smn-ring-swatch' }), t('chart.tip.noop')) : null,
           h('span', { className: 'smn-grow' }),
-          h('span', { className: 'smn-meta' }, t('chart.summary', kept, quiet, noop)))
+          h('span', { className: 'smn-meta' }, anyFacts ? t('chart.summary', kept, quiet, noop) : t('insights.summary', kept, quiet)))
       : null
   )
 }
 
-function NightTip({ n, leftPct }) {
+function NightTip({ n, leftPct, clickable = true }) {
   const t = useTr()
+  const focus = nightFocus(n)
+  const insights = t('insights.tip', n.insights_proposed || 0, n.insights_approved || 0)
+  // An insights night reports insights where a fact night reports what it kept; a 'both' night reports both.
+  // Approvals are applied before the wake gate, so even a quiet night can carry one.
   const lines = n.quiet
-    ? [t('chart.tip.quiet')]
-    : [t('chart.tip.light', n.fragments, n.observations), t('chart.tip.rem', n.themes, n.truths), t('chart.tip.deep', n.promoted, n.merged, n.deferred)]
-  if (n.noop && !n.quiet) lines.push(t('chart.tip.noop'))
+    ? [t('chart.tip.quiet'), ...(focus !== 'facts' && n.insights_approved ? [insights] : [])]
+    : focus === 'insights'
+      ? [t('chart.tip.light', n.fragments, n.observations), insights]
+      : [t('chart.tip.light', n.fragments, n.observations), t('chart.tip.rem', n.themes, n.truths), t('chart.tip.deep', n.promoted, n.merged, n.deferred), ...(focus === 'both' ? [insights] : [])]
+  if (nightNoop(n) && !n.quiet) lines.push(t('chart.tip.noop'))
   if (n.errors) lines.push(t('chart.tip.errors', n.errors))
   return h(
     'div',
     { className: 'smn-tip', style: { left: `${clamp(leftPct, 22, 78)}%` }, role: 'tooltip' },
     h('strong', null, new Date(`${n.date}T12:00:00`).toLocaleDateString(locale(), { weekday: 'short', month: 'short', day: 'numeric' }), n.dry_run ? ` · ${t('chart.tip.dry')}` : ''),
     lines.map((l, i) => h('span', { key: i }, l)),
-    !n.quiet ? h('span', { className: 'smn-meta' }, t('chart.tip.click')) : null
+    !n.quiet && clickable ? h('span', { className: 'smn-meta' }, t('chart.tip.click')) : null
   )
 }
 
@@ -2829,6 +3161,10 @@ function Page() {
         toast('success', t('toast.undone', (res && res.restored && res.restored.join(', ')) || 'memory'))
       }
     })
+  // What the page shows follows `focus`: 'insights' hides the fact sections, 'facts' hides Insights, 'both' shows
+  // everything. Until the overview arrives neither is drawn, so nothing flashes and then disappears.
+  const insights = !!ov && focusOf(ov) !== 'facts'
+  const facts = !!ov && focusOf(ov) !== 'insights'
   const scrollTo = ref => ref.current && ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const onReview = alarm => scrollTo(alarm.kind === 'budget_full' ? spaceRef : nearRef)
   const pickTheme = tag => {
@@ -2854,15 +3190,17 @@ function Page() {
         'div',
         { className: 'smn-grid' },
         h('div', { className: 'smn-col smn-col-main' },
-          h(MorningSection, { ov, run, onBack: () => setRun(null), confirm }),
-          h(AlmostThere, { ov, theme, onClearTheme: () => setTheme(null), themes: themes.data && themes.data.themes, confirm, sectionRef: nearRef }),
+          insights ? h(InsightsSection, { ov }) : null,
+          facts ? h(MorningSection, { ov, run, onBack: () => setRun(null), confirm }) : null,
+          facts ? h(AlmostThere, { ov, theme, onClearTheme: () => setTheme(null), themes: themes.data && themes.data.themes, confirm, sectionRef: nearRef }) : null,
+          !ov && !overview.error ? h(Section, { title: h(Skel, { height: 14, width: 120 }) }, h(Skel, { height: 14, width: '60%' }), h(Skel, { height: 60 })) : null,
           h(Diary)),
         h('div', { className: 'smn-col smn-col-side' },
           h(MemorySpace, { ov, latestKeys, confirm, focusRef: spaceRef }),
-          ov ? h(SleepChart, { nights: ov.nights, selectedRun: run, onSelect: r => { setRun(r === (ov.last_run && ov.last_run.at) ? null : r); window.requestAnimationFrame(() => { const el = document.getElementById('smn-morning'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }) } }) : h(Section, { title: t('chart.title') }, h(Skel, { height: 130 })),
-          h(Constellation, { data: themes.data, active: theme, onPick: pickTheme }),
-          h(Thinks, { ov }),
-          h(Calibration, { ov }))
+          ov ? h(SleepChart, { nights: ov.nights, selectedRun: run, onSelect: !facts ? null : r => { setRun(r === (ov.last_run && ov.last_run.at) ? null : r); window.requestAnimationFrame(() => { const el = document.getElementById('smn-morning'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }) } }) : h(Section, { title: t('chart.title') }, h(Skel, { height: 130 })),
+          facts ? h(Constellation, { data: themes.data, active: theme, onPick: pickTheme }) : null,
+          facts ? h(Thinks, { ov }) : null,
+          facts ? h(Calibration, { ov }) : null)
       )
     ),
     h(PreviewDialog),
@@ -2879,11 +3217,19 @@ function StatusChip() {
   const t = useTr()
   const { data } = useOverview()
   const seen = useStore($seenRun)
-  if (!data || !data.last_run || data.last_run.dry_run) return null
-  if (nowS() - data.last_run.at > DAY_S || seen === data.last_run.at) return null
+  if (!data) return null
+  const focus = focusOf(data)
+  const toReview = focus !== 'facts' && data.counts ? data.counts.insights_to_review || 0 : 0
+  // Insights wait for a decision, so their chip stays until none is left to review.
+  const insightChip = toReview
+    ? h(Tooltip, { label: t('insights.statusTip', toReview) }, h('button', { type: 'button', className: 'smn-status', onClick: () => go(ROUTE) }, h(Icon, { name: 'sparkle', size: '0.7rem' }), h('span', null, t('insights.toReviewCount', toReview))))
+    : null
+  if (focus === 'insights') return insightChip
+  if (!data.last_run || data.last_run.dry_run) return insightChip
+  if (nowS() - data.last_run.at > DAY_S || seen === data.last_run.at) return insightChip
   const night = (data.nights || [])[data.nights.length - 1]
   const n = night ? night.promoted + night.merged : 0
-  if (!n) return null
+  if (!n) return insightChip
   return h(
     Tooltip,
     { label: t('surfaces.statusTip', n) },
@@ -2904,11 +3250,21 @@ function SessionMark({ sessionId }) {
 function ChatEmptyLine() {
   const t = useTr()
   const ov = useOverview().data
+  const focus = focusOf(ov)
   const fresh = !!(ov && ov.last_run && nowS() - ov.last_run.at < 1.5 * DAY_S)
-  const q = useChanges(null)
-  if (!fresh || !q.data) return null
+  // Under focus: insights the fact changes are never read, so no fact text can show here.
+  const q = useSomniaQuery(['changes', 'latest'], 'changes', { run: 'latest' }, { enabled: !!ov && focus !== 'insights' })
+  const toReview = ov && focus !== 'facts' && ov.counts ? ov.counts.insights_to_review || 0 : 0
+  const insightLine = toReview
+    ? h('div', { className: 'smn-chat-empty' },
+        h('button', { type: 'button', className: 'smn-chat-empty-line', onClick: () => go(ROUTE) },
+          h('span', { className: 'smn-chat-empty-head' }, h(Icon, { name: 'sparkle', size: '0.75rem' }), h('span', null, t('name'))),
+          h('span', { className: 'smn-chat-empty-text' }, t('insights.toReviewCount', toReview))))
+    : null
+  if (!ov || focus === 'insights') return insightLine
+  if (!fresh || !q.data) return insightLine
   const kept = (q.data.changes || []).filter(c => !c.forgotten && ['added', 'merged', 'superseded', 'vault'].includes(c.action))
-  if (!kept.length) return null
+  if (!kept.length) return insightLine
   const more = kept.length - 1
   return h(
     'div',
@@ -2922,8 +3278,47 @@ function ChatEmptyLine() {
   )
 }
 
-/** ::somnia-memory{key="claim:…"} → compact candidate card inside the transcript. */
+/** ::somnia-memory{key="…"} → a card inside the transcript: an insight for `insight:` keys, else a fact candidate. */
 function DirectiveCard({ attrs, streaming }) {
+  const key = attrs && attrs.key
+  return isInsightKey(key) ? h(InsightDirectiveCard, { attrs, streaming }) : h(MemoryDirectiveCard, { attrs, streaming })
+}
+
+/** ::somnia-memory{key="insight:…"} → the insight: criterion, rule, occasions, Approve / Forget. */
+function InsightDirectiveCard({ attrs, streaming }) {
+  const t = useTr()
+  const key = attrs && attrs.key
+  const q = useCandidate(key, !streaming)
+  const { approve, forget, pending } = useInsightActions()
+  const [gone, setGone] = useState(false)
+  if (streaming || q.isLoading) return h('div', { className: 'smn-card' }, h(Skel, { height: 12, width: '30%' }), h(Skel, { height: 14, style: { marginTop: 8 } }))
+  if (q.error) return h('div', { className: 'smn-card smn-card-muted' }, h(Icon, { name: 'eye-closed', size: '0.8125rem' }), h('span', { className: 'smn-meta' }, isDisabledError(q.error) ? t('disabled.title') : t('insights.missing')))
+  const it = q.data
+  if (!it) return null
+  if (gone || it.status === 'rejected') return h('div', { className: 'smn-card smn-card-muted' }, h(Icon, { name: 'circle-slash', size: '0.8125rem' }), h('span', { className: 'smn-meta' }, t('insights.gone')))
+  const approved = it.status === 'approved'
+  return h(
+    'div',
+    { className: 'smn-card smn-card-insight', 'data-key': it.key },
+    h('div', { className: 'smn-card-head' },
+      h(Icon, { name: 'sparkle', size: '0.75rem', className: 'smn-accent' }),
+      h('span', { className: 'smn-label' }, t('insights.card')),
+      h(Pill, { color: approved ? 'var(--ui-green)' : 'var(--ui-orange)', icon: approved ? 'pass' : 'eye' }, t(`insights.status.${approved ? 'approved' : 'proposed'}`)),
+      approved && it.inlined ? h(Pill, { color: 'var(--ui-green)', tip: t('insights.inUserHint') }, t('insights.inUser')) : null,
+      h(InsightLabel, { it })),
+    h('p', { className: 'smn-insight-title' }, it.title),
+    h('p', { className: 'smn-fact' }, it.criterion),
+    h(InsightRule, { rule: it.rule }),
+    h(InsightOccasions, { occasions: it.occasions, max: 3 }),
+    h('div', { className: 'smn-row-actions' },
+      !approved ? h(Btn, { variant: 'default', icon: 'check', disabled: pending, tip: t('insights.approveHint'), onClick: () => approve(it.key) }, t('insights.approve')) : null,
+      h(ArmedButton, { icon: 'trash', disabled: pending, label: t('insights.forget'), armedLabel: t('insights.reallyForget'), onConfirm: () => forget(it.key).then(res => { if (res) setGone(true) }) }),
+      h(Btn, { icon: 'link-external', onClick: () => { $focusKey.set(it.key); go(ROUTE) } }, t('surfaces.open')))
+  )
+}
+
+/** ::somnia-memory{key="claim:…"} → compact candidate card inside the transcript. */
+function MemoryDirectiveCard({ attrs, streaming }) {
   const t = useTr()
   const key = attrs && attrs.key
   const q = useCandidate(key, !streaming)
@@ -3192,6 +3587,45 @@ textarea.smn-textarea-native{padding:6px 8px;border-radius:4px;border:1px solid 
 .smn-tab{border:0;background:transparent;padding:2px 8px;font:inherit;font-size:0.6875rem;color:var(--ui-text-secondary);border-radius:3px;cursor:pointer}
 .smn-tab[aria-pressed=true]{background:var(--ui-bg-quaternary);color:var(--ui-text-primary)}
 .smn-input{height:26px;padding:0 8px;border-radius:3px;border:1px solid var(--ui-stroke-secondary);background:transparent;color:var(--ui-text-primary);font:inherit;font-size:0.75rem}
+
+/* insights */
+.smn-insights{display:flex;flex-direction:column;gap:26px}
+.smn-insight-group{display:flex;flex-direction:column;gap:10px;min-width:0}
+.smn-h3{margin:0;display:flex;align-items:baseline;gap:6px;font-size:0.75rem;font-weight:600;color:var(--ui-text-secondary)}
+.smn-insight{display:flex;flex-direction:column;gap:10px;min-width:0;padding:16px 18px 12px;border:1px solid var(--ui-stroke-tertiary);border-radius:8px;background:color-mix(in srgb,var(--ui-bg-card,transparent) 55%,transparent)}
+.smn-insight-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.smn-insight-title{margin:0;font-size:0.875rem;font-weight:600;line-height:1.35;color:var(--ui-text-primary);overflow-wrap:anywhere}
+.smn-insight-label{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}
+.smn-rule{display:flex;flex-direction:column;gap:3px;padding:9px 12px;border-radius:6px;background:color-mix(in srgb,var(--ui-accent) 9%,transparent)}
+.smn-rule-label{display:inline-flex;align-items:center;gap:5px;font-size:0.6875rem;font-weight:600;color:color-mix(in srgb,var(--ui-accent) 75%,var(--ui-text-primary))}
+.smn-rule-text{margin:0;font-size:0.8125rem;line-height:1.5;color:var(--ui-text-primary);overflow-wrap:anywhere}
+.smn-refines{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:0.75rem;line-height:1.5;color:var(--ui-text-secondary)}
+.smn-insight-more{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;max-width:100%;padding:2px 6px 2px 2px;margin-left:-2px;border:0;border-radius:3px;background:transparent;color:var(--ui-text-secondary);font:inherit;font-size:0.75rem;text-align:left;cursor:pointer}
+.smn-insight-more:hover{color:var(--ui-text-primary);background:var(--ui-row-hover-background)}
+.smn-insight-detail{display:flex;flex-direction:column;gap:12px;min-width:0}
+.smn-insight-block{display:flex;flex-direction:column;gap:5px;min-width:0}
+.smn-occs{display:flex;flex-direction:column;gap:10px;min-width:0}
+.smn-occ{display:flex;flex-direction:column;gap:4px;min-width:0}
+.smn-occ-head{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0}
+.smn-occ .smn-quote{color:var(--ui-text-primary);overflow-wrap:anywhere}
+.smn-insight-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-top:10px;border-top:1px solid var(--ui-stroke-quaternary,var(--ui-stroke-tertiary))}
+.smn-insight-none{margin:0;font-size:0.8125rem;color:var(--ui-text-secondary)}
+.smn-insight-waiting,.smn-insight-note{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:0.6875rem;color:var(--ui-text-tertiary);min-width:0}
+.smn-insight-note .smn-mono{color:var(--ui-text-secondary);overflow-wrap:anywhere;min-width:0}
+.smn-empty .smn-insight-waiting{justify-content:center}
+.smn-area{display:flex;flex-direction:column;gap:6px;min-width:0}
+.smn-area-title{margin:4px 0 0;font-size:0.6875rem;font-weight:600;color:var(--ui-text-tertiary)}
+.smn-appr{display:flex;flex-direction:column;min-width:0}
+.smn-appr:hover{background:var(--ui-row-hover-background)}
+.smn-appr-main{display:flex;flex-direction:column;gap:4px;width:100%;padding:12px 16px 2px;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.smn-appr-top{display:flex;align-items:flex-start;gap:8px}
+.smn-appr-title{flex:1 1 auto;min-width:0;font-size:0.8125rem;font-weight:600;line-height:1.4;color:var(--ui-text-primary);overflow-wrap:anywhere}
+.smn-appr-rule{display:block;font-size:0.78125rem;line-height:1.5;color:var(--ui-text-secondary);overflow-wrap:anywhere}
+.smn-appr-detail{display:flex;flex-direction:column;gap:12px;padding:10px 16px 4px}
+.smn-appr-foot{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;padding:2px 10px 8px 16px}
+.smn-card-insight{gap:9px}
+.smn-card-insight .smn-insight-title{font-size:0.8125rem}
+.smn-chart-hit.is-static{cursor:default}
 
 /* charts */
 .smn-chart{position:relative}

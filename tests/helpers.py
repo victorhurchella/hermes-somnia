@@ -18,16 +18,21 @@ for _var in ("OBSIDIAN_VAULT_PATH", "WIKI_PATH"):
     os.environ.pop(_var, None)
 
 
-def make_sessions_db(path: Path, rows: list[tuple]) -> None:
-    """rows: (session_id, source, role, content, timestamp, display_kind)."""
+def make_sessions_db(path: Path, rows: list[tuple], sessions: dict | None = None, legacy: bool = False) -> None:
+    """rows: (session_id, source, role, content, timestamp, display_kind). ``sessions`` maps a session id to
+    extra columns (parent_session_id, created_source, title, end_reason); ``legacy`` builds the schema without them."""
     conn = sqlite3.connect(path)
-    conn.executescript("""
-        create table sessions (id text primary key, source text, chat_type text);
+    extra = "" if legacy else ", parent_session_id text, created_source text, title text, end_reason text"
+    conn.executescript(f"""
+        create table sessions (id text primary key, source text, chat_type text{extra});
         create table messages (id integer primary key autoincrement, session_id text, role text, content text,
                                timestamp real, display_kind text, _compressed_summary integer default 0);
     """)
     for sid, source, *_ in rows:
         conn.execute("insert or ignore into sessions(id, source) values(?, ?)", (sid, source))
+    for sid, cols in (sessions or {}).items():
+        for col, value in cols.items():
+            conn.execute(f"update sessions set {col}=? where id=?", (value, sid))
     for sid, _source, role, content, ts, kind in rows:
         conn.execute("insert into messages(session_id, role, content, timestamp, display_kind) values(?,?,?,?,?)",
                      (sid, role, content, ts, kind))
@@ -84,14 +89,21 @@ class FakeMemory:
 class ScriptedLLM:
     """Routes by system prompt: extraction, consolidation or diary."""
 
-    def __init__(self, extract=None, consolidate=None, diary="Soft rain on the build logs."):
+    def __init__(self, extract=None, consolidate=None, diary="Soft rain on the build logs.", judge_extract=None,
+                 judge_synth=None):
+        self.judge_extract = judge_extract or (lambda user: {"observations": []})
+        self.judge_synth = judge_synth or (lambda user: {"insights": []})
         self.extract = extract or (lambda user: {"observations": []})
         self.consolidate = consolidate
         self.diary = diary
         self.calls: list = []
 
     def __call__(self, system, user, max_tokens):
-        if system.startswith("You read fragments"):
+        if "Agent replies are truncated" in system:
+            kind, out = "judge_extract", self.judge_extract(user)
+        elif system.startswith("You receive judgment observations"):
+            kind, out = "judge_synth", self.judge_synth(user)
+        elif system.startswith("You read fragments"):
             kind, out = "extract", self.extract(user)
         elif system.startswith("Choose how to incorporate"):
             kind = "consolidate"

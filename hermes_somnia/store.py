@@ -45,6 +45,17 @@ create table if not exists changes (
   score real, components text not null default '{}', sessions text not null default '[]', reason text
 );
 create index if not exists changes_run on changes(run_id);
+create table if not exists observations (
+  id integer primary key autoincrement, criterion text not null, kind text, name text, application text,
+  context text, quote text not null, session_id text not null, day text not null, at real not null,
+  insight_key text, created_at real not null
+);
+create index if not exists observations_key on observations(insight_key);
+create table if not exists judgments (
+  key text primary key, title text not null, kind text, area text, name text, criterion text not null,
+  user_version text, rule text not null, relation text, delta text, status text not null,
+  proposed_at real not null, decided_at real, note text, inline_hash text
+);
 """
 
 _JSON_FIELDS = ("sessions", "days", "sources", "concept_tags", "evidence")
@@ -92,6 +103,26 @@ class Entry:
         return max(0.0, min(1.0, self.total_score / self.signal_count)) if self.signal_count else 0.0
 
 
+@dataclass
+class Judgment:
+    """An insight: a criterion of judgment the user applies, with the rule it implies for the agent."""
+    key: str
+    title: str
+    kind: str  # principle | value | taste | response
+    area: str  # design | product | analysis | code | communication | responses
+    name: Optional[str]
+    criterion: str
+    user_version: str
+    rule: str
+    relation: str = "new"  # new | refines
+    delta: Optional[str] = None
+    status: str = "proposed"  # proposed | approved | rejected
+    proposed_at: float = 0.0
+    decided_at: Optional[float] = None
+    note: Optional[str] = None  # inbox note that holds the proposal
+    inline_hash: Optional[str] = None  # owned USER.md entry, when inlined
+
+
 _ORIGIN_RANK = {"owner": 0, "agent": 1, "system": 2, "untrusted": 3}
 
 
@@ -120,7 +151,7 @@ class Store:
             if col not in have:
                 self.conn.execute(f"alter table entries add column {col} {ddl}")
         owned = {r[1] for r in self.conn.execute("pragma table_info(owned)")}
-        for col, ddl in (("last_confirmed_at", "real"), ("run_id", "integer")):
+        for col, ddl in (("last_confirmed_at", "real"), ("run_id", "integer"), ("class", "text")):
             if col not in owned:
                 self.conn.execute(f"alter table owned add column {col} {ddl}")
         self.conn.commit()
@@ -241,11 +272,13 @@ class Store:
 
     # --- owned memory entries (only these are ever evicted) ---
     def own(self, entry_hash: str, target: str, text: str, key: Optional[str], score: Optional[float],
-            run_id: Optional[int] = None, at: Optional[float] = None) -> None:
+            run_id: Optional[int] = None, at: Optional[float] = None, klass: Optional[str] = None) -> None:
+        """``klass``: None for a fact entry; 'pointer' or 'inline' for insight entries, which the fact
+        pipeline never evicts, merges or rewrites."""
         at = at or time.time()
         self.conn.execute(
-            "insert or replace into owned(entry_hash, target, text, key, score, created_at, last_confirmed_at, run_id) "
-            "values(?,?,?,?,?,?,?,?)", (entry_hash, target, text, key, score, at, at, run_id))
+            "insert or replace into owned(entry_hash, target, text, key, score, created_at, last_confirmed_at, "
+            "run_id, class) values(?,?,?,?,?,?,?,?,?)", (entry_hash, target, text, key, score, at, at, run_id, klass))
 
     def owned(self, target: Optional[str] = None) -> dict[str, dict]:
         q, args = ("select * from owned where target=?", (target,)) if target else ("select * from owned", ())
@@ -257,6 +290,49 @@ class Store:
 
     def disown(self, entry_hash: str) -> None:
         self.conn.execute("delete from owned where entry_hash=?", (entry_hash,))
+
+    # --- insights: observations + judgments ---
+    def add_observation(self, *, criterion: str, kind: str, name: Optional[str], application: str, context: str,
+                        quote: str, session_id: str, day: str, at: float, created_at: float) -> int:
+        cur = self.conn.execute(
+            "insert into observations(criterion, kind, name, application, context, quote, session_id, day, at, "
+            "created_at) values(?,?,?,?,?,?,?,?,?,?)",
+            (criterion, kind, name, application, context, quote, session_id, day, at, created_at))
+        return int(cur.lastrowid or 0)
+
+    def observations(self, *, unassigned: bool = False, key: Optional[str] = None) -> list[dict]:
+        q, args = "select * from observations", ()
+        if key is not None:
+            q, args = q + " where insight_key=?", (key,)
+        elif unassigned:
+            q += " where insight_key is null"
+        return [dict(r) for r in self.conn.execute(q + " order by at, id", args)]
+
+    def assign_observations(self, ids: Iterable[int], key: str) -> None:
+        for i in ids:
+            self.conn.execute("update observations set insight_key=? where id=?", (key, i))
+
+    def drop_observations(self, ids: Iterable[int]) -> None:
+        for i in ids:
+            self.conn.execute("delete from observations where id=?", (i,))
+
+    def prune_observations(self, before: float) -> int:
+        """Unassigned observations that waited too long for a second occasion."""
+        cur = self.conn.execute("delete from observations where insight_key is null and at < ?", (before,))
+        return cur.rowcount
+
+    def judgments(self, status: Optional[str] = None) -> list[Judgment]:
+        q, args = ("select * from judgments where status=?", (status,)) if status else ("select * from judgments", ())
+        return [Judgment(**dict(r)) for r in self.conn.execute(q + " order by proposed_at, key", args)]
+
+    def judgment(self, key: str) -> Optional[Judgment]:
+        row = self.conn.execute("select * from judgments where key=?", (key,)).fetchone()
+        return Judgment(**dict(row)) if row else None
+
+    def save_judgment(self, j: Judgment) -> None:
+        data = asdict(j)
+        self.conn.execute(f"insert or replace into judgments({', '.join(data)}) values({', '.join('?' for _ in data)})",
+                          tuple(data.values()))
 
     # --- runs + changes ---
     def start_run(self, dry_run: bool) -> int:

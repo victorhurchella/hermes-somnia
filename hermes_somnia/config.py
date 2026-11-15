@@ -21,6 +21,8 @@ PAGE_SETTINGS = ("destructive", "max_promotions", "min_score", "min_sessions", "
 
 @dataclass
 class Settings:
+    # what Somnia looks for: insights (criteria of judgment), facts (the Light -> REM -> Deep pipeline) or both
+    focus: str = "insights"
     # where Deep writes: auto (the vault when one is configured, else builtin), builtin (MEMORY.md/USER.md),
     # vault (markdown second brain) or both
     destinations: str = "auto"
@@ -41,6 +43,14 @@ class Settings:
     vault_note_tags: list = field(default_factory=lambda: ["somnia"])
     vault_language: str = "en"  # en | pt-BR: headings and labels of the inbox notes
     vault_sync_command: str = ""  # run after each vault write, e.g. a git commit+push; {note} {folder} {day}
+    vault_pull_command: str = ""  # run from the vault root before ticked proposals are read, e.g. a git pull
+    # insights
+    max_insights: int = 3  # most new proposals per night (there is no minimum)
+    insight_window_days: int = 60  # how long an unmatched observation waits for a second occasion
+    insights_note: str = ""  # vault-relative path of the living note; empty = <vault_folder>/insights.md
+    insights_known_notes: list = field(default_factory=list)  # vault-relative notes read as "already recorded"
+    insights_pointer: bool = True  # keep one USER.md entry pointing at the living note
+    insights_inline_max: int = 3  # most "responses" insights copied into USER.md
     # ingestion
     ingest_days: int = 14
     max_messages: int = 600
@@ -103,7 +113,17 @@ class Settings:
                 except (TypeError, ValueError):
                     continue
                 setattr(s, f.name, value)
+        if s.focus not in ("insights", "facts", "both"):
+            s.focus = "insights"
         return s
+
+    @property
+    def wants_facts(self) -> bool:
+        return self.focus in ("facts", "both")
+
+    @property
+    def wants_insights(self) -> bool:
+        return self.focus in ("insights", "both")
 
     @property
     def resolved_destinations(self) -> str:

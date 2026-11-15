@@ -18,6 +18,24 @@ export function createMockServer(fixture, { mode = 'normal', latency = 90 } = {}
     if (!c) throw rpcError(4001, `KeyError: unknown candidate ${key}`)
     return c
   }
+  const AREAS = ['design', 'product', 'analysis', 'code', 'communication', 'responses']
+  const INLINE_MAX = 3
+  const isInsight = key => typeof key === 'string' && key.startsWith('insight:')
+  const store = () => (db.insights ||= { items: [], rejected: 0, waiting: 0, note: null })
+  const insight = key => {
+    const it = store().items.find(x => x.key === key)
+    if (!it) throw rpcError(4001, `KeyError: unknown insight ${key}`)
+    return it
+  }
+  const userBudget = () => db.overview.budgets.find(x => x.target === 'user')
+  const dropInlined = it => {
+    const b = userBudget()
+    if (b) {
+      b.entries = b.entries.filter(e => e.key !== it.key)
+      reindex(b)
+    }
+    it.inlined = false
+  }
   const budget = target => {
     const b = db.overview.budgets.find(x => x.target === target)
     if (!b) throw rpcError(4001, `ValueError: unknown target ${target}`)
@@ -45,7 +63,9 @@ export function createMockServer(fixture, { mode = 'normal', latency = 90 } = {}
       rejected: cs.filter(c => c.status === 'rejected').length,
       skills: cs.filter(c => c.status === 'skill').length,
       stale: ov.budgets.reduce((n, b) => n + b.entries.filter(e => e.stale).length, 0),
-      pending: 0
+      pending: 0,
+      insights_to_review: store().items.filter(i => i.status === 'proposed').length,
+      insights_approved: store().items.filter(i => i.status === 'approved').length
     }
     ov.pressure = Object.fromEntries(ov.budgets.map(b => [b.target, Math.round((b.used / b.limit) * 1000) / 1000]))
     if (ov.alarm && ov.alarm.kind === 'budget_full') {
@@ -132,7 +152,40 @@ export function createMockServer(fixture, { mode = 'normal', latency = 90 } = {}
       items = [...items].sort((a, b) => (filter === 'promoted' ? (b.promoted_at || 0) - (a.promoted_at || 0) : b.raw - a.raw))
       return { items: items.slice(0, limit), total: items.length }
     },
-    candidate: ({ key }) => cand(key),
+    candidate: ({ key }) => (isInsight(key) ? insight(key) : cand(key)),
+    insights: () => {
+      const st = store()
+      const approved = st.items.filter(i => i.status === 'approved').sort((a, b) => AREAS.indexOf(a.area) - AREAS.indexOf(b.area) || b.decided_at - a.decided_at)
+      return {
+        focus: db.overview.focus || 'facts',
+        to_review: st.items.filter(i => i.status === 'proposed').sort((a, b) => b.proposed_at - a.proposed_at),
+        approved,
+        rejected: st.rejected + st.items.filter(i => i.status === 'rejected').length,
+        waiting: st.waiting,
+        note: approved.length ? st.note : null
+      }
+    },
+    'insight.approve': ({ key }) => {
+      const it = insight(key)
+      if ([...jobs.values()].some(j => j.state === 'running' && j.kind === 'run')) throw rpcError(4001, 'RpcError: Somnia is running a sweep; try again in a moment')
+      const warnings = []
+      if (it.status !== 'approved') {
+        it.status = 'approved'
+        it.decided_at = now()
+        const b = userBudget()
+        const inlinedNow = store().items.filter(i => i.inlined).length
+        if (it.area === 'responses' && it.rule.length <= 160 && inlinedNow < INLINE_MAX && b) {
+          if (b.used + it.rule.length + 3 > b.limit) warnings.push('USER.md is full; the rule stays in the insights note only')
+          else {
+            b.entries.push({ index: b.entries.length, text: it.rule, chars: it.rule.length, owner: 'somnia', key: it.key, created_at: now(), last_confirmed_at: null, stale: false, pointer: false })
+            reindex(b)
+            it.inlined = true
+          }
+        }
+        warnings.push(...((db.approve_warnings && db.approve_warnings[key]) || []))
+      }
+      return { ok: true, key, note: store().note, inlined: !!it.inlined, warnings }
+    },
     themes: () => db.themes,
     diary: ({ limit = 10 } = {}) => ({ ...db.diary, entries: db.diary.entries.slice(0, limit) }),
     stats: () => {
@@ -191,6 +244,14 @@ export function createMockServer(fixture, { mode = 'normal', latency = 90 } = {}
       return out
     },
     forget: ({ key, remove_entry }) => {
+      if (isInsight(key)) {
+        const it = insight(key)
+        const wasApproved = it.status === 'approved'
+        it.status = 'rejected'
+        it.decided_at = now()
+        dropInlined(it)
+        return { ok: true, removed_entry: wasApproved }
+      }
       const c = cand(key)
       const wasPromoted = c.status === 'promoted'
       c.status = 'rejected'
@@ -206,15 +267,24 @@ export function createMockServer(fixture, { mode = 'normal', latency = 90 } = {}
       return { ok: true, removed_entry: removed }
     },
     unforget: ({ key }) => {
+      if (isInsight(key)) {
+        const it = insight(key)
+        it.status = 'proposed'
+        it.decided_at = null
+        dropInlined(it)
+        return { ok: true }
+      }
       const c = cand(key)
       c.status = c.kind === 'procedure' ? 'skill' : 'candidate'
       return { ok: true }
     },
     pin: ({ key, pinned }) => {
+      if (isInsight(key)) throw rpcError(4001, 'RpcError: an insight cannot be pinned; approve it instead')
       cand(key).pinned = !!pinned
       return { ok: true }
     },
     promote: params => {
+      if (isInsight(params.key)) throw rpcError(4001, 'RpcError: an insight cannot be promoted; approve it instead')
       cand(params.key)
       return startJob('promote', params)
     },

@@ -2,6 +2,7 @@
  "now": 1794388320,
  "overview": {
   "version": "0.4.0",
+  "focus": "insights",
   "destinations": "builtin",
   "destructive": "apply",
   "schedule": "0 3 * * *",
@@ -55,7 +56,9 @@
    "rejected": 0,
    "skills": 0,
    "stale": 0,
-   "pending": 0
+   "pending": 0,
+   "insights_to_review": 0,
+   "insights_approved": 0
   },
   "vault": null,
   "pressure": {
@@ -106,6 +109,12 @@
     "feynman"
    ]
   }
+ },
+ "insights": {
+  "items": [],
+  "rejected": 0,
+  "waiting": 0,
+  "note": "~/.hermes/plugin-data/hermes-somnia/insights.md"
  },
  "runs": {},
  "latest_run": null,

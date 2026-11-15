@@ -17,22 +17,25 @@ shot() { # dir name qs [extra args...]
     echo "FAIL $dir/$name $(cat ${TMPDIR:-/tmp}/smn-shot.json)"; fail=1
   fi
 }
+# demo = focus: insights (the default); demo-facts = the fact pipeline, for the fact sections.
 for lang in en pt-BR; do
   l=$(echo "$lang" | tr 'A-Z' 'a-z')
   shot "$lang" page        "theme=dark&fixture=demo&lang=$l" --height 1180
-  shot "$lang" page-full   "theme=dark&fixture=demo&lang=$l" --height 3400
+  shot "$lang" page-full   "theme=dark&fixture=demo&lang=$l" --height 2200
   shot "$lang" page-light  "theme=light&fixture=demo&lang=$l" --height 1180
-  shot "$lang" memory      "theme=dark&fixture=demo&lang=$l&script=memory" --clip "#smn-space"
-  shot "$lang" almost-there "theme=dark&fixture=demo&lang=$l" --clip "#smn-near" --height 3400
-  shot "$lang" sleep       "theme=dark&fixture=demo&lang=$l" --clip "#smn-sleep" --height 3400
-  shot "$lang" principles  "theme=dark&fixture=demo&lang=$l" --clip "#smn-thinks" --height 3400
-  shot "$lang" diary       "theme=dark&fixture=demo&lang=$l" --clip "#smn-diary" --height 3400
-  shot "$lang" chat-card   "theme=dark&fixture=demo&lang=$l&view=chat" --clip ".hx-msgs" --height 1100
-  shot "$lang" settings    "theme=dark&fixture=demo&lang=$l&view=settings" --height 900
-  shot "$lang" preview     "theme=dark&fixture=demo&lang=$l" --height 1000 --eval "$PREVIEW_CLICK"
-  shot "$lang" optimize    "theme=dark&fixture=demo&lang=$l" --height 1000 --eval "$OPTIMIZE_CLICK"
-  shot "$lang" limit       "theme=dark&fixture=demo&lang=$l" --clip "#smn-space" --eval "$LIMIT_CLICK"
+  shot "$lang" insights    "theme=dark&fixture=demo&lang=$l" --clip "#smn-insights" --height 2200
+  shot "$lang" chat-insight "theme=dark&fixture=demo&lang=$l&view=chat" --clip ".hx-msgs" --height 1300
   shot "$lang" empty       "theme=dark&fixture=empty&lang=$l" --height 1000
-  shot "$lang" alarm       "theme=dark&fixture=demo&lang=$l&alarm=noop" --height 700
+  shot "$lang" memory      "theme=dark&fixture=demo-facts&lang=$l&script=memory" --clip "#smn-space"
+  shot "$lang" almost-there "theme=dark&fixture=demo-facts&lang=$l" --clip "#smn-near" --height 3400
+  shot "$lang" sleep       "theme=dark&fixture=demo-facts&lang=$l" --clip "#smn-sleep" --height 3400
+  shot "$lang" principles  "theme=dark&fixture=demo-facts&lang=$l" --clip "#smn-thinks" --height 3400
+  shot "$lang" diary       "theme=dark&fixture=demo-facts&lang=$l" --clip "#smn-diary" --height 3400
+  shot "$lang" chat-card   "theme=dark&fixture=demo-facts&lang=$l&view=chat" --clip ".hx-msgs" --height 1100
+  shot "$lang" settings    "theme=dark&fixture=demo-facts&lang=$l&view=settings" --height 900
+  shot "$lang" preview     "theme=dark&fixture=demo-facts&lang=$l" --height 1000 --eval "$PREVIEW_CLICK"
+  shot "$lang" optimize    "theme=dark&fixture=demo-facts&lang=$l" --height 1000 --eval "$OPTIMIZE_CLICK"
+  shot "$lang" limit       "theme=dark&fixture=demo-facts&lang=$l" --clip "#smn-space" --eval "$LIMIT_CLICK"
+  shot "$lang" alarm       "theme=dark&fixture=demo-facts&lang=$l&alarm=noop" --height 700
 done
 exit $fail
