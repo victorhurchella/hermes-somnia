@@ -81,13 +81,24 @@ def read_fragments(db_path: Path, *, after_id: int, since_ts: float, sources: li
         kind_col = "m.display_kind" if "display_kind" in cols else "null"
         summary_filter = "and coalesce(m._compressed_summary, 0) = 0" if "_compressed_summary" in cols else ""
         chat_type = "s.chat_type" if "chat_type" in scols else "null"
+        # A delegated subagent can inherit the parent's interactive source; its "user" turns are briefs the
+        # agent wrote. A session with a parent that is not a delegated run (a continuation) is kept.
+        delegated_filter = ""
+        if "parent_session_id" in scols:
+            signs = [cond for col, cond in (("created_source", "s.created_source = 'subagent'"),
+                                            ("title", "s.title like 'Subagent:%'"),
+                                            ("end_reason", "s.end_reason in ('agent_close', 'startup_orphan_reap')"))
+                     if col in scols]
+            if signs:
+                delegated_filter = (f"and not (s.parent_session_id is not null and "
+                                    f"coalesce(({' or '.join(signs)}), 0))")
         marks = ",".join("?" for _ in sources) or "''"
         rows = conn.execute(
             f"""select m.id, m.session_id, m.role, m.content, m.timestamp, {kind_col} as kind,
                        s.source, {chat_type} as chat_type
                 from messages m join sessions s on s.id = m.session_id
                 where m.id > ? and m.timestamp >= ? and m.timestamp <= ? and m.role in ('user', 'assistant')
-                  and s.source in ({marks}) {summary_filter}
+                  and s.source in ({marks}) {summary_filter} {delegated_filter}
                 order by m.id asc""",
             (after_id, since_ts, until_ts if until_ts is not None else 1e18, *sources)).fetchall()
     finally:
